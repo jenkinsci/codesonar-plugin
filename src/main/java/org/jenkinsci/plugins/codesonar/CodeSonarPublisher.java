@@ -18,6 +18,7 @@ import hudson.tasks.Recorder;
 import hudson.util.ArgumentListBuilder;
 import java.io.File;
 import java.io.IOException;
+import org.kohsuke.stapler.DataBoundConstructor;
 
 /**
  *
@@ -26,26 +27,34 @@ import java.io.IOException;
 public class CodeSonarPublisher extends Recorder {
 
     private final String PROJECT_NAME = "project_x";
-    private final File WORKING_DIR = new File("codesonar/" + PROJECT_NAME);
+    private final File WORKING_DIR = new File("/home/andrius/projects/codesonar-plugin/codesonar/", PROJECT_NAME);
     private final String SERVER_ADDRESS = "10.10.1.125:8080";
+
+    @DataBoundConstructor
+    public CodeSonarPublisher() {
+    }
 
     @Override
     public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener) throws InterruptedException, IOException {
         ArgumentListBuilder argumentListBuilder = new ArgumentListBuilder();
         argumentListBuilder.add("codesonar");
         argumentListBuilder.add("analyze");
-        argumentListBuilder.add(PROJECT_NAME);
+        argumentListBuilder.add("/home/andrius/projects/codesonar-plugin/codesonar/" + PROJECT_NAME);
         argumentListBuilder.add("-foreground");
         argumentListBuilder.add(SERVER_ADDRESS);
 
-        int result = launcher.launch().cmds(argumentListBuilder).join();
+        int result = launcher.launch()
+                             .pwd(build.getWorkspace())
+                             .cmds(argumentListBuilder)
+                             .stdout(listener).join();
+
+        if (result == 0) return false;
         
-        return result == 0;
     }
     
     @Override
     public BuildStepMonitor getRequiredMonitorService() {
-        throw new UnsupportedOperationException("Not supported yet.");
+        return BuildStepMonitor.NONE;
     }
     
     @Extension
