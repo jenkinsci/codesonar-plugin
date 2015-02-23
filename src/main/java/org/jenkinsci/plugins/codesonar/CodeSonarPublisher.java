@@ -18,6 +18,17 @@ import hudson.tasks.Recorder;
 import hudson.util.ArgumentListBuilder;
 import java.io.File;
 import java.io.IOException;
+import java.io.StringReader;
+import java.net.URI;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBException;
+import javax.xml.bind.Unmarshaller;
+import org.apache.http.client.fluent.Request;
+import org.jenkinsci.plugins.codesonar.models.Project;
+import org.jenkinsci.plugins.codesonar.models.Projects;
+import org.jenkinsci.plugins.codesonar.services.XmlSerializationService;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 /**
@@ -47,10 +58,32 @@ public class CodeSonarPublisher extends Recorder {
                              .pwd(build.getWorkspace())
                              .cmds(argumentListBuilder)
                              .stdout(listener).join();
-
-        if (result == 0) return false;
+        if (result != 0) return false;
         
+        String url = "http://" + SERVER_ADDRESS + "/index.xml";
+        String xmlContent = Request.Get(url).execute().returnContent().asString();
+        String cleanXmlContent  = xmlContent.replaceAll("&", "&amp;");
+        
+        Projects projects = null;
+        try {
+            JAXBContext context = JAXBContext.newInstance(Projects.class);
+            Unmarshaller un = context.createUnmarshaller();
+        
+            StringReader reader = new StringReader(cleanXmlContent);
+        
+            projects = (Projects) un.unmarshal(reader);
+        } catch (JAXBException ex) {}
+        
+        Project project = projects.getProjectByName(PROJECT_NAME);
+        
+        url = "http://" + SERVER_ADDRESS + project.getUrl();
+        xmlContent = Request.Get(url).execute().returnContent().asString();
+        
+        listener.getLogger().println(xmlContent);
+
+        return true;
     }
+    
     
     @Override
     public BuildStepMonitor getRequiredMonitorService() {
