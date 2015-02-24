@@ -5,18 +5,12 @@
  */
 package org.jenkinsci.plugins.codesonar.unit;
 
-import java.io.StringReader;
-import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.UnmarshalException;
-import javax.xml.bind.Unmarshaller;
 import org.jenkinsci.plugins.codesonar.models.Metric;
 import org.jenkinsci.plugins.codesonar.services.XmlSerializationService;
 import org.jenkinsci.plugins.codesonar.models.Project;
-import org.junit.After;
-import org.junit.AfterClass;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
