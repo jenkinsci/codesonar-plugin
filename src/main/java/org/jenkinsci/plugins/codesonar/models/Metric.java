@@ -13,20 +13,22 @@ import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlValue;
 
 @XmlRootElement
-@XmlAccessorType (XmlAccessType.FIELD)
-public class Metric  {
+@XmlAccessorType(XmlAccessType.FIELD)
+public class Metric implements Serializable {
+
     @XmlAttribute
     private String name;
     @XmlValue
     private String value;
 
-    public Metric() {}
-    
+    public Metric() {
+    }
+
     public Metric(String name, String value) {
         this.name = name;
         this.value = value;
     }
-    
+
     public String getName() {
         return name;
     }
@@ -42,5 +44,30 @@ public class Metric  {
     public void setValue(String value) {
         this.value = value;
     }
-    
+
+    @Override
+    public boolean equals(Object obj) {
+        Metric other = (Metric) obj;
+
+        if (!this.name.equals(other.name)) {
+            return false;
+        }
+        if (!this.value.equals(other.value)) {
+            return false;
+        }
+
+        return true;
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+
+        sb.append("name: ").append(name);
+        sb.append("\n");
+        sb.append("value: ").append(value);
+        sb.append("\n");
+
+        return sb.toString();
+    }
 }

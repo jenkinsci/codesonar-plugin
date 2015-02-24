@@ -8,14 +8,14 @@ import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 
 @XmlRootElement(name = "project")
-@XmlAccessorType (XmlAccessType.FIELD)
-public class Project{
+@XmlAccessorType(XmlAccessType.FIELD)
+public class Project implements Serializable {
+
     @XmlAttribute
     private String url;
     private String project;
     private String state;
     private String started;
-//    private String metric;
     @XmlElement
     private Metric metric;
 
@@ -61,8 +61,42 @@ public class Project{
 
     @Override
     public boolean equals(Object obj) {
-        return this.url.equals(((Project) obj).url);
+        Project other = (Project) obj;
+
+        if (!this.url.equals(other.url)) {
+            return false;
+        }
+        if (!this.project.equals(other.project)) {
+            return false;
+        }
+        if (!this.state.equals(other.state)) {
+            return false;
+        }
+        if (!this.started.equals(other.started)) {
+            return false;
+        }
+        if (!this.metric.equals(other.metric)) {
+            return false;
+        }
+
+        return true;
     }
-    
-    
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+
+        sb.append("url: ").append(url);
+        sb.append("\n");
+        sb.append("project: ").append(project);
+        sb.append("\n");
+        sb.append("state: ").append(state);
+        sb.append("\n");
+        sb.append("started: ").append(started);
+        sb.append("\n");
+        sb.append("metric: ").append(metric);
+        sb.append("\n");
+
+        return sb.toString();
+    }
 }
