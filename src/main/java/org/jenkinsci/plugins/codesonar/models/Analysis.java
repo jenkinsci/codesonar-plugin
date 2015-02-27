@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package org.jenkinsci.plugins.codesonar.models;
 
 import java.io.Serializable;
@@ -20,6 +15,7 @@ import javax.xml.bind.annotation.XmlRootElement;
 @XmlRootElement(name = "analysis")
 @XmlAccessorType(XmlAccessType.FIELD)
 public class Analysis implements Serializable {
+
     @XmlAttribute
     private String username;
     @XmlAttribute(name = "analysis_name")
@@ -43,7 +39,7 @@ public class Analysis implements Serializable {
     @XmlAttribute
     private String address;
     @XmlElement(name = "warning")
-    private List<Warning> warnings;  
+    private List<Warning> warnings;
 
     public String getUsername() {
         return username;
