@@ -84,8 +84,58 @@
             
                     
     <build>
-        <plugins> 
+        <plugins>
+            <!-- 
+            Enabled us to use custom build numbers for the plugin and
+            relate them to a git SHA. Very usefull for snapshots and non-releases
+            that goes to manual validation.
+            With this plugin and the maven-hpi-plugin configuration below
+            the plugin will show up with at version number like:
+            major.minor.patch-SNAPSHOT-gitSHA (dev builds)
+            major.minor.patch-gitSHA (releases)
+            -->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>buildnumber-maven-plugin</artifactId>
+                <version>1.3</version> <!-- Need newest version to get bugfixes compared to parent pom -->
+                <executions>
+                    <execution>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>create</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <!-- Git SHA of 5 should be more than enough for uniqueness in combo with version number -->
+                    <shortRevisionLength>5</shortRevisionLength>
+                </configuration>
+            </plugin>
 
+            <!-- 
+            This produces the hpi file for Jenkins plugins. 
+            We reconfigure it here to add version information and a newer version
+            It would have been nice if we could signal dirty workspaces on the version
+            but buildnumber-maven-plugin does not support it. Neither does one like it:
+            https://github.com/code54/buildversion-plugin
+            -->
+            <plugin>
+                <groupId>org.jenkins-ci.tools</groupId>
+                <artifactId>maven-hpi-plugin</artifactId>
+                <version>1.109</version> <!-- Older version have some problems with writing the manifest file -->
+                <configuration>
+                    <pluginVersionDescription>${buildNumber}</pluginVersionDescription>
+                    <compatibleSinceVersion>2.0</compatibleSinceVersion>
+                </configuration>
+            </plugin>
+            
+            
+            <!--
+                Use java 1.7. We need this for our testing environment. Java 6 was EOL last year
+                and i was starting to get some wierd errors with FindBugs plugin. Plugins also require
+                Java 7 with the version of Jenkins we're using so i decided to move to Java 7 which also soon
+                is EOL.                  
+            -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
@@ -94,7 +144,26 @@
                     <target>1.7</target>
                 </configuration>
             </plugin>
-                       
+            
+            <!-- 
+            Allows integration tests to clean test environment before build fails 
+            use 'mvn verify' to run integration tests to allow 'post-integration-test' phase
+            to run so it can tear down integration test environment
+            -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-failsafe-plugin</artifactId>
+                <version>2.17</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>integration-test</goal>
+                            <goal>verify</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+     
             <!-- 
             Binds automatically surefire:test goal to the test phase and generates
             .txt and .xml reports for test results.
@@ -390,13 +459,17 @@
             <version>4.12</version>
             <scope>test</scope>
         </dependency>
-        
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-all</artifactId>
+            <version>1.9.5</version>
+            <scope>test</scope>
+        </dependency>
         <dependency>
             <groupId>org.apache.httpcomponents</groupId>
             <artifactId>httpclient</artifactId>
             <version>4.4</version>
         </dependency>
-        
         <dependency>
             <groupId>org.apache.httpcomponents</groupId>
             <artifactId>fluent-hc</artifactId>
