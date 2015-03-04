@@ -1,21 +1,29 @@
 package org.jenkinsci.plugins.codesonar;
 
+import com.google.common.collect.Lists;
+import hudson.DescriptorExtensionList;
 import hudson.Extension;
 import hudson.Launcher;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 import hudson.model.Action;
 import hudson.model.BuildListener;
+import hudson.model.Descriptor;
 import hudson.model.Result;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.BuildStepMonitor;
+import hudson.tasks.Builder;
 import hudson.tasks.Publisher;
 import hudson.tasks.Recorder;
 import hudson.util.ArgumentListBuilder;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import javax.xml.bind.JAXBException;
 import org.apache.http.client.fluent.Request;
+import org.jenkinsci.plugins.codesonar.conditions.Condition;
+import org.jenkinsci.plugins.codesonar.conditions.ConditionDescriptor;
 import org.jenkinsci.plugins.codesonar.models.Analysis;
 import org.jenkinsci.plugins.codesonar.models.Project;
 import org.jenkinsci.plugins.codesonar.models.Projects;
@@ -36,15 +44,12 @@ public class CodeSonarPublisher extends Recorder {
 
     private XmlSerializationService xmlSerializationService;
 
-    private int warningRank;
-    private float warningPercentage;
+    private List<Condition> conditions = Lists.newArrayList();
 
     @DataBoundConstructor
-    public CodeSonarPublisher() {
+    public CodeSonarPublisher(List<Condition> conditions) {
         xmlSerializationService = new XmlSerializationService();
-
-        warningRank = 30;
-        warningPercentage = 5.0f;
+        this.conditions = conditions;
     }
 
     @Override
@@ -84,23 +89,13 @@ public class CodeSonarPublisher extends Recorder {
         } catch (JAXBException ex) {
         }
 
-        int totalNumberOfWarnings = analysis.getWarnings().size();
-
-        float severeWarnings = 0.0f;
-        for (Warning warning : analysis.getWarnings()) {
-            if (warning.getRank() < warningRank) {
-                severeWarnings++;
-            }
-        }
-
-        float calculatedWarningPercentage = (severeWarnings / totalNumberOfWarnings) * 100;
-
-        if (calculatedWarningPercentage > warningPercentage) {
-            build.setResult(Result.UNSTABLE);
-        }
-
         build.addAction(new CodeSonarBuildAction(analysis, build));
 
+        for (Condition condition : conditions) {
+            Result validationResult = condition.validate(build, launcher, listener);
+            build.setResult(validationResult);
+        }
+        
         return true;
     }
 
@@ -114,22 +109,17 @@ public class CodeSonarPublisher extends Recorder {
         return BuildStepMonitor.NONE;
     }
 
-    public int getWarningRank() {
-        return warningRank;
+    public List<Condition> getConditions() {
+        return conditions;
     }
 
-    @DataBoundSetter
-    public void setWarningRank(int warningRank) {
-        this.warningRank = warningRank;
+    public void setConditions(List<Condition> conditions) {
+        this.conditions = conditions;
     }
 
-    public float getWarningPercentage() {
-        return warningPercentage;
-    }
-
-    @DataBoundSetter
-    public void setWarningPercentage(float warningPercentage) {
-        this.warningPercentage = warningPercentage;
+    @Override
+    public BuildStepDescriptor getDescriptor() {
+        return (DescriptorImpl) super.getDescriptor();
     }
 
     @Extension
@@ -143,6 +133,17 @@ public class CodeSonarPublisher extends Recorder {
         @Override
         public String getDisplayName() {
             return "Code Sonar";
+        }
+
+        public List<ConditionDescriptor<?>> getAllConditions() {
+            DescriptorExtensionList<Condition, ConditionDescriptor<Condition>> all = Condition.getAll();
+
+            List<ConditionDescriptor<?>> list = new ArrayList<ConditionDescriptor<?>>();
+            for (ConditionDescriptor<?> d : all) {
+                list.add(d);
+            }
+
+            return list;
         }
     }
 
