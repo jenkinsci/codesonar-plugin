@@ -14,7 +14,6 @@ import hudson.tasks.BuildStepMonitor;
 import hudson.tasks.Publisher;
 import hudson.tasks.Recorder;
 import hudson.util.ArgumentListBuilder;
-import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -36,6 +35,10 @@ public class CodeSonarPublisher extends Recorder {
 
     private final String PROJECT_NAME = "project_x";
     //private final File WORKING_DIR = new File("/home/andrius/projects/codesonar-plugin/codesonar/", PROJECT_NAME);
+    
+    //TODO:Delete this before
+    private final String old_location = "/home/andrius/projects/codesonar-plugin/_codesonar/"+PROJECT_NAME;
+    
     private final String SERVER_ADDRESS = "10.10.1.125:8080";
     private String hubAddress;
     private String projectLocation;
@@ -58,9 +61,9 @@ public class CodeSonarPublisher extends Recorder {
         ArgumentListBuilder argumentListBuilder = new ArgumentListBuilder();
         argumentListBuilder.add("codesonar");
         argumentListBuilder.add("analyze");
-        argumentListBuilder.add("/home/andrius/projects/codesonar-plugin/_codesonar/" + PROJECT_NAME);
+        argumentListBuilder.add(projectLocation);
         argumentListBuilder.add("-foreground");
-        argumentListBuilder.add(SERVER_ADDRESS);
+        argumentListBuilder.add(hubAddress);
 
         int result = launcher.launch()
                 .pwd(build.getWorkspace())
@@ -70,7 +73,7 @@ public class CodeSonarPublisher extends Recorder {
             return false;
         }
 
-        String url = "http://" + SERVER_ADDRESS + "/index.xml";
+        String url = "http://" + hubAddress + "/index.xml";
         String xmlContent = Request.Get(url).execute().returnContent().asString();
 
         Projects projects = null;
@@ -79,15 +82,20 @@ public class CodeSonarPublisher extends Recorder {
         } catch (JAXBException ex) {
         }
 
-        Project project = projects.getProjectByName(PROJECT_NAME);
+        //The project name is always the folder name
+        int index = hubAddress.lastIndexOf("/");
+        String resolvedProjectName = index != -1 ? hubAddress.substring(hubAddress.lastIndexOf("/")+1) : hubAddress;
+        
+        Project project = projects.getProjectByName(resolvedProjectName);
 
-        url = "http://" + SERVER_ADDRESS + project.getUrl();
+        url = "http://" + hubAddress + project.getUrl();
         xmlContent = Request.Get(url).execute().returnContent().asString();
 
         Analysis analysis = null;
         try {
             analysis = xmlSerializationService.deserialize(xmlContent, Analysis.class);
         } catch (JAXBException ex) {
+            ex.printStackTrace(listener.getLogger());
         }
 
         build.addAction(new CodeSonarBuildAction(analysis, build));

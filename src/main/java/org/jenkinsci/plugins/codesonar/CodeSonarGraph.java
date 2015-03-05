@@ -3,6 +3,7 @@ package org.jenkinsci.plugins.codesonar;
 import hudson.util.ChartUtil;
 import hudson.util.ColorPalette;
 import hudson.util.DataSetBuilder;
+import hudson.util.Graph;
 import hudson.util.ShiftedCategoryAxis;
 import java.awt.BasicStroke;
 import java.awt.Color;
