@@ -8,11 +8,9 @@ import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 import hudson.model.Action;
 import hudson.model.BuildListener;
-import hudson.model.Descriptor;
 import hudson.model.Result;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.BuildStepMonitor;
-import hudson.tasks.Builder;
 import hudson.tasks.Publisher;
 import hudson.tasks.Recorder;
 import hudson.util.ArgumentListBuilder;
@@ -27,10 +25,8 @@ import org.jenkinsci.plugins.codesonar.conditions.ConditionDescriptor;
 import org.jenkinsci.plugins.codesonar.models.Analysis;
 import org.jenkinsci.plugins.codesonar.models.Project;
 import org.jenkinsci.plugins.codesonar.models.Projects;
-import org.jenkinsci.plugins.codesonar.models.Warning;
 import org.jenkinsci.plugins.codesonar.services.XmlSerializationService;
 import org.kohsuke.stapler.DataBoundConstructor;
-import org.kohsuke.stapler.DataBoundSetter;
 
 /**
  *
@@ -39,16 +35,21 @@ import org.kohsuke.stapler.DataBoundSetter;
 public class CodeSonarPublisher extends Recorder {
 
     private final String PROJECT_NAME = "project_x";
-    private final File WORKING_DIR = new File("/home/andrius/projects/codesonar-plugin/codesonar/", PROJECT_NAME);
+    //private final File WORKING_DIR = new File("/home/andrius/projects/codesonar-plugin/codesonar/", PROJECT_NAME);
     private final String SERVER_ADDRESS = "10.10.1.125:8080";
+    private String hubAddress;
+    private String projectLocation;
+    
 
     private XmlSerializationService xmlSerializationService;
 
     private List<Condition> conditions = Lists.newArrayList();
 
     @DataBoundConstructor
-    public CodeSonarPublisher(List<Condition> conditions) {
+    public CodeSonarPublisher(List<Condition> conditions, String hubAddress, String projectLocation) {
         xmlSerializationService = new XmlSerializationService();
+        this.hubAddress = hubAddress;
+        this.projectLocation = projectLocation;
         this.conditions = conditions;
     }
 
@@ -122,8 +123,40 @@ public class CodeSonarPublisher extends Recorder {
         return (DescriptorImpl) super.getDescriptor();
     }
 
+    /**
+     * @return the hubAddress
+     */
+    public String getHubAddress() {
+        return hubAddress;
+    }
+
+    /**
+     * @param hubAddress the hubAddress to set
+     */
+    public void setHubAddress(String hubAddress) {
+        this.hubAddress = hubAddress;
+    }
+
+    /**
+     * @return the projectLocation
+     */
+    public String getProjectLocation() {
+        return projectLocation;
+    }
+
+    /**
+     * @param projectLocation the projectLocation to set
+     */
+    public void setProjectLocation(String projectLocation) {
+        this.projectLocation = projectLocation;
+    }
+
     @Extension
     public static class DescriptorImpl extends BuildStepDescriptor<Publisher> {
+        
+        public DescriptorImpl() {
+            load();
+        }
 
         @Override
         public boolean isApplicable(Class<? extends AbstractProject> type) {

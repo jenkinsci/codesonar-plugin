@@ -17,7 +17,7 @@ import org.kohsuke.stapler.DataBoundConstructor;
  */
 public class PercentageOfWariningsIncreasedInCasesBellowCertainRank extends Condition {
 
-    private static final String NAME = "Warning percentage bellow a certain rank";
+    private static final String NAME = "Warning percentage below a certain rank";
 
     private int rankOfWarnings;
     private float warningPercentage;
