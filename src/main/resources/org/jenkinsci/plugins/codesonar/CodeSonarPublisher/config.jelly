@@ -8,7 +8,7 @@
     </f:entry>
 
     <f:block>
-        <f:hetero-list descriptors="${descriptor.getAllConditions()}" items="${it.conditions}" name="conditions" />
+        <f:hetero-list descriptors="${descriptor.getAllConditions()}" items="${instance.conditions}" name="conditions" />
     </f:block>
   	
 </j:jelly>
