@@ -5,4 +5,7 @@
     <f:entry field="warningPercentage" title="Maximum percentage of warnings">
         <f:textbox />
     </f:entry>
+    <f:entry field="warrantedResult" title="Mark build as">
+        <f:select />
+    </f:entry>
 </j:jelly>

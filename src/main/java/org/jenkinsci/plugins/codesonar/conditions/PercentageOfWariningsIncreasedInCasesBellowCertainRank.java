@@ -10,6 +10,7 @@ import org.jenkinsci.plugins.codesonar.CodeSonarBuildAction;
 import org.jenkinsci.plugins.codesonar.models.Analysis;
 import org.jenkinsci.plugins.codesonar.models.Warning;
 import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.DataBoundSetter;
 
 /**
  *
@@ -21,7 +22,7 @@ public class PercentageOfWariningsIncreasedInCasesBellowCertainRank extends Cond
 
     private int rankOfWarnings;
     private float warningPercentage;
-    private Result warantedResult;
+    private String warrantedResult = Result.UNSTABLE.toString();
     
     @DataBoundConstructor
     public PercentageOfWariningsIncreasedInCasesBellowCertainRank(int rankOfWarnings, float warningPercentage) {
@@ -53,7 +54,8 @@ public class PercentageOfWariningsIncreasedInCasesBellowCertainRank extends Cond
         System.out.println("--------------------------------------");
         
         if (calculatedWarningPercentage > warningPercentage) {
-            build.setResult(Result.FAILURE);
+            Result result = Result.fromString(warrantedResult);
+            return result;
         }
         
         return Result.SUCCESS;
@@ -67,12 +69,21 @@ public class PercentageOfWariningsIncreasedInCasesBellowCertainRank extends Cond
         this.rankOfWarnings = rankOfWarnings;
     }
 
-    public float getWarningPercentageIncrease() {
+    public float getWarningPercentage() {
         return warningPercentage;
     }
 
-    public void setWarningPercentageIncrease(float warningPercentageIncrease) {
-        this.warningPercentage = warningPercentageIncrease;
+    public void setWarningPercentage(float warningPercentage) {
+        this.warningPercentage = warningPercentage;
+    }
+
+    public String getWarrantedResult() {
+        return warrantedResult;
+    }
+
+    @DataBoundSetter
+    public void setWarrantedResult(String warrantedResult) {
+        this.warrantedResult = warrantedResult;
     }
 
     @Extension
