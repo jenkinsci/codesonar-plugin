@@ -83,8 +83,8 @@ public class CodeSonarPublisher extends Recorder {
         }
 
         //The project name is always the folder name
-        int index = hubAddress.lastIndexOf("/");
-        String resolvedProjectName = index != -1 ? hubAddress.substring(hubAddress.lastIndexOf("/")+1) : hubAddress;
+        int index = projectLocation.lastIndexOf("/");
+        String resolvedProjectName = index != -1 ? projectLocation.substring(projectLocation.lastIndexOf("/")+1) : projectLocation;
         
         Project project = projects.getProjectByName(resolvedProjectName);
 
