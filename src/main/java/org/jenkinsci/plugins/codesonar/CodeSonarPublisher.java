@@ -35,24 +35,27 @@ public class CodeSonarPublisher extends Recorder {
 
     private final String PROJECT_NAME = "project_x";
     //private final File WORKING_DIR = new File("/home/andrius/projects/codesonar-plugin/codesonar/", PROJECT_NAME);
-    
+
     //TODO:Delete this before
-    private final String old_location = "/home/andrius/projects/codesonar-plugin/_codesonar/"+PROJECT_NAME;
-    
+    private final String old_location = "/home/andrius/projects/codesonar-plugin/_codesonar/" + PROJECT_NAME;
+
     private final String SERVER_ADDRESS = "10.10.1.125:8080";
     private String hubAddress;
     private String projectLocation;
-    
 
     private XmlSerializationService xmlSerializationService;
 
-    private List<Condition> conditions = Lists.newArrayList();
+    private List<Condition> conditions;
 
     @DataBoundConstructor
     public CodeSonarPublisher(List<Condition> conditions, String hubAddress, String projectLocation) {
         xmlSerializationService = new XmlSerializationService();
         this.hubAddress = hubAddress;
         this.projectLocation = projectLocation;
+
+        if (conditions == null) {
+            conditions = Lists.newArrayList();
+        } 
         this.conditions = conditions;
     }
 
@@ -84,8 +87,8 @@ public class CodeSonarPublisher extends Recorder {
 
         //The project name is always the folder name
         int index = projectLocation.lastIndexOf("/");
-        String resolvedProjectName = index != -1 ? projectLocation.substring(projectLocation.lastIndexOf("/")+1) : projectLocation;
-        
+        String resolvedProjectName = index != -1 ? projectLocation.substring(projectLocation.lastIndexOf("/") + 1) : projectLocation;
+
         Project project = projects.getProjectByName(resolvedProjectName);
 
         url = "http://" + hubAddress + project.getUrl();
@@ -105,7 +108,7 @@ public class CodeSonarPublisher extends Recorder {
             build.setResult(validationResult);
             listener.getLogger().println(String.format(("'%s' marked the build as %s"), condition.getDescriptor().getDisplayName(), validationResult.toString()));
         }
-        
+
         return true;
     }
 
@@ -162,7 +165,7 @@ public class CodeSonarPublisher extends Recorder {
 
     @Extension
     public static class DescriptorImpl extends BuildStepDescriptor<Publisher> {
-        
+
         public DescriptorImpl() {
             load();
         }
