@@ -18,50 +18,54 @@ import org.kohsuke.stapler.DataBoundConstructor;
  * @author Mads
  */
 public class WarningCountIncreasedByPercentage extends Condition {
-    
+
     private static final String NAME = "Maximum warning count increase";
     private float percentage = 5f;
- 
+
     @DataBoundConstructor
     public WarningCountIncreasedByPercentage(float percentage) {
         this.percentage = percentage;
     }
-    
+
     @Override
     public Result validate(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener) {
-        
+
         Analysis previous = getPreviousAnalysisResult(build);
-        if(previous == null) {
+        if (previous == null) {
             //No previous results. New analysis
             return Result.SUCCESS;
         } else {
             Analysis current = getAnalysis(build);
-            float currentCount = (float)current.getWarnings().size();
-            float previousCount = (float)previous.getWarnings().size();
+            float currentCount = (float) current.getWarnings().size();
+            float previousCount = (float) previous.getWarnings().size();
             float diff = currentCount - previousCount;
-            
-            if ((diff/previousCount)*100 > percentage) {
+
+            System.out.println("----------------percentage diff----------------------");
+            System.out.println((diff / previousCount) * 100);
+            System.out.println("--------------------------------------");
+
+            if ((diff / previousCount) * 100 > percentage) {
                 return Result.SUCCESS;
             } else {
                 return Result.UNSTABLE;
             }
 
         }
-        
+
     }
-    
+
     @Extension
     public static final class DescriptorImpl extends ConditionDescriptor<WarningCountIncreasedByPercentage> {
 
         public DescriptorImpl() {
             load();
         }
-        
+
         @Override
         public String getDisplayName() {
             return NAME;
         }
-        
+
     }
 
     /**
