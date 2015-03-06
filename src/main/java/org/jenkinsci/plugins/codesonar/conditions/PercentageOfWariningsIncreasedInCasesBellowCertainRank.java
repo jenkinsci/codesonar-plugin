@@ -23,7 +23,7 @@ public class PercentageOfWariningsIncreasedInCasesBellowCertainRank extends Cond
     private int rankOfWarnings;
     private float warningPercentage;
     private String warrantedResult = Result.UNSTABLE.toString();
-    
+
     @DataBoundConstructor
     public PercentageOfWariningsIncreasedInCasesBellowCertainRank(int rankOfWarnings, float warningPercentage) {
         this.rankOfWarnings = rankOfWarnings;
@@ -33,11 +33,15 @@ public class PercentageOfWariningsIncreasedInCasesBellowCertainRank extends Cond
     @Override
     public Result validate(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener) {
         CodeSonarBuildAction buildAction = build.getAction(CodeSonarBuildAction.class);
-        checkState(buildAction != null, "CondeSonar build action not present");
-        
+        if (buildAction == null) {
+            return Result.SUCCESS;
+        }
+
         Analysis analysis = buildAction.getAnalysis();
-        checkState(analysis != null, "CodeSonar build action not present");
-        
+        if (analysis == null) {
+            return Result.SUCCESS;
+        }
+
         int totalNumberOfWarnings = analysis.getWarnings().size();
 
         float severeWarnings = 0.0f;
@@ -52,12 +56,12 @@ public class PercentageOfWariningsIncreasedInCasesBellowCertainRank extends Cond
         System.out.println("----------------calculatedWarningPercentage----------------------");
         System.out.println(calculatedWarningPercentage);
         System.out.println("--------------------------------------");
-        
+
         if (calculatedWarningPercentage > warningPercentage) {
             Result result = Result.fromString(warrantedResult);
             return result;
         }
-        
+
         return Result.SUCCESS;
     }
 
