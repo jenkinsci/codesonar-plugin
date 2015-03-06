@@ -103,6 +103,7 @@ public class CodeSonarPublisher extends Recorder {
         for (Condition condition : conditions) {
             Result validationResult = condition.validate(build, launcher, listener);
             build.setResult(validationResult);
+            listener.getLogger().println(String.format(("'%s' marked the build as %s"), condition.getDescriptor().getDisplayName(), validationResult.toString()));
         }
         
         return true;

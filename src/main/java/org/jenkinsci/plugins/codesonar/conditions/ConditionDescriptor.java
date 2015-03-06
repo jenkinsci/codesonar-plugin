@@ -21,8 +21,7 @@ public abstract class ConditionDescriptor<T extends Condition> extends Descripto
     public ListBoxModel doFillWarrantedResultItems() {
         ListBoxModel output = new ListBoxModel();
         output.add(new ListBoxModel.Option("Unstable", Result.UNSTABLE.toString()));
-        output.add(new ListBoxModel.Option("Failed", Result.FAILURE.toString()));
-        
+        output.add(new ListBoxModel.Option("Failed", Result.FAILURE.toString()));        
         return output;
     }
 
