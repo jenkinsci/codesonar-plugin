@@ -10,28 +10,28 @@ import org.kohsuke.stapler.StaplerResponse;
  *
  * @author andrius
  */
-public class CodeSonarProjectAction implements Action {
+public class CodeSonarLatestAnalysisProjectAction implements Action {
 
     private final AbstractProject<?, ?> project;
 
-    public CodeSonarProjectAction(AbstractProject<?, ?> project) {
+    public CodeSonarLatestAnalysisProjectAction(AbstractProject<?, ?> project) {
         this.project = project;
     }
 
     @Override
     public String getIconFileName() {
-        return null;
-//        return "/plugin/codesonar/icons/codesonar-logo.png";
+        return "/plugin/codesonar/icons/codesonar-logo.png";
     }
 
     @Override
     public String getDisplayName() {
-        return null;
+        return "Latest CodeSonar analysis";
     }
 
     @Override
     public String getUrlName() {
-        return "CodeSonar";
+        CodeSonarBuildAction buildAction = Utils.getLatestCodeSonarBuildActionFromProject(project);
+        return buildAction.getUrlName();
     }
 
     public CodeSonarBuildAction getLatestActionInProject() {
@@ -39,19 +39,5 @@ public class CodeSonarProjectAction implements Action {
             return project.getLastSuccessfulBuild().getAction(CodeSonarBuildAction.class);
         }
         return null;
-    }
-
-    public boolean isDrawGraphs() {
-        return project.getBuilds().size() >= 2;
-    }
-
-    public void doReportGraphs(StaplerRequest req, StaplerResponse rsp) {
-        CodeSonarBuildAction action = getLatestActionInProject();
-        if (action != null) {
-            try {
-                action.doReportGraphs(req, rsp);
-            } catch (IOException exception) {
-            }
-        }
     }
 }

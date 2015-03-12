@@ -15,9 +15,15 @@ import hudson.tasks.Publisher;
 import hudson.tasks.Recorder;
 import hudson.util.ArgumentListBuilder;
 import java.io.IOException;
+import java.io.Reader;
+import java.io.StringWriter;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
+import java.util.regex.Pattern;
 import javax.xml.bind.JAXBException;
+import org.apache.commons.io.IOUtils;
 import org.apache.http.client.fluent.Request;
 import org.jenkinsci.plugins.codesonar.conditions.Condition;
 import org.jenkinsci.plugins.codesonar.conditions.ConditionDescriptor;
@@ -33,66 +39,59 @@ import org.kohsuke.stapler.DataBoundConstructor;
  */
 public class CodeSonarPublisher extends Recorder {
 
-    private final String PROJECT_NAME = "project_x";
-    //private final File WORKING_DIR = new File("/home/andrius/projects/codesonar-plugin/codesonar/", PROJECT_NAME);
-
-    //TODO:Delete this before
-    private final String old_location = "/home/andrius/projects/codesonar-plugin/_codesonar/" + PROJECT_NAME;
-
     private final String SERVER_ADDRESS = "10.10.1.125:8080";
     private String hubAddress;
-    private String projectLocation;
+    private String projectName;
 
     private XmlSerializationService xmlSerializationService;
 
     private List<Condition> conditions;
 
     @DataBoundConstructor
-    public CodeSonarPublisher(List<Condition> conditions, String hubAddress, String projectLocation) {
+    public CodeSonarPublisher(List<Condition> conditions, String hubAddress, String projectName) {
         xmlSerializationService = new XmlSerializationService();
         this.hubAddress = hubAddress;
-        this.projectLocation = projectLocation;
+        this.projectName = projectName;
 
         if (conditions == null) {
             conditions = Lists.newArrayList();
-        } 
+        }
         this.conditions = conditions;
     }
 
     @Override
     public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener) throws InterruptedException, IOException {
-        ArgumentListBuilder argumentListBuilder = new ArgumentListBuilder();
-        argumentListBuilder.add("codesonar");
-        argumentListBuilder.add("analyze");
-        argumentListBuilder.add(projectLocation);
-        argumentListBuilder.add("-foreground");
-        argumentListBuilder.add(hubAddress);
+        List<String> logFile = IOUtils.readLines(build.getLogReader());
 
-        int result = launcher.launch()
-                .pwd(build.getWorkspace())
-                .cmds(argumentListBuilder)
-                .stdout(listener).join();
-        if (result != 0) {
-            return false;
+        Pattern pattern = Pattern.compile(String.format("(https|http)://%s/analysis/.*", hubAddress));
+
+        System.out.println("-------------start_-----");
+        
+        String analysisUrl = null;
+        for (String line : logFile) {
+            if (pattern.matcher(line).matches()) {
+                analysisUrl = line;
+            }
         }
+        System.out.println("analysis url: " + analysisUrl);
+        if (analysisUrl == null) {
+            String url = "http://" + hubAddress + "/index.xml";
+            String xmlContent = Request.Get(url).execute().returnContent().asString();
 
-        String url = "http://" + hubAddress + "/index.xml";
-        String xmlContent = Request.Get(url).execute().returnContent().asString();
+            Projects projects = null;
+            try {
+                projects = xmlSerializationService.deserialize(xmlContent, Projects.class);
+            } catch (JAXBException ex) {
+            }
 
-        Projects projects = null;
-        try {
-            projects = xmlSerializationService.deserialize(xmlContent, Projects.class);
-        } catch (JAXBException ex) {
+            Project project = projects.getProjectByName(projectName);
+
+            analysisUrl = "http://" + hubAddress + project.getUrl();
+
         }
-
-        //The project name is always the folder name
-        int index = projectLocation.lastIndexOf("/");
-        String resolvedProjectName = index != -1 ? projectLocation.substring(projectLocation.lastIndexOf("/") + 1) : projectLocation;
-
-        Project project = projects.getProjectByName(resolvedProjectName);
-
-        url = "http://" + hubAddress + project.getUrl();
-        xmlContent = Request.Get(url).execute().returnContent().asString();
+        System.out.println("analysis url: " + analysisUrl);
+        System.out.println("------------------");
+        String xmlContent = Request.Get(analysisUrl).execute().returnContent().asString();
 
         Analysis analysis = null;
         try {
@@ -101,7 +100,7 @@ public class CodeSonarPublisher extends Recorder {
             ex.printStackTrace(listener.getLogger());
         }
 
-        build.addAction(new CodeSonarBuildAction(analysis, build));
+        build.addAction(new CodeSonarBuildAction(analysis, hubAddress, build));
 
         for (Condition condition : conditions) {
             Result validationResult = condition.validate(build, launcher, listener);
@@ -113,8 +112,10 @@ public class CodeSonarPublisher extends Recorder {
     }
 
     @Override
-    public Action getProjectAction(AbstractProject<?, ?> project) {
-        return new CodeSonarProjectAction(project);
+    public Collection<? extends Action> getProjectActions(AbstractProject<?, ?> project) {
+        return Arrays.asList(
+                new CodeSonarProjectAction(project),
+                new CodeSonarLatestAnalysisProjectAction(project));
     }
 
     @Override
@@ -152,15 +153,15 @@ public class CodeSonarPublisher extends Recorder {
     /**
      * @return the projectLocation
      */
-    public String getProjectLocation() {
-        return projectLocation;
+    public String getProjectName() {
+        return projectName;
     }
 
     /**
-     * @param projectLocation the projectLocation to set
+     * @param projectName the projectLocation to set
      */
-    public void setProjectLocation(String projectLocation) {
-        this.projectLocation = projectLocation;
+    public void setProjectName(String projectName) {
+        this.projectName = projectName;
     }
 
     @Extension
@@ -177,7 +178,7 @@ public class CodeSonarPublisher extends Recorder {
 
         @Override
         public String getDisplayName() {
-            return "Code Sonar";
+            return "CodeSonar";
         }
 
         public List<ConditionDescriptor<?>> getAllConditions() {

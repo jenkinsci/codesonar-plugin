@@ -16,10 +16,12 @@ import org.kohsuke.stapler.StaplerResponse;
 public class CodeSonarBuildAction implements Action {
 
     private final Analysis analysis;
+    private final String hubAddress;
     private final AbstractBuild<?, ?> build;
 
-    public CodeSonarBuildAction(Analysis analysis, AbstractBuild<?, ?> build) {
+    public CodeSonarBuildAction(Analysis analysis, String hubAddress, AbstractBuild<?, ?> build) {
         this.analysis = analysis;
+        this.hubAddress = hubAddress;
         this.build = build;
     }
 
@@ -30,12 +32,12 @@ public class CodeSonarBuildAction implements Action {
 
     @Override
     public String getDisplayName() {
-        return "Code Sonar analysis";
+        return "CodeSonar analysis";
     }
 
     @Override
     public String getUrlName() {
-        return "http://10.10.1.125:8080/analysis/" + getAnalysis().getAnalysisId() + ".html";
+        return String.format("http://%s/analysis/%s.html", hubAddress, getAnalysis().getAnalysisId());
     }
 
     public Analysis getAnalysis() {
@@ -51,7 +53,6 @@ public class CodeSonarBuildAction implements Action {
 
         for (CodeSonarBuildAction prqabuild = this; prqabuild != null; prqabuild = prqabuild.getPreviousAction()) {
             int totalNubmerOfWarnings = prqabuild.getAnalysis().getWarnings().size();
-
             label = new ChartUtil.NumberOnlyBuildLabel(prqabuild.build);
 
             dsb.add(totalNubmerOfWarnings, "Total number of warnings", label);

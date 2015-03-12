@@ -1,5 +1,6 @@
 package org.jenkinsci.plugins.codesonar;
 
+import hudson.model.AbstractBuild;
 import hudson.util.ChartUtil;
 import hudson.util.ColorPalette;
 import hudson.util.DataSetBuilder;
@@ -8,6 +9,8 @@ import hudson.util.ShiftedCategoryAxis;
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.io.IOException;
+import javax.annotation.CheckForNull;
+import org.jenkinsci.plugins.codesonar.models.Analysis;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.axis.CategoryAxis;
@@ -43,14 +46,15 @@ public class CodeSonarGraph {
         try {
             int width = 400;
             int height = 300;
-            JFreeChart chart = createChart(dsb.build(), "Code Sonar warnings", null, 50, 0);
+            
+            JFreeChart chart = createChart(dsb.build(), "CodeSonar warnings", null);
             ChartUtil.generateGraph(req, rsp, chart, width, height);
         } catch (RuntimeException ex) {
             throw ex;
         }
     }
-
-    protected JFreeChart createChart(CategoryDataset dataset, String title, String yaxis, int max, int min) {
+    
+    protected JFreeChart createChart(CategoryDataset dataset, String title, String yaxis) {
         final JFreeChart chart = ChartFactory.createLineChart(title, // chart                                                                                                                                       // title
                 null, // unused
                 yaxis, // range axis label
@@ -83,7 +87,7 @@ public class CodeSonarGraph {
 
         final NumberAxis rangeAxis = (NumberAxis) plot.getRangeAxis();
         rangeAxis.setStandardTickUnits(NumberAxis.createIntegerTickUnits());
-        rangeAxis.setLowerBound(min);
+//        rangeAxis.setLowerBound(min);
 
         final LineAndShapeRenderer renderer = (LineAndShapeRenderer) plot.getRenderer();
         renderer.setBaseStroke(new BasicStroke(2.0f));

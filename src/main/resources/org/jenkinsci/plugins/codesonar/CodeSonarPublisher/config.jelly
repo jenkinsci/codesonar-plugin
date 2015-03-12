@@ -3,7 +3,7 @@
         <f:textbox/>
     </f:entry>
 
-    <f:entry field="projectLocation" title="Project location">
+    <f:entry field="projectName" title="Project name">
         <f:textbox/>
     </f:entry>
 

@@ -23,7 +23,7 @@ public abstract class Condition implements Describable<Condition>, ExtensionPoin
     
     @CheckForNull
     public Analysis getPreviousAnalysisResult(AbstractBuild<?, ?> build) {       
-        for(AbstractBuild<?,?> it = build.getPreviousBuild(); it!=null; it = it.getPreviousBuild()) {
+        for(AbstractBuild<?,?> it = build.getPreviousBuild(); it!= null; it = it.getPreviousBuild()) {
             if(it.getAction(CodeSonarBuildAction.class) != null && it.getAction(CodeSonarBuildAction.class).getAnalysis() !=  null) {
                 return it.getAction(CodeSonarBuildAction.class).getAnalysis();
             }

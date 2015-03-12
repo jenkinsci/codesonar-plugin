@@ -30,7 +30,7 @@ public class WarningCountIncreasedByPercentage extends Condition {
     @Override
     public Result validate(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener) {
 
-        Analysis previous = getPreviousAnalysisResult(build);
+        /*Analysis previous = getPreviousAnalysisResult(build);
         if (previous == null) {
             //No previous results. New analysis
             return Result.SUCCESS;
@@ -50,8 +50,8 @@ public class WarningCountIncreasedByPercentage extends Condition {
                 return Result.UNSTABLE;
             }
 
-        }
-
+        }*/
+return null;
     }
 
     @Extension
