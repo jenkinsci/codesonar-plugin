@@ -62,8 +62,9 @@ public class CodeSonarPublisher extends Recorder {
     @Override
     public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener) throws InterruptedException, IOException {
         List<String> logFile = IOUtils.readLines(build.getLogReader());
+        String expandedHubAddress = build.getEnvironment(listener).expand(hubAddress);
 
-        Pattern pattern = Pattern.compile(String.format("(https|http)://%s/analysis/.*", hubAddress));
+        Pattern pattern = Pattern.compile(String.format("(https|http)://%s/analysis/.*", expandedHubAddress));
 
         System.out.println("-------------start_-----");
         
@@ -75,7 +76,7 @@ public class CodeSonarPublisher extends Recorder {
         }
         System.out.println("analysis url: " + analysisUrl);
         if (analysisUrl == null) {
-            String url = "http://" + hubAddress + "/index.xml";
+            String url = "http://" + expandedHubAddress + "/index.xml";
             String xmlContent = Request.Get(url).execute().returnContent().asString();
 
             Projects projects = null;
@@ -86,7 +87,7 @@ public class CodeSonarPublisher extends Recorder {
 
             Project project = projects.getProjectByName(projectName);
 
-            analysisUrl = "http://" + hubAddress + project.getUrl();
+            analysisUrl = "http://" + expandedHubAddress + project.getUrl();
 
         }
         System.out.println("analysis url: " + analysisUrl);
