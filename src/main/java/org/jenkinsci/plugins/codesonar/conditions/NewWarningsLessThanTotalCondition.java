@@ -5,7 +5,6 @@
  */
 package org.jenkinsci.plugins.codesonar.conditions;
 
-import hudson.Extension;
 import hudson.Launcher;
 import hudson.model.AbstractBuild;
 import hudson.model.BuildListener;
@@ -31,7 +30,7 @@ public class NewWarningsLessThanTotalCondition extends Condition {
         throw new UnsupportedOperationException("Not implemented yet");
     }
     
-    @Extension
+    /*@Extension
     public static final class DescriptorImpl extends ConditionDescriptor<NewWarningsLessThanTotalCondition> {
 
         public DescriptorImpl() {
@@ -43,7 +42,7 @@ public class NewWarningsLessThanTotalCondition extends Condition {
             return NAME;
         }
         
-    }
+    }*/
 
     /**
      * @return the percentage
