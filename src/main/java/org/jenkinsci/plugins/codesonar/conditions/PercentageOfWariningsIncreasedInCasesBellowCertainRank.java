@@ -1,6 +1,5 @@
 package org.jenkinsci.plugins.codesonar.conditions;
 
-import static com.google.common.base.Preconditions.*;
 import hudson.Extension;
 import hudson.Launcher;
 import hudson.model.AbstractBuild;
@@ -52,10 +51,6 @@ public class PercentageOfWariningsIncreasedInCasesBellowCertainRank extends Cond
         }
 
         float calculatedWarningPercentage = (severeWarnings / totalNumberOfWarnings) * 100;
-
-        System.out.println("----------------calculatedWarningPercentage----------------------");
-        System.out.println(calculatedWarningPercentage);
-        System.out.println("--------------------------------------");
 
         if (calculatedWarningPercentage > warningPercentage) {
             Result result = Result.fromString(warrantedResult);
