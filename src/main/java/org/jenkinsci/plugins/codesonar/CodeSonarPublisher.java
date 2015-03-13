@@ -4,6 +4,7 @@ import com.google.common.collect.Lists;
 import hudson.DescriptorExtensionList;
 import hudson.Extension;
 import hudson.Launcher;
+import hudson.Util;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 import hudson.model.Action;
@@ -38,8 +39,7 @@ import org.kohsuke.stapler.DataBoundConstructor;
  * @author andrius
  */
 public class CodeSonarPublisher extends Recorder {
-
-    private final String SERVER_ADDRESS = "10.10.1.125:8080";
+    
     private String hubAddress;
     private String projectName;
 
@@ -63,12 +63,11 @@ public class CodeSonarPublisher extends Recorder {
     public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener) throws InterruptedException, IOException {
         List<String> logFile = IOUtils.readLines(build.getLogReader());
         
-        String expandedHubAddress = build.getEnvironment(listener).expand(hubAddress);
-        String expandedProjectName = build.getEnvironment(listener).expand(projectName);
+        String expandedHubAddress = build.getEnvironment(listener).expand(Util.fixNull(hubAddress));
+        String expandedProjectName = build.getEnvironment(listener).expand(Util.fixNull(projectName));
 
         Pattern pattern = Pattern.compile(String.format("(https|http)://%s/analysis/.*", expandedHubAddress));
 
-        System.out.println("-------------start_-----");
         
         String analysisUrl = null;
         for (String line : logFile) {
@@ -118,7 +117,8 @@ public class CodeSonarPublisher extends Recorder {
     public Collection<? extends Action> getProjectActions(AbstractProject<?, ?> project) {
         return Arrays.asList(
                 new CodeSonarProjectAction(project),
-                new CodeSonarLatestAnalysisProjectAction(project));
+                new CodeSonarLatestAnalysisProjectAction(project)
+        );
     }
 
     @Override
