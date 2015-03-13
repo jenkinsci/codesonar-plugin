@@ -12,6 +12,7 @@ import hudson.model.BuildListener;
 import hudson.model.Result;
 import org.jenkinsci.plugins.codesonar.models.Analysis;
 import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.DataBoundSetter;
 
 /**
  *
@@ -19,8 +20,9 @@ import org.kohsuke.stapler.DataBoundConstructor;
  */
 public class WarningCountIncreasedByPercentage extends Condition {
 
-    private static final String NAME = "Maximum warning count increase";
+    private static final String NAME = "Maximum warning count increased by percentage";
     private float percentage = 5f;
+    private String warrantedResult = Result.UNSTABLE.toString();
 
     @DataBoundConstructor
     public WarningCountIncreasedByPercentage(float percentage) {
@@ -29,29 +31,24 @@ public class WarningCountIncreasedByPercentage extends Condition {
 
     @Override
     public Result validate(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener) {
-
-        /*Analysis previous = getPreviousAnalysisResult(build);
+        Analysis previous = getPreviousAnalysisResult(build);
         if (previous == null) {
             //No previous results. New analysis
             return Result.SUCCESS;
         } else {
             Analysis current = getAnalysis(build);
-            float currentCount = (float) current.getWarnings().size();
+
             float previousCount = (float) previous.getWarnings().size();
+            float currentCount = (float) current.getWarnings().size();
             float diff = currentCount - previousCount;
 
-            System.out.println("----------------percentage diff----------------------");
-            System.out.println((diff / previousCount) * 100);
-            System.out.println("--------------------------------------");
-
             if ((diff / previousCount) * 100 > percentage) {
-                return Result.SUCCESS;
-            } else {
-                return Result.UNSTABLE;
+                Result result = Result.fromString(warrantedResult);
+                return result;
             }
-
-        }*/
-return null;
+        }
+        
+        return Result.SUCCESS;
     }
 
     @Extension
@@ -80,6 +77,15 @@ return null;
      */
     public void setPercentage(float percentage) {
         this.percentage = percentage;
+    }
+
+    public String getWarrantedResult() {
+        return warrantedResult;
+    }
+
+    @DataBoundSetter
+    public void setWarrantedResult(String warrantedResult) {
+        this.warrantedResult = warrantedResult;
     }
 
 }

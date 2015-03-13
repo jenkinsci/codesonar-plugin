@@ -2,4 +2,7 @@
     <f:entry field="percentage" title="Maximum increase">
         <f:textbox />
     </f:entry>
+    <f:entry field="warrantedResult" title="Mark build as">
+        <f:select />
+    </f:entry>
 </j:jelly>
