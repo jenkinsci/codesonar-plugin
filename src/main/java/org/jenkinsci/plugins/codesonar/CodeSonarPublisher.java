@@ -14,14 +14,12 @@ import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.BuildStepMonitor;
 import hudson.tasks.Publisher;
 import hudson.tasks.Recorder;
-import hudson.util.ArgumentListBuilder;
 import java.io.IOException;
-import java.io.Reader;
-import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.xml.bind.JAXBException;
 import org.apache.commons.io.IOUtils;
@@ -39,7 +37,7 @@ import org.kohsuke.stapler.DataBoundConstructor;
  * @author andrius
  */
 public class CodeSonarPublisher extends Recorder {
-    
+
     private String hubAddress;
     private String projectName;
 
@@ -62,20 +60,24 @@ public class CodeSonarPublisher extends Recorder {
     @Override
     public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener) throws InterruptedException, IOException {
         List<String> logFile = IOUtils.readLines(build.getLogReader());
-        
+
         String expandedHubAddress = build.getEnvironment(listener).expand(Util.fixNull(hubAddress));
         String expandedProjectName = build.getEnvironment(listener).expand(Util.fixNull(projectName));
 
-        Pattern pattern = Pattern.compile(String.format("(https|http)://%s/analysis/.*", expandedHubAddress));
+        Pattern pattern = Pattern.compile("codesonar:\\s+(.*/analysis/.*)");
 
-        
         String analysisUrl = null;
         for (String line : logFile) {
-            if (pattern.matcher(line).matches()) {
-                analysisUrl = line;
+            Matcher matcher = pattern.matcher(line);
+            if (matcher.matches()) {
+                analysisUrl = matcher.group(1);
             }
         }
-        System.out.println("analysis url: " + analysisUrl);
+
+        if (analysisUrl != null && analysisUrl.endsWith(".html")) {
+            analysisUrl = analysisUrl.replaceAll(".html", ".xml");
+        }
+
         if (analysisUrl == null) {
             String url = "http://" + expandedHubAddress + "/index.xml";
             String xmlContent = Request.Get(url).execute().returnContent().asString();
@@ -89,10 +91,8 @@ public class CodeSonarPublisher extends Recorder {
             Project project = projects.getProjectByName(expandedProjectName);
 
             analysisUrl = "http://" + expandedHubAddress + project.getUrl();
-
         }
-        System.out.println("analysis url: " + analysisUrl);
-        System.out.println("------------------");
+
         String xmlContent = Request.Get(analysisUrl).execute().returnContent().asString();
 
         Analysis analysis = null;
