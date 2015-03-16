@@ -1,6 +1,6 @@
 package org.jenkinsci.plugins.codesonar;
 
-import com.google.common.collect.Lists;
+import hudson.AbortException;
 import hudson.DescriptorExtensionList;
 import hudson.Extension;
 import hudson.Launcher;
@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.xml.bind.JAXBException;
+import org.apache.commons.collections.ListUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.client.fluent.Request;
 import org.jenkinsci.plugins.codesonar.conditions.Condition;
@@ -29,6 +30,7 @@ import org.jenkinsci.plugins.codesonar.conditions.ConditionDescriptor;
 import org.jenkinsci.plugins.codesonar.models.Analysis;
 import org.jenkinsci.plugins.codesonar.models.Project;
 import org.jenkinsci.plugins.codesonar.models.Projects;
+import org.jenkinsci.plugins.codesonar.services.AnalysisService;
 import org.jenkinsci.plugins.codesonar.services.XmlSerializationService;
 import org.kohsuke.stapler.DataBoundConstructor;
 
@@ -42,17 +44,20 @@ public class CodeSonarPublisher extends Recorder {
     private String projectName;
 
     private XmlSerializationService xmlSerializationService;
+    private AnalysisService analysisService;
 
     private List<Condition> conditions;
 
     @DataBoundConstructor
     public CodeSonarPublisher(List<Condition> conditions, String hubAddress, String projectName) {
         xmlSerializationService = new XmlSerializationService();
+        analysisService = new AnalysisService(xmlSerializationService);
+
         this.hubAddress = hubAddress;
         this.projectName = projectName;
 
         if (conditions == null) {
-            conditions = Lists.newArrayList();
+            conditions = ListUtils.EMPTY_LIST;
         }
         this.conditions = conditions;
     }
@@ -64,43 +69,13 @@ public class CodeSonarPublisher extends Recorder {
         String expandedHubAddress = build.getEnvironment(listener).expand(Util.fixNull(hubAddress));
         String expandedProjectName = build.getEnvironment(listener).expand(Util.fixNull(projectName));
 
-        Pattern pattern = Pattern.compile("codesonar:\\s+(.*/analysis/.*)");
-
-        String analysisUrl = null;
-        for (String line : logFile) {
-            Matcher matcher = pattern.matcher(line);
-            if (matcher.matches()) {
-                analysisUrl = matcher.group(1);
-            }
-        }
-
-        if (analysisUrl != null && analysisUrl.endsWith(".html")) {
-            analysisUrl = analysisUrl.replaceAll(".html", ".xml");
-        }
+        String analysisUrl = analysisService.getAnalysisUrlFromLogFile(logFile);
 
         if (analysisUrl == null) {
-            String url = "http://" + expandedHubAddress + "/index.xml";
-            String xmlContent = Request.Get(url).execute().returnContent().asString();
-
-            Projects projects = null;
-            try {
-                projects = xmlSerializationService.deserialize(xmlContent, Projects.class);
-            } catch (JAXBException ex) {
-            }
-
-            Project project = projects.getProjectByName(expandedProjectName);
-
-            analysisUrl = "http://" + expandedHubAddress + project.getUrl();
+            analysisUrl = analysisService.getLatestAnalysisUrlForAProject(expandedHubAddress, expandedProjectName);
         }
-
-        String xmlContent = Request.Get(analysisUrl).execute().returnContent().asString();
-
-        Analysis analysis = null;
-        try {
-            analysis = xmlSerializationService.deserialize(xmlContent, Analysis.class);
-        } catch (JAXBException ex) {
-            ex.printStackTrace(listener.getLogger());
-        }
+            
+        Analysis analysis = analysisService.getAnalysisFromUrl(analysisUrl);
 
         build.addAction(new CodeSonarBuildAction(analysis, expandedHubAddress, build));
 
