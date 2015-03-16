@@ -7,6 +7,7 @@ import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
+import org.apache.commons.collections.ListUtils;
 
 /**
  *
@@ -130,6 +131,10 @@ public class Analysis implements Serializable {
     }
 
     public List<Warning> getWarnings() {
+        if (warnings == null) {
+            return ListUtils.EMPTY_LIST;
+        }
+
         return warnings;
     }
 
