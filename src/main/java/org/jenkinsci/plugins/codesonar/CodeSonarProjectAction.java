@@ -21,7 +21,6 @@ public class CodeSonarProjectAction implements Action {
     @Override
     public String getIconFileName() {
         return null;
-//        return "/plugin/codesonar/icons/codesonar-logo.png";
     }
 
     @Override

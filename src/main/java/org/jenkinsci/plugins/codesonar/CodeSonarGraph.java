@@ -1,16 +1,12 @@
 package org.jenkinsci.plugins.codesonar;
 
-import hudson.model.AbstractBuild;
 import hudson.util.ChartUtil;
 import hudson.util.ColorPalette;
 import hudson.util.DataSetBuilder;
-import hudson.util.Graph;
 import hudson.util.ShiftedCategoryAxis;
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.io.IOException;
-import javax.annotation.CheckForNull;
-import org.jenkinsci.plugins.codesonar.models.Analysis;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.axis.CategoryAxis;
@@ -87,7 +83,6 @@ public class CodeSonarGraph {
 
         final NumberAxis rangeAxis = (NumberAxis) plot.getRangeAxis();
         rangeAxis.setStandardTickUnits(NumberAxis.createIntegerTickUnits());
-//        rangeAxis.setLowerBound(min);
 
         final LineAndShapeRenderer renderer = (LineAndShapeRenderer) plot.getRenderer();
         renderer.setBaseStroke(new BasicStroke(2.0f));

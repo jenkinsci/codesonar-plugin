@@ -35,19 +35,19 @@ public class WarningCountIncreasedByPercentage extends Condition {
         if (previous == null) {
             //No previous results. New analysis
             return Result.SUCCESS;
-        } else {
-            Analysis current = getAnalysis(build);
-
-            float previousCount = (float) previous.getWarnings().size();
-            float currentCount = (float) current.getWarnings().size();
-            float diff = currentCount - previousCount;
-
-            if ((diff / previousCount) * 100 > percentage) {
-                Result result = Result.fromString(warrantedResult);
-                return result;
-            }
         }
-        
+
+        Analysis current = getAnalysis(build);
+
+        float previousCount = (float) previous.getWarnings().size();
+        float currentCount = (float) current.getWarnings().size();
+        float diff = currentCount - previousCount;
+
+        if ((diff / previousCount) * 100 > percentage) {
+            Result result = Result.fromString(warrantedResult);
+            return result;
+        }
+
         return Result.SUCCESS;
     }
 
