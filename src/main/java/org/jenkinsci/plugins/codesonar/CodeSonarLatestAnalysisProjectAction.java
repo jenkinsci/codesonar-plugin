@@ -20,24 +20,32 @@ public class CodeSonarLatestAnalysisProjectAction implements Action {
 
     @Override
     public String getIconFileName() {
+        if (!isBuildActionPresent()) {
+            return null;
+        }
         return "/plugin/codesonar/icons/codesonar-logo.png";
     }
 
     @Override
     public String getDisplayName() {
-        return "Latest CodeSonar analysis";
+        if (!isBuildActionPresent()) {
+            return null;
+        }
+        return "Latest CodeSonar Analysis";
     }
 
     @Override
     public String getUrlName() {
         CodeSonarBuildAction buildAction = Utils.getLatestCodeSonarBuildActionFromProject(project);
+
+        if (buildAction == null) {
+            return null;
+        }
+
         return buildAction.getUrlName();
     }
 
-    public CodeSonarBuildAction getLatestActionInProject() {
-        if (project.getLastSuccessfulBuild() != null) {
-            return project.getLastSuccessfulBuild().getAction(CodeSonarBuildAction.class);
-        }
-        return null;
+    public boolean isBuildActionPresent() {
+        return Utils.getLatestCodeSonarBuildActionFromProject(project) != null;
     }
 }
