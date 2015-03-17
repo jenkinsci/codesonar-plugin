@@ -1,6 +1,5 @@
 package org.jenkinsci.plugins.codesonar;
 
-import hudson.AbortException;
 import hudson.DescriptorExtensionList;
 import hudson.Extension;
 import hudson.Launcher;
@@ -19,18 +18,14 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import javax.xml.bind.JAXBException;
 import org.apache.commons.collections.ListUtils;
 import org.apache.commons.io.IOUtils;
-import org.apache.http.client.fluent.Request;
+import org.apache.http.impl.bootstrap.HttpServer;
 import org.jenkinsci.plugins.codesonar.conditions.Condition;
 import org.jenkinsci.plugins.codesonar.conditions.ConditionDescriptor;
 import org.jenkinsci.plugins.codesonar.models.Analysis;
-import org.jenkinsci.plugins.codesonar.models.Project;
-import org.jenkinsci.plugins.codesonar.models.Projects;
 import org.jenkinsci.plugins.codesonar.services.AnalysisService;
+import org.jenkinsci.plugins.codesonar.services.HttpService;
 import org.jenkinsci.plugins.codesonar.services.XmlSerializationService;
 import org.kohsuke.stapler.DataBoundConstructor;
 
@@ -44,6 +39,7 @@ public class CodeSonarPublisher extends Recorder {
     private String projectName;
 
     private XmlSerializationService xmlSerializationService;
+    private HttpService httpService;
     private AnalysisService analysisService;
 
     private List<Condition> conditions;
@@ -51,7 +47,8 @@ public class CodeSonarPublisher extends Recorder {
     @DataBoundConstructor
     public CodeSonarPublisher(List<Condition> conditions, String hubAddress, String projectName) {
         xmlSerializationService = new XmlSerializationService();
-        analysisService = new AnalysisService(xmlSerializationService);
+        httpService = new HttpService();
+        analysisService = new AnalysisService(xmlSerializationService, httpService);
 
         this.hubAddress = hubAddress;
         this.projectName = projectName;
@@ -64,7 +61,6 @@ public class CodeSonarPublisher extends Recorder {
 
     @Override
     public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener) throws InterruptedException, IOException {
-
         String expandedHubAddress = build.getEnvironment(listener).expand(Util.fixNull(hubAddress));
         String expandedProjectName = build.getEnvironment(listener).expand(Util.fixNull(projectName));
 
@@ -74,7 +70,7 @@ public class CodeSonarPublisher extends Recorder {
         if (analysisUrl == null) {
             analysisUrl = analysisService.getLatestAnalysisUrlForAProject(expandedHubAddress, expandedProjectName);
         }
-            
+
         Analysis analysis = analysisService.getAnalysisFromUrl(analysisUrl);
 
         build.addAction(new CodeSonarBuildAction(analysis, expandedHubAddress, build));
