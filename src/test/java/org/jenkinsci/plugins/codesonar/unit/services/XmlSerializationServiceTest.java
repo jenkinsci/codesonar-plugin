@@ -1,4 +1,4 @@
-package org.jenkinsci.plugins.codesonar.unit;
+package org.jenkinsci.plugins.codesonar.unit.services;
 
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.UnmarshalException;
