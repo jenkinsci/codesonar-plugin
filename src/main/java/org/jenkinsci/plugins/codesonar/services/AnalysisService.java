@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package org.jenkinsci.plugins.codesonar.services;
 
 import hudson.AbortException;
@@ -11,7 +6,6 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.xml.bind.JAXBException;
-import org.apache.http.client.fluent.Request;
 import org.apache.http.conn.HttpHostConnectException;
 import org.jenkinsci.plugins.codesonar.models.Analysis;
 import org.jenkinsci.plugins.codesonar.models.Project;
@@ -25,7 +19,7 @@ public class AnalysisService {
 
     private final XmlSerializationService xmlSerializationService;
     private final HttpService httpService;
-    
+
     public AnalysisService(XmlSerializationService xmlSerializationService, HttpService httpService) {
         this.xmlSerializationService = xmlSerializationService;
         this.httpService = httpService;
@@ -54,7 +48,7 @@ public class AnalysisService {
 
         String xmlContent = null;
         try {
-            xmlContent = httpService.GetContentFromURLAsString(url);
+            xmlContent = httpService.getContentFromUrlAsString(url);
         } catch (HttpHostConnectException e) {
             throw new AbortException(e.getMessage());
         }
@@ -73,7 +67,7 @@ public class AnalysisService {
     }
 
     public Analysis getAnalysisFromUrl(String analysisUrl) throws IOException {
-        String xmlContent = Request.Get(analysisUrl).execute().returnContent().asString();
+        String xmlContent = httpService.getContentFromUrlAsString(analysisUrl);
 
         Analysis analysis = null;
         try {

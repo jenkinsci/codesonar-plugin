@@ -20,7 +20,6 @@ import java.util.Collection;
 import java.util.List;
 import org.apache.commons.collections.ListUtils;
 import org.apache.commons.io.IOUtils;
-import org.apache.http.impl.bootstrap.HttpServer;
 import org.jenkinsci.plugins.codesonar.conditions.Condition;
 import org.jenkinsci.plugins.codesonar.conditions.ConditionDescriptor;
 import org.jenkinsci.plugins.codesonar.models.Analysis;
