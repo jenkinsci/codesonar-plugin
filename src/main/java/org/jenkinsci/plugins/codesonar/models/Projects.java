@@ -2,6 +2,7 @@ package org.jenkinsci.plugins.codesonar.models;
 
 import hudson.AbortException;
 import java.io.Serializable;
+import java.util.Collections;
 import java.util.List;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
@@ -20,6 +21,10 @@ public class Projects implements Serializable {
     private List<Project> projects;
 
     public Project getProjectByName(String projectName) throws AbortException {
+        if (projects == null) {
+            projects = Collections.EMPTY_LIST;
+        }
+
         for (Project project : projects) {
             if (project.getProject().equals(projectName)) {
                 return project;
