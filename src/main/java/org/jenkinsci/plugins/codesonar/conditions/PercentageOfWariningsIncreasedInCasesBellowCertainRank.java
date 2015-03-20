@@ -5,6 +5,7 @@ import hudson.Launcher;
 import hudson.model.AbstractBuild;
 import hudson.model.BuildListener;
 import hudson.model.Result;
+import java.util.List;
 import org.jenkinsci.plugins.codesonar.CodeSonarBuildAction;
 import org.jenkinsci.plugins.codesonar.models.Analysis;
 import org.jenkinsci.plugins.codesonar.models.Warning;
@@ -44,7 +45,8 @@ public class PercentageOfWariningsIncreasedInCasesBellowCertainRank extends Cond
         int totalNumberOfWarnings = analysis.getWarnings().size();
 
         float severeWarnings = 0.0f;
-        for (Warning warning : analysis.getWarnings()) {
+        List<Warning> warnings = analysis.getWarnings();
+        for (Warning warning : warnings) {
             if (warning.getRank() < rankOfWarnings) {
                 severeWarnings++;
             }
