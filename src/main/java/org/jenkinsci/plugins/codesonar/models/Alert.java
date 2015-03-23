@@ -14,7 +14,6 @@ import javax.xml.bind.annotation.XmlRootElement;
 @XmlRootElement
 @XmlAccessorType(XmlAccessType.FIELD)
 public class Alert implements Serializable {
-
     @XmlAttribute
     private String url;
     @XmlAttribute
