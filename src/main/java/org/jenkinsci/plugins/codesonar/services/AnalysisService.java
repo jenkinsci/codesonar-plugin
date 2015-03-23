@@ -2,10 +2,10 @@ package org.jenkinsci.plugins.codesonar.services;
 
 import hudson.AbortException;
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import javax.xml.bind.JAXBException;
 import org.apache.http.conn.HttpHostConnectException;
 import org.jenkinsci.plugins.codesonar.models.Analysis;
 import org.jenkinsci.plugins.codesonar.models.Project;
@@ -15,10 +15,14 @@ import org.jenkinsci.plugins.codesonar.models.Projects;
  *
  * @author Andrius
  */
-public class AnalysisService {
+public class AnalysisService implements Serializable {
 
-    private final XmlSerializationService xmlSerializationService;
-    private final HttpService httpService;
+    private XmlSerializationService xmlSerializationService;
+    private HttpService httpService;
+
+    public XmlSerializationService getXmlSerializationService() {
+        return xmlSerializationService;
+    }
 
     public AnalysisService(XmlSerializationService xmlSerializationService, HttpService httpService) {
         this.xmlSerializationService = xmlSerializationService;
@@ -44,7 +48,7 @@ public class AnalysisService {
     }
 
     public String getLatestAnalysisUrlForAProject(String hubAddress, String projectName) throws IOException {
-        String url = "http://" + hubAddress + "/index.xml";
+        String url = String.format("http://%s/index.xml", hubAddress);
 
         String xmlContent = null;
         try {
@@ -54,10 +58,7 @@ public class AnalysisService {
         }
 
         Projects projects = null;
-        try {
-            projects = xmlSerializationService.deserialize(xmlContent, Projects.class);
-        } catch (JAXBException ex) {
-        }
+        projects = xmlSerializationService.deserialize(xmlContent, Projects.class);
 
         Project project = projects.getProjectByName(projectName);
 
@@ -69,11 +70,7 @@ public class AnalysisService {
     public Analysis getAnalysisFromUrl(String analysisUrl) throws IOException {
         String xmlContent = httpService.getContentFromUrlAsString(analysisUrl);
 
-        Analysis analysis = null;
-        try {
-            analysis = xmlSerializationService.deserialize(xmlContent, Analysis.class);
-        } catch (JAXBException ex) {
-        }
+        Analysis analysis = xmlSerializationService.deserialize(xmlContent, Analysis.class);
 
         return analysis;
     }

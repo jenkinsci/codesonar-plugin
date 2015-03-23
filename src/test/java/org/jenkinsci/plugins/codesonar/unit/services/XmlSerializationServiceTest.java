@@ -1,10 +1,16 @@
 package org.jenkinsci.plugins.codesonar.unit.services;
 
+import hudson.AbortException;
+import java.io.File;
+import java.io.IOException;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.UnmarshalException;
+import org.apache.commons.io.IOUtils;
+import org.codehaus.plexus.util.FileUtils;
 import org.jenkinsci.plugins.codesonar.models.Metric;
 import org.jenkinsci.plugins.codesonar.services.XmlSerializationService;
 import org.jenkinsci.plugins.codesonar.models.Project;
+import org.jenkinsci.plugins.codesonar.models.metrics.Metrics;
 import org.junit.Before;
 import org.junit.Test;
 import static org.junit.Assert.*;
@@ -21,9 +27,9 @@ public class XmlSerializationServiceTest {
     public void setUp() {
         xmlSerializationService = new XmlSerializationService();
     }
-
+    
     @Test
-    public void providedValidXML_deserializesTheXml() throws JAXBException {
+    public void providedValidXML_deserializesTheXml() throws Exception {
         final String VALID_XML_CONTENT
                 = "<project url=\"/analysis/8.xml?filter=2&prj_filter=10\">\n"
                 + "<project>coverity</project>\n"
@@ -44,8 +50,8 @@ public class XmlSerializationServiceTest {
         assertEquals(EXPECTED_RESULT, result);
     }
 
-    @Test(expected = UnmarshalException.class)
-    public void providedInvalidXML_throwsException() throws JAXBException {
+    @Test(expected = AbortException.class)
+    public void providedInvalidXML_throwsAbortException() throws AbortException {
         final String INVALID_XML_CONTENT
                 = "project url=\"/analysis/8.xml?filter=2&prj_filter=10\">\n"
                 + "<project>coverity</project>\n"

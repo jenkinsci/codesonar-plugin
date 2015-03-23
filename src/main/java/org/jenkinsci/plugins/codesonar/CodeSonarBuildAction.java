@@ -6,6 +6,8 @@ import hudson.util.ChartUtil;
 import hudson.util.DataSetBuilder;
 import java.io.IOException;
 import org.jenkinsci.plugins.codesonar.models.Analysis;
+import org.jenkinsci.plugins.codesonar.models.metrics.Metric;
+import org.jenkinsci.plugins.codesonar.models.metrics.Metrics;
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.StaplerResponse;
 
@@ -16,11 +18,13 @@ import org.kohsuke.stapler.StaplerResponse;
 public class CodeSonarBuildAction implements Action {
 
     private final Analysis analysis;
+    private final Metrics metrics;
     private final String hubAddress;
     private final AbstractBuild<?, ?> build;
 
-    public CodeSonarBuildAction(Analysis analysis, String hubAddress, AbstractBuild<?, ?> build) {
+    public CodeSonarBuildAction(Analysis analysis, Metrics metrics, String hubAddress, AbstractBuild<?, ?> build) {
         this.analysis = analysis;
+        this.metrics = metrics;
         this.hubAddress = hubAddress;
         this.build = build;
     }
@@ -44,21 +48,52 @@ public class CodeSonarBuildAction implements Action {
         return analysis;
     }
 
+    public Metrics getMetrics() {
+        return metrics;
+    }
+
     public void doReportGraphs(StaplerRequest req, StaplerResponse rsp) throws IOException {
+        String graphName = req.getParameter("name");
+
         CodeSonarGraph graph = new CodeSonarGraph();
 
         DataSetBuilder<String, ChartUtil.NumberOnlyBuildLabel> dsb = new DataSetBuilder<String, ChartUtil.NumberOnlyBuildLabel>();
 
         ChartUtil.NumberOnlyBuildLabel label = null;
 
-        for (CodeSonarBuildAction prqabuild = this; prqabuild != null; prqabuild = prqabuild.getPreviousAction()) {
-            int totalNubmerOfWarnings = prqabuild.getAnalysis().getWarnings().size();
-            label = new ChartUtil.NumberOnlyBuildLabel(prqabuild.build);
+        if (graphName.equals("totalWarnings")) {
+            String title = "Total number of warnings";
+            for (CodeSonarBuildAction codeSonarBuildAction = this; codeSonarBuildAction != null; codeSonarBuildAction = codeSonarBuildAction.getPreviousAction()) {
+                if (codeSonarBuildAction.getAnalysis() == null) {
+                    continue;
+                }
 
-            dsb.add(totalNubmerOfWarnings, "Total number of warnings", label);
+                int totalNubmerOfWarnings = codeSonarBuildAction.getAnalysis().getWarnings().size();
+                label = new ChartUtil.NumberOnlyBuildLabel(codeSonarBuildAction.build);
+
+                dsb.add(totalNubmerOfWarnings, title, label);
+            }
+
+            graph.drawGraph(req, rsp, dsb, title);
+        } else if (graphName.equals("loc")) {
+            String title = "Lines Of Code";
+            for (CodeSonarBuildAction codeSonarBuildAction = this; codeSonarBuildAction != null; codeSonarBuildAction = codeSonarBuildAction.getPreviousAction()) {
+                if (codeSonarBuildAction.getMetrics() == null) {
+                    continue;
+                }
+                
+                Metric metric = codeSonarBuildAction.getMetrics().getMetricByName("LCodeOnly");
+                int value = Integer.parseInt(metric.getValue());
+
+                label = new ChartUtil.NumberOnlyBuildLabel(codeSonarBuildAction.build);
+
+                dsb.add(value, title, label);
+
+            }
+
+            graph.drawGraph(req, rsp, dsb, title);
         }
 
-        graph.drawGraph(req, rsp, dsb);
     }
 
     public CodeSonarBuildAction getPreviousAction() {

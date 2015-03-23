@@ -38,12 +38,12 @@ public class CodeSonarGraph {
         this.title = title;
     }
 
-    public void drawGraph(StaplerRequest req, StaplerResponse rsp, DataSetBuilder<String, ChartUtil.NumberOnlyBuildLabel> dsb) throws IOException {
+    public void drawGraph(StaplerRequest req, StaplerResponse rsp, DataSetBuilder<String, ChartUtil.NumberOnlyBuildLabel> dsb, String title) throws IOException {
         try {
             int width = 400;
             int height = 300;
             
-            JFreeChart chart = createChart(dsb.build(), "CodeSonar warnings", null);
+            JFreeChart chart = createChart(dsb.build(), title, null);
             ChartUtil.generateGraph(req, rsp, chart, width, height);
         } catch (RuntimeException ex) {
             throw ex;

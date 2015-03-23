@@ -2,13 +2,14 @@ package org.jenkinsci.plugins.codesonar.services;
 
 import hudson.AbortException;
 import java.io.IOException;
+import java.io.Serializable;
 import org.apache.http.client.fluent.Request;
 
 /**
  *
  * @author Andrius
  */
-public class HttpService {
+public class HttpService implements Serializable {
 
     public String getContentFromUrlAsString(String url) throws IOException {
         String output;

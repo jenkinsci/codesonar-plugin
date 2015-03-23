@@ -96,10 +96,10 @@ public class AnalysisServiceTest {
     public void providedValidAnalysisUrl_shouldReturnAnAnalysis() throws Exception {
         final String VALID_ANALYSIS_URL = "10.10.10.10";
         final String RESPONSE_XML_CONTENT = "valid xml content";
-        final Analysis Analysis = new Analysis();
+        final Analysis ANALYSIS = new Analysis();
 
         when(mockedHttpService.getContentFromUrlAsString(any(String.class))).thenReturn(RESPONSE_XML_CONTENT);
-        when(mockedXmlSerializationService.deserialize(any(String.class), isA(Class.class))).thenReturn(Analysis);
+        when(mockedXmlSerializationService.deserialize(any(String.class), isA(Class.class))).thenReturn(ANALYSIS);
 
         Analysis analysis = analysisService.getAnalysisFromUrl(VALID_ANALYSIS_URL);
 

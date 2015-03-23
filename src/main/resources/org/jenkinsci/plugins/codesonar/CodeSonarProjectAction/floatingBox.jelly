@@ -4,7 +4,8 @@
     <j:if test="${latestAction != null}">
         <j:choose>
             <j:when test="${latestAction.previousAction != null}">
-                <img style="margin-left:20px;" src="CodeSonar/reportGraphs"/>
+                <img style="margin-left:20px;" src="CodeSonar/reportGraphs?name=totalWarnings"/>
+                <img style="margin-left:20px;" src="CodeSonar/reportGraphs?name=loc"/>
             </j:when>
             <j:otherwise>
                 <div id="marginme" style="margin-right:150px">

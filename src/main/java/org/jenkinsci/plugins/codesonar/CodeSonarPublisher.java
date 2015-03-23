@@ -23,8 +23,10 @@ import org.apache.commons.io.IOUtils;
 import org.jenkinsci.plugins.codesonar.conditions.Condition;
 import org.jenkinsci.plugins.codesonar.conditions.ConditionDescriptor;
 import org.jenkinsci.plugins.codesonar.models.Analysis;
+import org.jenkinsci.plugins.codesonar.models.metrics.Metrics;
 import org.jenkinsci.plugins.codesonar.services.AnalysisService;
 import org.jenkinsci.plugins.codesonar.services.HttpService;
+import org.jenkinsci.plugins.codesonar.services.MetricsService;
 import org.jenkinsci.plugins.codesonar.services.XmlSerializationService;
 import org.kohsuke.stapler.DataBoundConstructor;
 
@@ -40,6 +42,8 @@ public class CodeSonarPublisher extends Recorder {
     private XmlSerializationService xmlSerializationService;
     private HttpService httpService;
     private AnalysisService analysisService;
+    private MetricsService metricsService;
+
 
     private List<Condition> conditions;
 
@@ -48,7 +52,8 @@ public class CodeSonarPublisher extends Recorder {
         xmlSerializationService = new XmlSerializationService();
         httpService = new HttpService();
         analysisService = new AnalysisService(xmlSerializationService, httpService);
-
+        metricsService = new MetricsService(httpService, xmlSerializationService);
+        
         this.hubAddress = hubAddress;
         this.projectName = projectName;
 
@@ -71,8 +76,11 @@ public class CodeSonarPublisher extends Recorder {
         }
 
         Analysis analysis = analysisService.getAnalysisFromUrl(analysisUrl);
-
-        build.addAction(new CodeSonarBuildAction(analysis, expandedHubAddress, build));
+        
+        String metricsUrl = metricsService.getMetricsUrlForAnAnalysisId(expandedHubAddress, analysis.getAnalysisId());
+        Metrics metrics = metricsService.getMetricsFromUrl(metricsUrl);
+        
+        build.addAction(new CodeSonarBuildAction(analysis, metrics, expandedHubAddress, build));
 
         for (Condition condition : conditions) {
             Result validationResult = condition.validate(build, launcher, listener);
