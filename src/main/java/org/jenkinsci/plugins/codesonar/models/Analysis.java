@@ -2,6 +2,7 @@ package org.jenkinsci.plugins.codesonar.models;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import javax.xml.bind.annotation.XmlAccessType;
@@ -155,7 +156,7 @@ public class Analysis implements Serializable {
     }
 
     public List<Alert> getRedAlerts() {
-        List<Alert> redAlerts = new ArrayList<>();
+        List<Alert> redAlerts = Collections.EMPTY_LIST;
 
         for (Alert alert : alerts) {
             boolean isRed = false;
@@ -201,7 +202,7 @@ public class Analysis implements Serializable {
     }
 
     public List<Alert> getYellowAlerts() {
-        List<Alert> yellowAlerts = new ArrayList<>();
+        List<Alert> yellowAlerts = Collections.EMPTY_LIST;
 
         for (Alert alert : alerts) {
             boolean isYellow = false;
