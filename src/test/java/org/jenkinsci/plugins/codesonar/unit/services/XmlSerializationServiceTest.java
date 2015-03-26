@@ -1,16 +1,9 @@
 package org.jenkinsci.plugins.codesonar.unit.services;
 
 import hudson.AbortException;
-import java.io.File;
-import java.io.IOException;
-import javax.xml.bind.JAXBException;
-import javax.xml.bind.UnmarshalException;
-import org.apache.commons.io.IOUtils;
-import org.codehaus.plexus.util.FileUtils;
 import org.jenkinsci.plugins.codesonar.models.Metric;
 import org.jenkinsci.plugins.codesonar.services.XmlSerializationService;
 import org.jenkinsci.plugins.codesonar.models.Project;
-import org.jenkinsci.plugins.codesonar.models.metrics.Metrics;
 import org.junit.Before;
 import org.junit.Test;
 import static org.junit.Assert.*;
