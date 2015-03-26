@@ -5,30 +5,11 @@
  */
 package org.jenkinsci.plugins.codesonar.integration.conditions;
 
-import hudson.model.Cause;
-import hudson.model.FreeStyleBuild;
-import hudson.model.FreeStyleProject;
-import hudson.model.Result;
-import hudson.util.RunList;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import org.jenkinsci.plugins.codesonar.CodeSonarPublisher;
-import org.jenkinsci.plugins.codesonar.conditions.Condition;
-import org.jenkinsci.plugins.codesonar.conditions.PercentageOfWariningsIncreasedInCasesBellowCertainRank;
-import org.junit.After;
-import static org.junit.Assert.fail;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.jvnet.hudson.test.JenkinsRule;
-
 /**
  *
  * @author Andrius
  */
-public class PercentageOfWariningsIncreasedInCasesBellowCertainRankIT {
+public class PercentageOfWariningsIncreasedInCasesBellowCertainRankConditionIT {
 
     /*@Rule
     public JenkinsRule jenkinsRule = new JenkinsRule();

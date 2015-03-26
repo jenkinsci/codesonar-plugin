@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package org.jenkinsci.plugins.codesonar.conditions;
 
 import hudson.Extension;
@@ -14,18 +9,14 @@ import org.jenkinsci.plugins.codesonar.models.Analysis;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 
-/**
- *
- * @author Mads
- */
-public class WarningCountIncreasedByPercentage extends Condition {
+public class WarningCountIncreasedByPercentageCondition extends Condition {
 
     private static final String NAME = "Maximum warning count increased by percentage";
     private float percentage = 5f;
     private String warrantedResult = Result.UNSTABLE.toString();
 
     @DataBoundConstructor
-    public WarningCountIncreasedByPercentage(float percentage) {
+    public WarningCountIncreasedByPercentageCondition(float percentage) {
         this.percentage = percentage;
     }
 
@@ -33,7 +24,6 @@ public class WarningCountIncreasedByPercentage extends Condition {
     public Result validate(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener) {
         Analysis previous = getPreviousAnalysisResult(build);
         if (previous == null) {
-            //No previous results. New analysis
             return Result.SUCCESS;
         }
 
@@ -51,19 +41,6 @@ public class WarningCountIncreasedByPercentage extends Condition {
         return Result.SUCCESS;
     }
 
-    @Extension
-    public static final class DescriptorImpl extends ConditionDescriptor<WarningCountIncreasedByPercentage> {
-
-        public DescriptorImpl() {
-            load();
-        }
-
-        @Override
-        public String getDisplayName() {
-            return NAME;
-        }
-
-    }
 
     /**
      * @return the percentage
@@ -88,4 +65,17 @@ public class WarningCountIncreasedByPercentage extends Condition {
         this.warrantedResult = warrantedResult;
     }
 
+    @Extension
+    public static final class DescriptorImpl extends ConditionDescriptor<WarningCountIncreasedByPercentageCondition> {
+
+        public DescriptorImpl() {
+            load();
+        }
+
+        @Override
+        public String getDisplayName() {
+            return NAME;
+        }
+
+    }
 }

@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package org.jenkinsci.plugins.codesonar.conditions;
 
 import hudson.Launcher;
@@ -11,17 +6,13 @@ import hudson.model.BuildListener;
 import hudson.model.Result;
 import org.kohsuke.stapler.DataBoundConstructor;
 
-/**
- *
- * @author Mads
- */
-public class NewWarningsLessThanTotalCondition extends Condition {
+public class NewWarningsIncreasedByPercentageCondition extends Condition {
     
-    private static final String NAME = "Maximum number of new warnings compared to total";
+    private static final String NAME = "Number of new warnings increased by a percentage";
     private float percentage;
  
     @DataBoundConstructor
-    public NewWarningsLessThanTotalCondition(float percentage) {
+    public NewWarningsIncreasedByPercentageCondition(float percentage) {
         this.percentage = percentage;
     }
     
