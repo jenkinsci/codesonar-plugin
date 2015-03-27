@@ -1,4 +1,4 @@
-package org.jenkinsci.plugins.codesonar.models;
+package org.jenkinsci.plugins.codesonar.models.analysis;
 
 import java.io.Serializable;
 import java.util.ArrayList;

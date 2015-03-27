@@ -11,7 +11,7 @@ import hudson.model.Result;
 import javax.annotation.CheckForNull;
 import jenkins.model.Jenkins;
 import org.jenkinsci.plugins.codesonar.CodeSonarBuildAction;
-import org.jenkinsci.plugins.codesonar.models.Analysis;
+import org.jenkinsci.plugins.codesonar.models.analysis.Analysis;
 
 /**
  *

@@ -22,7 +22,7 @@ import org.apache.commons.collections.ListUtils;
 import org.apache.commons.io.IOUtils;
 import org.jenkinsci.plugins.codesonar.conditions.Condition;
 import org.jenkinsci.plugins.codesonar.conditions.ConditionDescriptor;
-import org.jenkinsci.plugins.codesonar.models.Analysis;
+import org.jenkinsci.plugins.codesonar.models.analysis.Analysis;
 import org.jenkinsci.plugins.codesonar.models.metrics.Metrics;
 import org.jenkinsci.plugins.codesonar.services.AnalysisService;
 import org.jenkinsci.plugins.codesonar.services.HttpService;

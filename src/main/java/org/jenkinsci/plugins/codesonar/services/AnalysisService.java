@@ -7,9 +7,9 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.apache.http.conn.HttpHostConnectException;
-import org.jenkinsci.plugins.codesonar.models.Analysis;
-import org.jenkinsci.plugins.codesonar.models.Project;
-import org.jenkinsci.plugins.codesonar.models.Projects;
+import org.jenkinsci.plugins.codesonar.models.analysis.Analysis;
+import org.jenkinsci.plugins.codesonar.models.projects.Project;
+import org.jenkinsci.plugins.codesonar.models.projects.Projects;
 
 /**
  *

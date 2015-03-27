@@ -5,7 +5,7 @@ import hudson.model.Action;
 import hudson.util.ChartUtil;
 import hudson.util.DataSetBuilder;
 import java.io.IOException;
-import org.jenkinsci.plugins.codesonar.models.Analysis;
+import org.jenkinsci.plugins.codesonar.models.analysis.Analysis;
 import org.jenkinsci.plugins.codesonar.models.metrics.Metric;
 import org.jenkinsci.plugins.codesonar.models.metrics.Metrics;
 import org.kohsuke.stapler.StaplerRequest;

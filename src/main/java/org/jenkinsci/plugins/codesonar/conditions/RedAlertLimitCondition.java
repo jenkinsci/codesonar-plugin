@@ -7,8 +7,8 @@ import hudson.model.BuildListener;
 import hudson.model.Result;
 import java.util.List;
 import org.jenkinsci.plugins.codesonar.CodeSonarBuildAction;
-import org.jenkinsci.plugins.codesonar.models.Alert;
-import org.jenkinsci.plugins.codesonar.models.Analysis;
+import org.jenkinsci.plugins.codesonar.models.analysis.Alert;
+import org.jenkinsci.plugins.codesonar.models.analysis.Analysis;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 

@@ -1,4 +1,4 @@
-package org.jenkinsci.plugins.codesonar.models;
+package org.jenkinsci.plugins.codesonar.models.projects;
 
 import hudson.AbortException;
 import java.io.Serializable;
