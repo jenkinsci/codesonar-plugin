@@ -17,16 +17,16 @@ import org.jenkinsci.plugins.codesonar.models.projects.Projects;
  */
 public class AnalysisService implements Serializable {
 
-    private XmlSerializationService xmlSerializationService;
     private HttpService httpService;
+    private XmlSerializationService xmlSerializationService;
 
     public XmlSerializationService getXmlSerializationService() {
         return xmlSerializationService;
     }
 
-    public AnalysisService(XmlSerializationService xmlSerializationService, HttpService httpService) {
-        this.xmlSerializationService = xmlSerializationService;
+    public AnalysisService(HttpService httpService, XmlSerializationService xmlSerializationService) {
         this.httpService = httpService;
+        this.xmlSerializationService = xmlSerializationService;
     }
 
     public String getAnalysisUrlFromLogFile(List<String> logFile) {

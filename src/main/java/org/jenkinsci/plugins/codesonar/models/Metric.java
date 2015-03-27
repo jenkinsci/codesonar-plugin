@@ -1,4 +1,4 @@
-package org.jenkinsci.plugins.codesonar.models.projects;
+package org.jenkinsci.plugins.codesonar.models;
 
 import java.io.Serializable;
 import javax.xml.bind.annotation.XmlAccessType;

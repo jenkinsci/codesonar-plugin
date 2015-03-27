@@ -38,7 +38,7 @@ public class MetricsServiceTest {
 
         final String EXPECTED_RESULT = String.format("http://%s/metrics/%s.xml", HUB_ADDRESS, ANALYSIS_ID);
 
-        String result = metricsService.getMetricsUrlForAnAnalysisId(HUB_ADDRESS, ANALYSIS_ID);
+        String result = metricsService.getMetricsUrlFromAnAnalysisId(HUB_ADDRESS, ANALYSIS_ID);
 
         Assert.assertEquals(EXPECTED_RESULT, result);
     }

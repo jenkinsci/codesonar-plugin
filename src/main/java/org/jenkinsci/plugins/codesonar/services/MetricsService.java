@@ -17,7 +17,7 @@ public class MetricsService implements Serializable {
         this.xmlSerializationService = xmlSerializationService;
     }
 
-    public String getMetricsUrlForAnAnalysisId(String hubAddress, String analysisId) {
+    public String getMetricsUrlFromAnAnalysisId(String hubAddress, String analysisId) {
         return String.format("http://%s/metrics/%s.xml", hubAddress, analysisId);
     }
     

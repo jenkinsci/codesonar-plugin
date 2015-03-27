@@ -1,7 +1,7 @@
 package org.jenkinsci.plugins.codesonar.unit.services;
 
 import hudson.AbortException;
-import org.jenkinsci.plugins.codesonar.models.projects.Metric;
+import org.jenkinsci.plugins.codesonar.models.Metric;
 import org.jenkinsci.plugins.codesonar.services.XmlSerializationService;
 import org.jenkinsci.plugins.codesonar.models.projects.Project;
 import org.junit.Before;

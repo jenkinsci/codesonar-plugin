@@ -1,5 +1,6 @@
 package org.jenkinsci.plugins.codesonar.models.projects;
 
+import org.jenkinsci.plugins.codesonar.models.Metric;
 import java.io.Serializable;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;

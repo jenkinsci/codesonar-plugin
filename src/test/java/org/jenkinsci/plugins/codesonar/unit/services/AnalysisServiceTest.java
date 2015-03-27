@@ -29,7 +29,7 @@ public class AnalysisServiceTest {
     public void setUp() {
         mockedXmlSerializationService = mock(XmlSerializationService.class);
         mockedHttpService = mock(HttpService.class);
-        analysisService = new AnalysisService(mockedXmlSerializationService, mockedHttpService);
+        analysisService = new AnalysisService(mockedHttpService, mockedXmlSerializationService);
     }
 
     @Test

@@ -17,8 +17,9 @@ import org.kohsuke.stapler.DataBoundSetter;
  * @author Andrius
  */
 public class RedAlertLimitCondition extends Condition {
+
     private static final String NAME = "Red alert limit";
-   
+
     private int alertLimit = 0;
     private String warrantedResult = Result.UNSTABLE.toString();
 
@@ -26,7 +27,7 @@ public class RedAlertLimitCondition extends Condition {
     public RedAlertLimitCondition(int alertLimit) {
         this.alertLimit = alertLimit;
     }
-    
+
     @Override
     public Result validate(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener) {
         CodeSonarBuildAction buildAction = build.getAction(CodeSonarBuildAction.class);
@@ -38,7 +39,7 @@ public class RedAlertLimitCondition extends Condition {
         if (analysis == null) {
             return Result.SUCCESS;
         }
-        
+
         List<Alert> redAlerts = analysis.getRedAlerts();
         if (redAlerts.size() > alertLimit) {
             Result result = Result.fromString(warrantedResult);
@@ -47,7 +48,7 @@ public class RedAlertLimitCondition extends Condition {
 
         return Result.SUCCESS;
     }
-    
+
     public int getAlertLimit() {
         return alertLimit;
     }
@@ -56,7 +57,7 @@ public class RedAlertLimitCondition extends Condition {
     public void setAlertLimit(int alertLimit) {
         this.alertLimit = alertLimit;
     }
-   
+
     public String getWarrantedResult() {
         return warrantedResult;
     }
