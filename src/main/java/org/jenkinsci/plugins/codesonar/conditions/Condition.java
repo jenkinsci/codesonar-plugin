@@ -1,5 +1,6 @@
 package org.jenkinsci.plugins.codesonar.conditions;
 
+import hudson.AbortException;
 import hudson.DescriptorExtensionList;
 import hudson.ExtensionPoint;
 import hudson.Launcher;
@@ -19,7 +20,7 @@ import org.jenkinsci.plugins.codesonar.models.analysis.Analysis;
  */
 public abstract class Condition implements Describable<Condition>, ExtensionPoint {
 
-    public abstract Result validate(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener);
+    public abstract Result validate(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener) throws AbortException;
     
     @CheckForNull
     public Analysis getPreviousAnalysisResult(AbstractBuild<?, ?> build) {       

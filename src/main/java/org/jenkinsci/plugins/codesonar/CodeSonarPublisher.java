@@ -24,9 +24,11 @@ import org.jenkinsci.plugins.codesonar.conditions.Condition;
 import org.jenkinsci.plugins.codesonar.conditions.ConditionDescriptor;
 import org.jenkinsci.plugins.codesonar.models.analysis.Analysis;
 import org.jenkinsci.plugins.codesonar.models.metrics.Metrics;
+import org.jenkinsci.plugins.codesonar.models.procedures.Procedures;
 import org.jenkinsci.plugins.codesonar.services.AnalysisService;
 import org.jenkinsci.plugins.codesonar.services.HttpService;
 import org.jenkinsci.plugins.codesonar.services.MetricsService;
+import org.jenkinsci.plugins.codesonar.services.ProceduresService;
 import org.jenkinsci.plugins.codesonar.services.XmlSerializationService;
 import org.kohsuke.stapler.DataBoundConstructor;
 
@@ -43,7 +45,7 @@ public class CodeSonarPublisher extends Recorder {
     private HttpService httpService;
     private AnalysisService analysisService;
     private MetricsService metricsService;
-
+    private ProceduresService proceduresService;
 
     private List<Condition> conditions;
 
@@ -51,9 +53,10 @@ public class CodeSonarPublisher extends Recorder {
     public CodeSonarPublisher(List<Condition> conditions, String hubAddress, String projectName) {
         xmlSerializationService = new XmlSerializationService();
         httpService = new HttpService();
-        analysisService = new AnalysisService(xmlSerializationService, httpService);
+        analysisService = new AnalysisService(httpService, xmlSerializationService);
         metricsService = new MetricsService(httpService, xmlSerializationService);
-        
+        proceduresService = new ProceduresService(httpService, xmlSerializationService);
+                
         this.hubAddress = hubAddress;
         this.projectName = projectName;
 
@@ -77,10 +80,13 @@ public class CodeSonarPublisher extends Recorder {
 
         Analysis analysis = analysisService.getAnalysisFromUrl(analysisUrl);
         
-        String metricsUrl = metricsService.getMetricsUrlForAnAnalysisId(expandedHubAddress, analysis.getAnalysisId());
+        String metricsUrl = metricsService.getMetricsUrlFromAnAnalysisId(expandedHubAddress, analysis.getAnalysisId());
         Metrics metrics = metricsService.getMetricsFromUrl(metricsUrl);
         
-        build.addAction(new CodeSonarBuildAction(analysis, metrics, expandedHubAddress, build));
+        String proceduresUrl = proceduresService.getProceduresUrlFromAnAnalysisId(expandedHubAddress, analysis.getAnalysisId());
+        Procedures procedures = proceduresService.getProceduresFromUrl(proceduresUrl);
+        
+        build.addAction(new CodeSonarBuildAction(analysis, metrics, procedures, expandedHubAddress, build));
 
         for (Condition condition : conditions) {
             Result validationResult = condition.validate(build, launcher, listener);

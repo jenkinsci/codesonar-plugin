@@ -1,10 +1,16 @@
 package org.jenkinsci.plugins.codesonar.conditions;
 
+import hudson.AbortException;
 import hudson.Extension;
 import hudson.Launcher;
 import hudson.model.AbstractBuild;
 import hudson.model.BuildListener;
 import hudson.model.Result;
+import java.util.List;
+import org.jenkinsci.plugins.codesonar.CodeSonarBuildAction;
+import org.jenkinsci.plugins.codesonar.models.Metric;
+import org.jenkinsci.plugins.codesonar.models.procedures.ProcedureRow;
+import org.jenkinsci.plugins.codesonar.models.procedures.Procedures;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 
@@ -13,6 +19,7 @@ import org.kohsuke.stapler.DataBoundSetter;
  * @author Andrius
  */
 public class ProcedureCyclomaticComplexityExceededCondition extends Condition {
+
     private static final String NAME = "Procedure cyclomatic complexity exceeded";
 
     private int maxCyclomaticComplexity;
@@ -24,8 +31,29 @@ public class ProcedureCyclomaticComplexityExceededCondition extends Condition {
     }
 
     @Override
-    public Result validate(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener) {
-        throw new UnsupportedOperationException();
+    public Result validate(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener) throws AbortException {
+        CodeSonarBuildAction buildAction = build.getAction(CodeSonarBuildAction.class);
+        if (buildAction == null) {
+            return Result.SUCCESS;
+        }
+
+        Procedures procedures = buildAction.getProcedures();
+        if (procedures == null) {
+            return Result.SUCCESS;
+        }
+
+        List<ProcedureRow> procedureRows = procedures.getProcedureRows();
+        for (ProcedureRow procedureRow : procedureRows) {
+            Metric cyclomaticComplexityMetric = procedureRow.getMetricByName("Cyclomatic Complexity");
+
+            String value = cyclomaticComplexityMetric.getValue();
+            if (Integer.parseInt(value) > maxCyclomaticComplexity) {
+                Result result = Result.fromString(warrantedResult);
+                return result;
+            }
+        }
+
+        return Result.SUCCESS;
     }
 
     public int getMaxCyclomaticComplexity() {
@@ -36,7 +64,7 @@ public class ProcedureCyclomaticComplexityExceededCondition extends Condition {
     public void setMaxCyclomaticComplexity(int maxCyclomaticComplexity) {
         this.maxCyclomaticComplexity = maxCyclomaticComplexity;
     }
-    
+
     public String getWarrantedResult() {
         return warrantedResult;
     }
@@ -57,5 +85,5 @@ public class ProcedureCyclomaticComplexityExceededCondition extends Condition {
         public String getDisplayName() {
             return NAME;
         }
-    }    
+    }
 }

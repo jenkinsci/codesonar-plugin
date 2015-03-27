@@ -8,6 +8,7 @@ import java.io.IOException;
 import org.jenkinsci.plugins.codesonar.models.analysis.Analysis;
 import org.jenkinsci.plugins.codesonar.models.metrics.Metric;
 import org.jenkinsci.plugins.codesonar.models.metrics.Metrics;
+import org.jenkinsci.plugins.codesonar.models.procedures.Procedures;
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.StaplerResponse;
 
@@ -19,12 +20,14 @@ public class CodeSonarBuildAction implements Action {
 
     private final Analysis analysis;
     private final Metrics metrics;
+    private final Procedures procedures;
     private final String hubAddress;
     private final AbstractBuild<?, ?> build;
 
-    public CodeSonarBuildAction(Analysis analysis, Metrics metrics, String hubAddress, AbstractBuild<?, ?> build) {
+    public CodeSonarBuildAction(Analysis analysis, Metrics metrics, Procedures procedures, String hubAddress, AbstractBuild<?, ?> build) {
         this.analysis = analysis;
         this.metrics = metrics;
+        this.procedures = procedures;
         this.hubAddress = hubAddress;
         this.build = build;
     }
@@ -50,6 +53,10 @@ public class CodeSonarBuildAction implements Action {
 
     public Metrics getMetrics() {
         return metrics;
+    }
+    
+    public Procedures getProcedures() {
+        return procedures;
     }
 
     public void doReportGraphs(StaplerRequest req, StaplerResponse rsp) throws IOException {
@@ -81,7 +88,7 @@ public class CodeSonarBuildAction implements Action {
                 if (codeSonarBuildAction.getMetrics() == null) {
                     continue;
                 }
-                
+
                 Metric metric = codeSonarBuildAction.getMetrics().getMetricByName("LCodeOnly");
                 int value = Integer.parseInt(metric.getValue());
 
