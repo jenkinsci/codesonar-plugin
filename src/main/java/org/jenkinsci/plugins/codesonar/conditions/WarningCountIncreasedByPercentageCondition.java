@@ -5,6 +5,8 @@ import hudson.Launcher;
 import hudson.model.AbstractBuild;
 import hudson.model.BuildListener;
 import hudson.model.Result;
+import org.jenkinsci.plugins.codesonar.CodeSonarBuildAction;
+import org.jenkinsci.plugins.codesonar.models.CodeSonarBuildActionDTO;
 import org.jenkinsci.plugins.codesonar.models.analysis.Analysis;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
@@ -22,13 +24,30 @@ public class WarningCountIncreasedByPercentageCondition extends Condition {
 
     @Override
     public Result validate(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener) {
-        Analysis previous = getPreviousAnalysisResult(build);
-        if (previous == null) {
+        CodeSonarBuildAction buildAction = build.getAction(CodeSonarBuildAction.class);
+        if (buildAction == null) {
             return Result.SUCCESS;
         }
 
-        Analysis current = getAnalysis(build);
+        CodeSonarBuildActionDTO buildActionDTO = buildAction.getBuildActionDTO();
+        if (buildActionDTO == null) {
+            return Result.SUCCESS;
+        }
+        
+        Analysis current = buildActionDTO.getAnalysisActiveWarnings();
+        
+        CodeSonarBuildAction previousBuildAction = buildAction.getPreviousAction();
+        if (previousBuildAction == null) {
+            return Result.SUCCESS;
+        }
 
+        CodeSonarBuildActionDTO prevBuildActionDTO = buildAction.getBuildActionDTO();
+        if (prevBuildActionDTO == null) {
+            return Result.SUCCESS;
+        }
+        
+        Analysis previous = prevBuildActionDTO.getAnalysisActiveWarnings();
+        
         float previousCount = (float) previous.getWarnings().size();
         float currentCount = (float) current.getWarnings().size();
         float diff = currentCount - previousCount;

@@ -3,10 +3,19 @@ package org.jenkinsci.plugins.codesonar.services;
 import hudson.AbortException;
 import java.io.IOException;
 import java.io.Serializable;
+import java.net.URISyntaxException;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.apache.http.NameValuePair;
+import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.conn.HttpHostConnectException;
+import org.apache.http.message.BasicNameValuePair;
+import org.jenkinsci.plugins.codesonar.Utils;
+import org.jenkinsci.plugins.codesonar.Utils.UrlFilters;
 import org.jenkinsci.plugins.codesonar.models.analysis.Analysis;
 import org.jenkinsci.plugins.codesonar.models.projects.Project;
 import org.jenkinsci.plugins.codesonar.models.projects.Projects;
@@ -47,15 +56,11 @@ public class AnalysisService implements Serializable {
         return analysisUrl;
     }
 
-    public String getLatestAnalysisUrlForAProject(String hubAddress, String projectName) throws IOException {
+    public String getLatestAnalysisUrlForAProject(String hubAddress, String projectName) throws AbortException {
         String url = String.format("http://%s/index.xml", hubAddress);
 
         String xmlContent = null;
-        try {
-            xmlContent = httpService.getContentFromUrlAsString(url);
-        } catch (HttpHostConnectException e) {
-            throw new AbortException(e.getMessage());
-        }
+        xmlContent = httpService.getContentFromUrlAsString(url);
 
         Projects projects = null;
         projects = xmlSerializationService.deserialize(xmlContent, Projects.class);
@@ -70,8 +75,18 @@ public class AnalysisService implements Serializable {
     public Analysis getAnalysisFromUrl(String analysisUrl) throws IOException {
         String xmlContent = httpService.getContentFromUrlAsString(analysisUrl);
 
-        Analysis analysis = xmlSerializationService.deserialize(xmlContent, Analysis.class);
-
-        return analysis;
+        return xmlSerializationService.deserialize(xmlContent, Analysis.class);
+    }
+    
+    public Analysis getAnalysisFromUrl(String analysisUrl, UrlFilters urlFilter) throws IOException {
+        URIBuilder uriBuilder;
+        try {
+            uriBuilder = new URIBuilder(analysisUrl);
+            uriBuilder.addParameter("filter", urlFilter.getValue());
+        } catch (URISyntaxException ex) {
+            throw new AbortException(ex.getMessage());
+        }
+        
+        return getAnalysisFromUrl(uriBuilder.toString());
     }
 }

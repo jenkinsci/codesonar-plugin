@@ -2,9 +2,11 @@ package org.jenkinsci.plugins.codesonar.unit.services;
 
 import hudson.AbortException;
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import org.jenkinsci.plugins.codesonar.Utils;
 import org.jenkinsci.plugins.codesonar.models.analysis.Analysis;
 import org.jenkinsci.plugins.codesonar.models.projects.Projects;
 import org.jenkinsci.plugins.codesonar.services.AnalysisService;
@@ -105,5 +107,18 @@ public class AnalysisServiceTest {
 
         assertNotNull(analysis);
     }
+    
+    @Test
+    public void providedValidAnalysisUrlAndUrlFilterNEW_shouldReturnAnAnalysisUrlForNewWarnings() throws IOException {
+        final String VALID_ANALYSIS_URL = "10.10.10.10";
+        final String RESPONSE_XML_CONTENT = "valid xml content";
+        final Analysis ANALYSIS = new Analysis();
 
+        when(mockedHttpService.getContentFromUrlAsString(any(String.class))).thenReturn(RESPONSE_XML_CONTENT);
+        when(mockedXmlSerializationService.deserialize(any(String.class), isA(Class.class))).thenReturn(ANALYSIS);
+
+        Analysis analysis = analysisService.getAnalysisFromUrl(VALID_ANALYSIS_URL, Utils.UrlFilters.NEW);
+
+        assertNotNull(analysis);
+    }
 }

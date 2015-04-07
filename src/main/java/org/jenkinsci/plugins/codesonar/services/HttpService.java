@@ -11,7 +11,7 @@ import org.apache.http.client.fluent.Request;
  */
 public class HttpService implements Serializable {
 
-    public String getContentFromUrlAsString(String url) throws IOException {
+    public String getContentFromUrlAsString(String url) throws AbortException {
         String output;
         try {
             output = Request.Get(url).execute().returnContent().asString();

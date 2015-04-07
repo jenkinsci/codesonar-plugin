@@ -8,9 +8,9 @@ import hudson.model.BuildListener;
 import hudson.model.Result;
 import java.util.List;
 import org.jenkinsci.plugins.codesonar.CodeSonarBuildAction;
+import org.jenkinsci.plugins.codesonar.models.CodeSonarBuildActionDTO;
 import org.jenkinsci.plugins.codesonar.models.Metric;
 import org.jenkinsci.plugins.codesonar.models.procedures.ProcedureRow;
-import org.jenkinsci.plugins.codesonar.models.procedures.Procedures;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 
@@ -37,12 +37,12 @@ public class ProcedureCyclomaticComplexityExceededCondition extends Condition {
             return Result.SUCCESS;
         }
 
-        Procedures procedures = buildAction.getProcedures();
-        if (procedures == null) {
+        CodeSonarBuildActionDTO buildActionDTO = buildAction.getBuildActionDTO();
+        if (buildActionDTO == null) {
             return Result.SUCCESS;
         }
 
-        List<ProcedureRow> procedureRows = procedures.getProcedureRows();
+        List<ProcedureRow> procedureRows = buildActionDTO.getProcedures().getProcedureRows();
         for (ProcedureRow procedureRow : procedureRows) {
             Metric cyclomaticComplexityMetric = procedureRow.getMetricByName("Cyclomatic Complexity");
 

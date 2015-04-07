@@ -20,8 +20,10 @@ import java.util.Collection;
 import java.util.List;
 import org.apache.commons.collections.ListUtils;
 import org.apache.commons.io.IOUtils;
+import org.jenkinsci.plugins.codesonar.Utils.UrlFilters;
 import org.jenkinsci.plugins.codesonar.conditions.Condition;
 import org.jenkinsci.plugins.codesonar.conditions.ConditionDescriptor;
+import org.jenkinsci.plugins.codesonar.models.CodeSonarBuildActionDTO;
 import org.jenkinsci.plugins.codesonar.models.analysis.Analysis;
 import org.jenkinsci.plugins.codesonar.models.metrics.Metrics;
 import org.jenkinsci.plugins.codesonar.models.procedures.Procedures;
@@ -78,15 +80,19 @@ public class CodeSonarPublisher extends Recorder {
             analysisUrl = analysisService.getLatestAnalysisUrlForAProject(expandedHubAddress, expandedProjectName);
         }
 
-        Analysis analysis = analysisService.getAnalysisFromUrl(analysisUrl);
+        Analysis analysisActiveWarnings = analysisService.getAnalysisFromUrl(analysisUrl, UrlFilters.ACTIVE);
         
-        String metricsUrl = metricsService.getMetricsUrlFromAnAnalysisId(expandedHubAddress, analysis.getAnalysisId());
+        String metricsUrl = metricsService.getMetricsUrlFromAnAnalysisId(expandedHubAddress, analysisActiveWarnings.getAnalysisId());
         Metrics metrics = metricsService.getMetricsFromUrl(metricsUrl);
         
-        String proceduresUrl = proceduresService.getProceduresUrlFromAnAnalysisId(expandedHubAddress, analysis.getAnalysisId());
+        String proceduresUrl = proceduresService.getProceduresUrlFromAnAnalysisId(expandedHubAddress, analysisActiveWarnings.getAnalysisId());
         Procedures procedures = proceduresService.getProceduresFromUrl(proceduresUrl);
         
-        build.addAction(new CodeSonarBuildAction(analysis, metrics, procedures, expandedHubAddress, build));
+        Analysis analysisNewWarnings = analysisService.getAnalysisFromUrl(analysisUrl, UrlFilters.NEW);
+        
+        CodeSonarBuildActionDTO buildActionDTO = new CodeSonarBuildActionDTO(analysisActiveWarnings, analysisNewWarnings, metrics, procedures, hubAddress);
+        
+        build.addAction(new CodeSonarBuildAction(buildActionDTO, build));
 
         for (Condition condition : conditions) {
             Result validationResult = condition.validate(build, launcher, listener);

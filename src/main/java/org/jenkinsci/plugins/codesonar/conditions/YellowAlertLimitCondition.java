@@ -7,8 +7,8 @@ import hudson.model.BuildListener;
 import hudson.model.Result;
 import java.util.List;
 import org.jenkinsci.plugins.codesonar.CodeSonarBuildAction;
+import org.jenkinsci.plugins.codesonar.models.CodeSonarBuildActionDTO;
 import org.jenkinsci.plugins.codesonar.models.analysis.Alert;
-import org.jenkinsci.plugins.codesonar.models.analysis.Analysis;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 
@@ -34,12 +34,12 @@ public class YellowAlertLimitCondition extends Condition {
             return Result.SUCCESS;
         }
 
-        Analysis analysis = buildAction.getAnalysis();
-        if (analysis == null) {
+        CodeSonarBuildActionDTO buildActionDTO = buildAction.getBuildActionDTO();
+        if (buildActionDTO == null) {
             return Result.SUCCESS;
         }
         
-        List<Alert> yellowAlerts = analysis.getYellowAlerts();
+        List<Alert> yellowAlerts = buildActionDTO.getAnalysisActiveWarnings().getYellowAlerts();
         if (yellowAlerts.size() > alertLimit) {
             Result result = Result.fromString(warrantedResult);
             return result;

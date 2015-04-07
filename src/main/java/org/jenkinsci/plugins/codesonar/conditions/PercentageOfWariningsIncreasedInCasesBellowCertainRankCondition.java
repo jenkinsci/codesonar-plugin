@@ -7,6 +7,7 @@ import hudson.model.BuildListener;
 import hudson.model.Result;
 import java.util.List;
 import org.jenkinsci.plugins.codesonar.CodeSonarBuildAction;
+import org.jenkinsci.plugins.codesonar.models.CodeSonarBuildActionDTO;
 import org.jenkinsci.plugins.codesonar.models.analysis.Analysis;
 import org.jenkinsci.plugins.codesonar.models.analysis.Warning;
 import org.kohsuke.stapler.DataBoundConstructor;
@@ -37,10 +38,12 @@ public class PercentageOfWariningsIncreasedInCasesBellowCertainRankCondition ext
             return Result.SUCCESS;
         }
 
-        Analysis analysis = buildAction.getAnalysis();
-        if (analysis == null) {
+        CodeSonarBuildActionDTO buildActionDTO = buildAction.getBuildActionDTO();
+        if (buildActionDTO == null) {
             return Result.SUCCESS;
         }
+
+        Analysis analysis = buildActionDTO.getAnalysisActiveWarnings();
 
         int totalNumberOfWarnings = analysis.getWarnings().size();
 

@@ -1,39 +1,54 @@
 package org.jenkinsci.plugins.codesonar.conditions;
 
+import hudson.Extension;
 import hudson.Launcher;
 import hudson.model.AbstractBuild;
 import hudson.model.BuildListener;
 import hudson.model.Result;
+import org.jenkinsci.plugins.codesonar.CodeSonarBuildAction;
+import org.jenkinsci.plugins.codesonar.models.CodeSonarBuildActionDTO;
+import org.jenkinsci.plugins.codesonar.models.analysis.Analysis;
 import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.DataBoundSetter;
 
 public class NewWarningsIncreasedByPercentageCondition extends Condition {
-    
+
     private static final String NAME = "Number of new warnings increased by a percentage";
     private float percentage;
- 
+    private String warrantedResult = Result.UNSTABLE.toString();
+
     @DataBoundConstructor
     public NewWarningsIncreasedByPercentageCondition(float percentage) {
         this.percentage = percentage;
     }
-    
+
     @Override
     public Result validate(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener) {
-        throw new UnsupportedOperationException("Not implemented yet");
-    }
-    
-    /*@Extension
-    public static final class DescriptorImpl extends ConditionDescriptor<NewWarningsLessThanTotalCondition> {
+        CodeSonarBuildAction buildAction = build.getAction(CodeSonarBuildAction.class);
+        if (buildAction == null) {
+            return Result.SUCCESS;
+        }
 
-        public DescriptorImpl() {
-            load();
+        CodeSonarBuildActionDTO buildActionDTO = buildAction.getBuildActionDTO();
+        if (buildActionDTO == null) {
+            return Result.SUCCESS;
         }
-        
-        @Override
-        public String getDisplayName() {
-            return NAME;
+
+        Analysis currentActiveWarnings = buildActionDTO.getAnalysisActiveWarnings();
+        Analysis currentNewWarnings = buildActionDTO.getAnalysisNewWarnings();
+
+        float activeWarningCount = (float) currentActiveWarnings.getWarnings().size();
+        float newWarningCount = (float) currentNewWarnings.getWarnings().size();
+
+        float diff = activeWarningCount - newWarningCount;
+
+        if ((diff / newWarningCount) * 100 > percentage) {
+            Result result = Result.fromString(warrantedResult);
+            return result;
         }
-        
-    }*/
+
+        return Result.SUCCESS;
+    }
 
     /**
      * @return the percentage
@@ -49,4 +64,26 @@ public class NewWarningsIncreasedByPercentageCondition extends Condition {
         this.percentage = percentage;
     }
 
+    public String getWarrantedResult() {
+        return warrantedResult;
+    }
+
+    @DataBoundSetter
+    public void setWarrantedResult(String warrantedResult) {
+        this.warrantedResult = warrantedResult;
+    }
+
+    @Extension
+    public static final class DescriptorImpl extends ConditionDescriptor<NewWarningsIncreasedByPercentageCondition> {
+
+        public DescriptorImpl() {
+            load();
+        }
+
+        @Override
+        public String getDisplayName() {
+            return NAME;
+        }
+
+    }
 }
