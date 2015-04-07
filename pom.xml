@@ -6,8 +6,8 @@
         <version>1.554.3</version>
     </parent>
 
-    <url>http://wiki.jenkins-ci.org/display/JENKINS/Pretested+Integration+Plugin</url>
-    <name>Codesonar</name>
+    <url></url>
+    <name>CodeSonar</name>
     <artifactId>codesonar</artifactId>
     <!--
     Using the buildnumber-maven-plugin and the maven-hpi-plugin configuration below
