@@ -90,7 +90,7 @@ public class CodeSonarPublisher extends Recorder {
         
         Analysis analysisNewWarnings = analysisService.getAnalysisFromUrl(analysisUrl, UrlFilters.NEW);
         
-        CodeSonarBuildActionDTO buildActionDTO = new CodeSonarBuildActionDTO(analysisActiveWarnings, analysisNewWarnings, metrics, procedures, hubAddress);
+        CodeSonarBuildActionDTO buildActionDTO = new CodeSonarBuildActionDTO(analysisActiveWarnings, analysisNewWarnings, metrics, procedures, expandedHubAddress);
         
         build.addAction(new CodeSonarBuildAction(buildActionDTO, build));
 
