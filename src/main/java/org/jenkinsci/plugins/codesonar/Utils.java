@@ -23,6 +23,10 @@ public class Utils {
         }
 
         AbstractBuild build = lastBuild.getPreviousBuild();
+        if (build == null) {
+            return null;
+        }
+        
         do {
             action = build.getAction(CodeSonarBuildAction.class);
 
