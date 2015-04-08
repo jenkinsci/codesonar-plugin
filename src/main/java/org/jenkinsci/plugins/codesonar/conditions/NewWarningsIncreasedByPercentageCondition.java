@@ -40,11 +40,10 @@ public class NewWarningsIncreasedByPercentageCondition extends Condition {
         float activeWarningCount = (float) currentActiveWarnings.getWarnings().size();
         float newWarningCount = (float) currentNewWarnings.getWarnings().size();
 
-        float diff = activeWarningCount - newWarningCount;
+        float result = (newWarningCount * 100.0f) / activeWarningCount; 
 
-        if ((diff / newWarningCount) * 100 > percentage) {
-            Result result = Result.fromString(warrantedResult);
-            return result;
+        if (result > percentage) {
+            return Result.fromString(warrantedResult);
         }
 
         return Result.SUCCESS;
@@ -60,6 +59,7 @@ public class NewWarningsIncreasedByPercentageCondition extends Condition {
     /**
      * @param percentage the percentage to set
      */
+    @DataBoundSetter
     public void setPercentage(float percentage) {
         this.percentage = percentage;
     }
