@@ -1,5 +1,6 @@
 package org.jenkinsci.plugins.codesonar;
 
+import hudson.AbortException;
 import hudson.DescriptorExtensionList;
 import hudson.Extension;
 import hudson.Launcher;
@@ -58,7 +59,7 @@ public class CodeSonarPublisher extends Recorder {
         analysisService = new AnalysisService(httpService, xmlSerializationService);
         metricsService = new MetricsService(httpService, xmlSerializationService);
         proceduresService = new ProceduresService(httpService, xmlSerializationService);
-                
+
         this.hubAddress = hubAddress;
         this.projectName = projectName;
 
@@ -73,6 +74,13 @@ public class CodeSonarPublisher extends Recorder {
         String expandedHubAddress = build.getEnvironment(listener).expand(Util.fixNull(hubAddress));
         String expandedProjectName = build.getEnvironment(listener).expand(Util.fixNull(projectName));
 
+        if (expandedHubAddress.isEmpty()) {
+            throw new AbortException("Hub address not provided");
+        }
+        if (expandedProjectName.isEmpty()) {
+            throw new AbortException("Project name not provided");
+        }
+
         List<String> logFile = IOUtils.readLines(build.getLogReader());
         String analysisUrl = analysisService.getAnalysisUrlFromLogFile(logFile);
 
@@ -81,17 +89,17 @@ public class CodeSonarPublisher extends Recorder {
         }
 
         Analysis analysisActiveWarnings = analysisService.getAnalysisFromUrl(analysisUrl, UrlFilters.ACTIVE);
-        
+
         String metricsUrl = metricsService.getMetricsUrlFromAnAnalysisId(expandedHubAddress, analysisActiveWarnings.getAnalysisId());
         Metrics metrics = metricsService.getMetricsFromUrl(metricsUrl);
-        
+
         String proceduresUrl = proceduresService.getProceduresUrlFromAnAnalysisId(expandedHubAddress, analysisActiveWarnings.getAnalysisId());
         Procedures procedures = proceduresService.getProceduresFromUrl(proceduresUrl);
-        
+
         Analysis analysisNewWarnings = analysisService.getAnalysisFromUrl(analysisUrl, UrlFilters.NEW);
-        
+
         CodeSonarBuildActionDTO buildActionDTO = new CodeSonarBuildActionDTO(analysisActiveWarnings, analysisNewWarnings, metrics, procedures, expandedHubAddress);
-        
+
         build.addAction(new CodeSonarBuildAction(buildActionDTO, build));
 
         for (Condition condition : conditions) {
