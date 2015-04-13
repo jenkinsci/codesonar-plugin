@@ -19,7 +19,7 @@ import org.kohsuke.stapler.DataBoundSetter;
 public class YellowAlertLimitCondition extends Condition {
     private static final String NAME = "Yellow alert limit";
    
-    private int alertLimit = 0;
+    private int alertLimit = 1;
     private String warrantedResult = Result.UNSTABLE.toString();
 
     @DataBoundConstructor

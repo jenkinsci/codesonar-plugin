@@ -22,7 +22,7 @@ public class ProcedureCyclomaticComplexityExceededCondition extends Condition {
 
     private static final String NAME = "Procedure cyclomatic complexity exceeded";
 
-    private int maxCyclomaticComplexity;
+    private int maxCyclomaticComplexity = 30;
     private String warrantedResult = Result.UNSTABLE.toString();
 
     @DataBoundConstructor

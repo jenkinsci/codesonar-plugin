@@ -21,8 +21,8 @@ public class PercentageOfWariningsIncreasedInCasesBellowCertainRankCondition ext
 
     private static final String NAME = "Percentage of warnings in cases below a certain rank increase";
 
-    private int rankOfWarnings;
-    private float warningPercentage;
+    private int rankOfWarnings = 30;
+    private float warningPercentage = 5.0f;
     private String warrantedResult = Result.UNSTABLE.toString();
 
     @DataBoundConstructor

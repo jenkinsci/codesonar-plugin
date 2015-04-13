@@ -14,7 +14,7 @@ import org.kohsuke.stapler.DataBoundSetter;
 public class WarningCountIncreasedByPercentageCondition extends Condition {
 
     private static final String NAME = "Maximum warning count increased by percentage";
-    private float percentage = 5f;
+    private float percentage = 5.0f;
     private String warrantedResult = Result.UNSTABLE.toString();
 
     @DataBoundConstructor
