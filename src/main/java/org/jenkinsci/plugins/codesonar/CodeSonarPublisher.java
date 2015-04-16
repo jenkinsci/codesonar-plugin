@@ -18,9 +18,12 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import org.apache.commons.collections.ListUtils;
 import org.apache.commons.io.IOUtils;
+import org.javatuples.Pair;
 import org.jenkinsci.plugins.codesonar.Utils.UrlFilters;
 import org.jenkinsci.plugins.codesonar.conditions.Condition;
 import org.jenkinsci.plugins.codesonar.conditions.ConditionDescriptor;
@@ -98,15 +101,22 @@ public class CodeSonarPublisher extends Recorder {
 
         Analysis analysisNewWarnings = analysisService.getAnalysisFromUrl(analysisUrl, UrlFilters.NEW);
 
-        CodeSonarBuildActionDTO buildActionDTO = new CodeSonarBuildActionDTO(analysisActiveWarnings, analysisNewWarnings, metrics, procedures, expandedHubAddress);
-
-        build.addAction(new CodeSonarBuildAction(buildActionDTO, build));
+        List<Pair<String, String>> conditionNamesAndResults = new ArrayList<>();
 
         for (Condition condition : conditions) {
             Result validationResult = condition.validate(build, launcher, listener);
+
+            Pair<String, String> pair = Pair.with(condition.getDescriptor().getDisplayName(), validationResult.toString());
+            conditionNamesAndResults.add(pair);
+
             build.setResult(validationResult);
             listener.getLogger().println(String.format(("'%s' marked the build as %s"), condition.getDescriptor().getDisplayName(), validationResult.toString()));
         }
+
+        CodeSonarBuildActionDTO buildActionDTO = new CodeSonarBuildActionDTO(analysisActiveWarnings,
+                analysisNewWarnings, metrics, procedures, expandedHubAddress, conditionNamesAndResults);
+
+        build.addAction(new CodeSonarBuildAction(buildActionDTO, build));
 
         return true;
     }

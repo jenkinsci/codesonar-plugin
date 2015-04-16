@@ -5,6 +5,8 @@ import hudson.model.Action;
 import hudson.util.ChartUtil;
 import hudson.util.DataSetBuilder;
 import java.io.IOException;
+import java.util.List;
+import org.javatuples.Pair;
 import org.jenkinsci.plugins.codesonar.models.CodeSonarBuildActionDTO;
 import org.jenkinsci.plugins.codesonar.models.metrics.Metric;
 import org.kohsuke.stapler.StaplerRequest;
@@ -46,7 +48,11 @@ public class CodeSonarBuildAction implements Action {
     public CodeSonarBuildActionDTO getBuildActionDTO() {
         return buildActionDTO;
     }
-
+    
+    public List<Pair<String, String>> getConditionNamesAndResults() {
+        return buildActionDTO.getConditionNamesAndResults();
+    }
+    
     public void doReportGraphs(StaplerRequest req, StaplerResponse rsp) throws IOException {
         String graphName = req.getParameter("name");
 

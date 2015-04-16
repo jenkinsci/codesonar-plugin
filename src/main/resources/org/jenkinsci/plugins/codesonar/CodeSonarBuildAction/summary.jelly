@@ -1,0 +1,11 @@
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
+    <t:summary icon="${it.getIconFileName()}">
+        <b>Conditions</b>
+        <j:set var="conditionNamesAndResults" value="${it.getConditionNamesAndResults()}"/>
+        <ul>
+            <j:forEach var="pair" items="${it.getConditionNamesAndResults()}">  
+                <li>"${pair.getValue0()}": <i>${pair.getValue1()}</i></li>
+            </j:forEach> 
+        </ul>
+    </t:summary>
+</j:jelly>
