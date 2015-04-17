@@ -1,12 +1,26 @@
 package org.jenkinsci.plugins.codesonar.integration.conditions;
 
+import hudson.model.Cause;
+import hudson.model.FreeStyleBuild;
+import hudson.model.FreeStyleProject;
+import hudson.model.Result;
+import hudson.model.queue.QueueTaskFuture;
+import hudson.util.RunList;
+import org.jenkinsci.plugins.codesonar.conditions.PercentageOfWariningsIncreasedInCasesBellowCertainRankCondition;
+import org.junit.After;
+import static org.junit.Assert.fail;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.jvnet.hudson.test.JenkinsRule;
+
 /**
  *
  * @author Andrius
  */
-public class PercentageOfWarningsIncreasedInCasesBellowCertainRankConditionIT {
+public class PercentageOfWariningsIncreasedInCasesBellowCertainRankConditionIT {
 
-    /*@Rule
+   /* @Rule
     public JenkinsRule jenkinsRule = new JenkinsRule();
 
     @Before
@@ -15,40 +29,36 @@ public class PercentageOfWarningsIncreasedInCasesBellowCertainRankConditionIT {
 
     @After
     public void tearDown() throws Exception {
-    }*/
+    }
 
-    /*@Test
+    @Test
     public void buildDoesNoContainBuildAction_ReturnsResultSuccess() throws Exception {
         // arrange
         final Result EXPECTED_RESULT = Result.SUCCESS;
         
         final int RANK_OF_WARNINGS = 30;
         final float WARNING_PERCENTAGE = 50.0f;
-        PercentageOfWariningsIncreasedInCasesBellowCertainRank condition = new PercentageOfWariningsIncreasedInCasesBellowCertainRank(RANK_OF_WARNINGS, WARNING_PERCENTAGE);
+        PercentageOfWariningsIncreasedInCasesBellowCertainRankCondition condition = 
+                new PercentageOfWariningsIncreasedInCasesBellowCertainRankCondition(RANK_OF_WARNINGS, WARNING_PERCENTAGE);
         
-        List<Condition> conditions = new ArrayList<>();
-        conditions.add(condition);
+//        List<> l = new Arraylist
+//        conditions.add(condition);
         
         final String VALID_HUB_ADDRESS = "10.10.10.10";
         final String VALID_PROJECT_NAME = "projectName";
 
         FreeStyleProject project = jenkinsRule.createFreeStyleProject();
-        project.getPublishersList().add(new CodeSonarPublisher(conditions, VALID_HUB_ADDRESS, VALID_PROJECT_NAME));
         
-        project.scheduleBuild(new Cause.UserIdCause());
-        
-        RunList<FreeStyleBuild> builds = project.getBuilds();
-        
-        for(FreeStyleBuild b : builds) {
-             String console = jenkinsRule.createWebClient().getPage(b, "console").asText();
-             System.out.println(console);
-        }
+//        project.getPublishersList().add(new CodeSonarPublisher(conditions, VALID_HUB_ADDRESS, VALID_PROJECT_NAME));
+       
+        QueueTaskFuture<FreeStyleBuild> queueTaskFuture = project.scheduleBuild2(0, new Cause.UserIdCause());
+        FreeStyleBuild build = queueTaskFuture.get();
         
         // act
         // assert
         fail("not implemented");
-    }
-
+    }*/
+/*
     @Test
     public void buildActionDoesNotContainAnalysis_ReturnsResultSuccess() {
         // arrange
