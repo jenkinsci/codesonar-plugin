@@ -101,7 +101,7 @@ public class CodeSonarPublisher extends Recorder {
 
         Analysis analysisNewWarnings = analysisService.getAnalysisFromUrl(analysisUrl, UrlFilters.NEW);
 
-        List<Pair<String, String>> conditionNamesAndResults = new ArrayList<>();
+        List<Pair<String, String>> conditionNamesAndResults = new ArrayList<Pair<String, String>>();
 
         for (Condition condition : conditions) {
             Result validationResult = condition.validate(build, launcher, listener);
