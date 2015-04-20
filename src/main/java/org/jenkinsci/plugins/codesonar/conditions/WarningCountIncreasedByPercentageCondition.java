@@ -5,11 +5,13 @@ import hudson.Launcher;
 import hudson.model.AbstractBuild;
 import hudson.model.BuildListener;
 import hudson.model.Result;
+import hudson.util.FormValidation;
 import org.jenkinsci.plugins.codesonar.CodeSonarBuildAction;
 import org.jenkinsci.plugins.codesonar.models.CodeSonarBuildActionDTO;
 import org.jenkinsci.plugins.codesonar.models.analysis.Analysis;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
+import org.kohsuke.stapler.QueryParameter;
 
 public class WarningCountIncreasedByPercentageCondition extends Condition {
 
@@ -95,6 +97,23 @@ public class WarningCountIncreasedByPercentageCondition extends Condition {
         public String getDisplayName() {
             return NAME;
         }
+        
+        public FormValidation doCheckPercentage(@QueryParameter("percentage") String percentage) {
+            try {
+                Float.parseFloat(percentage);
+            } catch (NumberFormatException nex) {
+                return FormValidation.error("The input must be a number"); 
+            }
+            
+            float value = Float.parseFloat(percentage);
+            
+            if(value < 0) {
+                return FormValidation.error("The provided value must be zero or greater"); 
+            }
+            
+            return FormValidation.ok("Ok");
+        }
 
     }
 }
+;
