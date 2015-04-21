@@ -26,13 +26,6 @@ public class CodeSonarPublisherIT {
         @Rule
     public JenkinsRule jenkinsRule = new JenkinsRule();
 
-    @Before
-    public void setUp() throws Exception {
-    }
-
-    @After
-    public void tearDown() throws Exception {
-    }
 
     @Test
     public void providedHubAddressIsEmpty_BuildFails() throws Exception {
