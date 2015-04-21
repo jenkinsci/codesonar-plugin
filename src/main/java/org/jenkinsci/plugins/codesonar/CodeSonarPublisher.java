@@ -14,6 +14,7 @@ import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.BuildStepMonitor;
 import hudson.tasks.Publisher;
 import hudson.tasks.Recorder;
+import hudson.util.FormValidation;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -21,6 +22,7 @@ import java.util.Collection;
 import java.util.List;
 import org.apache.commons.collections.ListUtils;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang.StringUtils;
 import org.javatuples.Pair;
 import org.jenkinsci.plugins.codesonar.Utils.UrlFilters;
 import org.jenkinsci.plugins.codesonar.conditions.Condition;
@@ -35,6 +37,7 @@ import org.jenkinsci.plugins.codesonar.services.MetricsService;
 import org.jenkinsci.plugins.codesonar.services.ProceduresService;
 import org.jenkinsci.plugins.codesonar.services.XmlSerializationService;
 import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.QueryParameter;
 
 /**
  *
@@ -219,6 +222,20 @@ public class CodeSonarPublisher extends Recorder {
             }
 
             return list;
+        }
+        
+        public FormValidation doCheckHubAddress(@QueryParameter("hubAddress") String hubAddress) {
+            if(!StringUtils.isBlank(hubAddress)) {
+                return FormValidation.ok("Ok");
+            }
+            return FormValidation.error("Hub address cannot be empty.");
+        }
+
+        public FormValidation doCheckProjectName(@QueryParameter("projectName") String projectName) {
+            if(!StringUtils.isBlank(projectName)) {
+                return FormValidation.ok("Ok");
+            }
+            return FormValidation.error("Project name cannot be empty.");
         }
     }
 
