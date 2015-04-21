@@ -18,9 +18,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import org.apache.commons.collections.ListUtils;
 import org.apache.commons.io.IOUtils;
 import org.javatuples.Pair;
@@ -173,6 +171,26 @@ public class CodeSonarPublisher extends Recorder {
      */
     public void setProjectName(String projectName) {
         this.projectName = projectName;
+    }
+
+    public void setXmlSerializationService(XmlSerializationService xmlSerializationService) {
+        this.xmlSerializationService = xmlSerializationService;
+    }
+
+    public void setHttpService(HttpService httpService) {
+        this.httpService = httpService;
+    }
+
+    public void setAnalysisService(AnalysisService analysisService) {
+        this.analysisService = analysisService;
+    }
+
+    public void setMetricsService(MetricsService metricsService) {
+        this.metricsService = metricsService;
+    }
+
+    public void setProceduresService(ProceduresService proceduresService) {
+        this.proceduresService = proceduresService;
     }
 
     @Extension
