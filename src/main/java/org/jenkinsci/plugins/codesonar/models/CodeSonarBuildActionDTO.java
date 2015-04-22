@@ -17,19 +17,19 @@ public class CodeSonarBuildActionDTO {
     private final Metrics metrics;
     private final Procedures procedures;
     private final String hubAddress;
-    private final List<Pair<String, String>> conditionNamesAndResults;
+    private List<Pair<String, String>> conditionNamesAndResults;
 
     public CodeSonarBuildActionDTO(Analysis analysisActiveWarnings,
             Analysis analysisNewWarnings, Metrics metrics, Procedures procedures,
-            String hubAddress, List<Pair<String, String>> conditionNamesAndResults) {
+            String hubAddress) {
         this.analysisActiveWarnings = analysisActiveWarnings;
         this.analysisNewWarnings = analysisNewWarnings;
         this.metrics = metrics;
         this.procedures = procedures;
         this.hubAddress = hubAddress;
-        this.conditionNamesAndResults = conditionNamesAndResults;
-    }
-
+        
+    }    
+    
     public Analysis getAnalysisActiveWarnings() {
         return analysisActiveWarnings;
     }
@@ -52,5 +52,9 @@ public class CodeSonarBuildActionDTO {
 
     public List<Pair<String, String>> getConditionNamesAndResults() {
         return conditionNamesAndResults;
+    }
+    
+    public void setConditionNamesAndResults(List<Pair<String, String>> conditionNamesAndResults) {
+        this.conditionNamesAndResults = conditionNamesAndResults;
     }
 }

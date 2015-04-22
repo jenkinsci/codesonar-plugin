@@ -104,6 +104,11 @@ public class CodeSonarPublisher extends Recorder {
 
         List<Pair<String, String>> conditionNamesAndResults = new ArrayList<Pair<String, String>>();
 
+        CodeSonarBuildActionDTO buildActionDTO = new CodeSonarBuildActionDTO(analysisActiveWarnings,
+                analysisNewWarnings, metrics, procedures, expandedHubAddress);
+
+        build.addAction(new CodeSonarBuildAction(buildActionDTO, build));
+
         for (Condition condition : conditions) {
             Result validationResult = condition.validate(build, launcher, listener);
 
@@ -114,10 +119,8 @@ public class CodeSonarPublisher extends Recorder {
             listener.getLogger().println(String.format(("'%s' marked the build as %s"), condition.getDescriptor().getDisplayName(), validationResult.toString()));
         }
 
-        CodeSonarBuildActionDTO buildActionDTO = new CodeSonarBuildActionDTO(analysisActiveWarnings,
-                analysisNewWarnings, metrics, procedures, expandedHubAddress, conditionNamesAndResults);
-
-        build.addAction(new CodeSonarBuildAction(buildActionDTO, build));
+        build.getAction(CodeSonarBuildAction.class).getBuildActionDTO()
+                .setConditionNamesAndResults(conditionNamesAndResults);
 
         return true;
     }
@@ -223,16 +226,16 @@ public class CodeSonarPublisher extends Recorder {
 
             return list;
         }
-        
+
         public FormValidation doCheckHubAddress(@QueryParameter("hubAddress") String hubAddress) {
-            if(!StringUtils.isBlank(hubAddress)) {
+            if (!StringUtils.isBlank(hubAddress)) {
                 return FormValidation.ok("Ok");
             }
             return FormValidation.error("Hub address cannot be empty.");
         }
 
         public FormValidation doCheckProjectName(@QueryParameter("projectName") String projectName) {
-            if(!StringUtils.isBlank(projectName)) {
+            if (!StringUtils.isBlank(projectName)) {
                 return FormValidation.ok("Ok");
             }
             return FormValidation.error("Project name cannot be empty.");
