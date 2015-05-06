@@ -6,7 +6,7 @@
         <version>1.554.3</version>
     </parent>
 
-    <url></url>
+    <url>https://wiki.jenkins-ci.org/display/JENKINS/CodeSonar+Plugin</url>
     <name>CodeSonar</name>
     <artifactId>codesonar</artifactId>
     <!--
