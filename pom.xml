@@ -7,7 +7,7 @@
     </parent>
 
     <url></url>
-    <name>CodeSonar</name>
+    <name>CodeSonar Plugin</name>
     <artifactId>codesonar</artifactId>
     <!--
     Using the buildnumber-maven-plugin and the maven-hpi-plugin configuration below
