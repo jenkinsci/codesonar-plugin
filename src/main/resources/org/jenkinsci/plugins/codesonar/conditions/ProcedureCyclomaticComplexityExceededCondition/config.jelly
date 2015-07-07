@@ -1,8 +1,8 @@
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
-    <f:entry field="maxCyclomaticComplexity" title="Cyclomatic complexity limit">
+    <f:entry field="maxCyclomaticComplexity" title="Maximum cyclomatic complexity">
         <f:textbox default="30" />
     </f:entry>
-    <f:entry field="warrantedResult" title="Mark build as">
+    <f:entry field="warrantedResult" title="If one or more procedures has higher cyclomatic complexity, set build result to">
         <f:select />
     </f:entry>
 </j:jelly>
