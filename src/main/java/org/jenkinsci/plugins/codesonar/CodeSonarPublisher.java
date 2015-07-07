@@ -19,9 +19,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import org.apache.commons.collections.ListUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
@@ -106,6 +104,11 @@ public class CodeSonarPublisher extends Recorder {
 
         List<Pair<String, String>> conditionNamesAndResults = new ArrayList<Pair<String, String>>();
 
+        CodeSonarBuildActionDTO buildActionDTO = new CodeSonarBuildActionDTO(analysisActiveWarnings,
+                analysisNewWarnings, metrics, procedures, expandedHubAddress);
+
+        build.addAction(new CodeSonarBuildAction(buildActionDTO, build));
+
         for (Condition condition : conditions) {
             Result validationResult = condition.validate(build, launcher, listener);
 
@@ -116,10 +119,8 @@ public class CodeSonarPublisher extends Recorder {
             listener.getLogger().println(String.format(("'%s' marked the build as %s"), condition.getDescriptor().getDisplayName(), validationResult.toString()));
         }
 
-        CodeSonarBuildActionDTO buildActionDTO = new CodeSonarBuildActionDTO(analysisActiveWarnings,
-                analysisNewWarnings, metrics, procedures, expandedHubAddress, conditionNamesAndResults);
-
-        build.addAction(new CodeSonarBuildAction(buildActionDTO, build));
+        build.getAction(CodeSonarBuildAction.class).getBuildActionDTO()
+                .setConditionNamesAndResults(conditionNamesAndResults);
 
         return true;
     }
@@ -178,6 +179,26 @@ public class CodeSonarPublisher extends Recorder {
         this.projectName = projectName;
     }
 
+    public void setXmlSerializationService(XmlSerializationService xmlSerializationService) {
+        this.xmlSerializationService = xmlSerializationService;
+    }
+
+    public void setHttpService(HttpService httpService) {
+        this.httpService = httpService;
+    }
+
+    public void setAnalysisService(AnalysisService analysisService) {
+        this.analysisService = analysisService;
+    }
+
+    public void setMetricsService(MetricsService metricsService) {
+        this.metricsService = metricsService;
+    }
+
+    public void setProceduresService(ProceduresService proceduresService) {
+        this.proceduresService = proceduresService;
+    }
+
     @Extension
     public static class DescriptorImpl extends BuildStepDescriptor<Publisher> {
 
@@ -205,16 +226,16 @@ public class CodeSonarPublisher extends Recorder {
 
             return list;
         }
-        
+
         public FormValidation doCheckHubAddress(@QueryParameter("hubAddress") String hubAddress) {
-            if(!StringUtils.isBlank(hubAddress)) {
+            if (!StringUtils.isBlank(hubAddress)) {
                 return FormValidation.ok("Ok");
             }
             return FormValidation.error("Hub address cannot be empty.");
         }
 
         public FormValidation doCheckProjectName(@QueryParameter("projectName") String projectName) {
-            if(!StringUtils.isBlank(projectName)) {
+            if (!StringUtils.isBlank(projectName)) {
                 return FormValidation.ok("Ok");
             }
             return FormValidation.error("Project name cannot be empty.");

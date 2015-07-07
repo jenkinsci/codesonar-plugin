@@ -6,8 +6,8 @@
         <version>1.554.3</version>
     </parent>
 
-    <url></url>
-    <name>CodeSonar</name>
+    <url>https://wiki.jenkins-ci.org/display/JENKINS/CodeSonar+Plugin</url>
+    <name>CodeSonar Plugin</name>
     <artifactId>codesonar</artifactId>
     <!--
     Using the buildnumber-maven-plugin and the maven-hpi-plugin configuration below
