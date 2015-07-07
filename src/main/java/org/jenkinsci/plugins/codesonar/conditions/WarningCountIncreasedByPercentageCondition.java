@@ -15,7 +15,7 @@ import org.kohsuke.stapler.QueryParameter;
 
 public class WarningCountIncreasedByPercentageCondition extends Condition {
 
-    private static final String NAME = "Maximum warning count increased by percentage";
+    private static final String NAME = "Warning count increase: overall";
     private float percentage = 5.0f;
     private String warrantedResult = Result.UNSTABLE.toString();
 

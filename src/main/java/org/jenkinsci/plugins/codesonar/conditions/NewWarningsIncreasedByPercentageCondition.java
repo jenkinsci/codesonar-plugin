@@ -13,7 +13,7 @@ import org.kohsuke.stapler.DataBoundSetter;
 
 public class NewWarningsIncreasedByPercentageCondition extends Condition {
 
-    private static final String NAME = "Number of new warnings increased by a percentage";
+    private static final String NAME = "Warning count increase: new only";
     private float percentage = 5.0f;
     private String warrantedResult = Result.UNSTABLE.toString();
 

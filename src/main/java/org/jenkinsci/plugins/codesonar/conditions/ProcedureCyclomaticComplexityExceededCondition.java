@@ -20,7 +20,7 @@ import org.kohsuke.stapler.DataBoundSetter;
  */
 public class ProcedureCyclomaticComplexityExceededCondition extends Condition {
 
-    private static final String NAME = "Procedure cyclomatic complexity exceeded";
+    private static final String NAME = "Cyclomatic complexity";
 
     private int maxCyclomaticComplexity = 30;
     private String warrantedResult = Result.UNSTABLE.toString();

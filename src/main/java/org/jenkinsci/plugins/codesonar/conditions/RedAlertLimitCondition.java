@@ -18,7 +18,7 @@ import org.kohsuke.stapler.DataBoundSetter;
  */
 public class RedAlertLimitCondition extends Condition {
 
-    private static final String NAME = "Red alert limit";
+    private static final String NAME = "Red alerts";
 
     private int alertLimit = 1;
     private String warrantedResult = Result.UNSTABLE.toString();
