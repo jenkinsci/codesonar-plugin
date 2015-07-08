@@ -15,7 +15,7 @@
     major.minor.patch-SNAPSHOT-gitSHA (dev builds)
     major.minor.patch-gitSHA (releases)
     -->
-    <version>1.0.0-SNAPSHOT</version>
+    <version>1.0.0</version>
     <packaging>hpi</packaging>
 
     <developers>
