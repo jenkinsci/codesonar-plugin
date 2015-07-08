@@ -49,7 +49,7 @@
 				 Jenkins CI github repo after an release. We do this to ensure no one sneaks code into our repo. -->
     <scm>
         <connection>scm:git:ssh://github.com/Praqma/codesonar-plugin.git</connection>
-        <developerConnection>scm:git:ssh://github.com/Praqma/codesonar-plugin.git</developerConnection>
+        <developerConnection>scm:git:ssh://git@github.com/Praqma/codesonar-plugin.git</developerConnection>
         <url>https://github.com/Praqma/codesonar-plugin</url>
     </scm>
 
