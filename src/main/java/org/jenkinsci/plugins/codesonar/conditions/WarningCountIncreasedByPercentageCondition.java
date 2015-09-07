@@ -111,7 +111,7 @@ public class WarningCountIncreasedByPercentageCondition extends Condition {
                 return FormValidation.error("The provided value must be zero or greater"); 
             }
             
-            return FormValidation.ok("Ok");
+            return FormValidation.ok();
         }
 
     }
