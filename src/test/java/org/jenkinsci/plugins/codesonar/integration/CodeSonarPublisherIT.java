@@ -104,6 +104,7 @@ public class CodeSonarPublisherIT {
         
         // assert that we have a message in the console log
         String log = FileUtils.readFileToString(build.getLogFile());
-        assertTrue(log.contains("[CodeSonar] Request sent to http://10.10.10.10/index.xml"));
+        assertTrue(log.contains("[CodeSonar] Error on url: http://10.10.10.10/index.xml"));
+        assertTrue(log.contains("[CodeSonar] Message is: "));
     }
 }

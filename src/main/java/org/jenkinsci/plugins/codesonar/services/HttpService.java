@@ -3,6 +3,8 @@ package org.jenkinsci.plugins.codesonar.services;
 import hudson.AbortException;
 import hudson.model.BuildListener;
 import java.io.Serializable;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.apache.http.client.fluent.Request;
 
 /**
@@ -10,30 +12,19 @@ import org.apache.http.client.fluent.Request;
  * @author Andrius
  */
 public class HttpService implements Serializable {
-    private transient BuildListener listener;
-
-    public String getContentFromUrlAsString(String url) throws AbortException {
-        log(String.format("Request sent to %s", url));
-        
+    
+    private static final Logger logger = Logger.getLogger(HttpService.class.getName());
+    
+    public String getContentFromUrlAsString(String url) throws AbortException {        
+        logger.fine(String.format("Request sent to %s", url));        
         String output;
         try {
             output = Request.Get(url).execute().returnContent().asString();
         } catch (Exception e) {
-            log(String.format("Error on url: %s", url));
-            log(String.format("Exception message is: %s", e.getMessage()));
-            throw new AbortException(e.getMessage());
+            logger.log(Level.SEVERE, String.format("[CodeSonar] Error on url: %s", url), e);
+            throw new AbortException(String.format("[CodeSonar] Error on url: %s%n[CodeSonar] Message is: %s", url, e.getMessage()));
         } 
         
         return output;
-    }
-    
-    public void setListener(BuildListener listener) {
-        this.listener = listener;
-    }
-    
-    private void log(String content) {
-        if(listener != null) {
-            listener.getLogger().println("[CodeSonar] "+content);
-        }
     }
 }

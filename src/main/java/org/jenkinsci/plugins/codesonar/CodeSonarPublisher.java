@@ -78,8 +78,6 @@ public class CodeSonarPublisher extends Recorder {
         String expandedHubAddress = build.getEnvironment(listener).expand(Util.fixNull(hubAddress));
         String expandedProjectName = build.getEnvironment(listener).expand(Util.fixNull(projectName));
         
-        httpService.setListener(listener);
-        
         if (expandedHubAddress.isEmpty()) {
             throw new AbortException("Hub address not provided");
         }
