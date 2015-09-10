@@ -5,15 +5,14 @@ import hudson.model.FreeStyleBuild;
 import hudson.model.FreeStyleProject;
 import hudson.model.Result;
 import hudson.model.queue.QueueTaskFuture;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
+import org.apache.commons.io.FileUtils;
 import static org.junit.Assert.*;
 import org.jenkinsci.plugins.codesonar.CodeSonarPublisher;
 import org.jenkinsci.plugins.codesonar.conditions.Condition;
 import org.jenkinsci.plugins.codesonar.conditions.PercentageOfWariningsIncreasedInCasesBellowCertainRankCondition;
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.jvnet.hudson.test.JenkinsRule;
@@ -77,5 +76,34 @@ public class CodeSonarPublisherIT {
       
         // assert
         assertEquals(EXPECTED_RESULT, build.getResult());
+    }
+    
+    @Test
+    public void testLogging() throws Exception {
+        final Result EXPECTED_RESULT = Result.FAILURE;
+        
+        final int RANK_OF_WARNINGS = 30;
+        final float WARNING_PERCENTAGE = 50.0f;
+        PercentageOfWariningsIncreasedInCasesBellowCertainRankCondition condition = 
+                new PercentageOfWariningsIncreasedInCasesBellowCertainRankCondition(RANK_OF_WARNINGS, WARNING_PERCENTAGE);
+        
+        final String VALID_HUB_ADDRESS = "10.10.10.10";
+        final String RANDOM_NAME = "projectNotThere";
+
+        FreeStyleProject project = jenkinsRule.createFreeStyleProject();
+        
+        List<Condition> conditions = new ArrayList<Condition>();
+        project.getPublishersList().add(new CodeSonarPublisher(conditions, VALID_HUB_ADDRESS, RANDOM_NAME));
+        
+        // act
+        QueueTaskFuture<FreeStyleBuild> queueTaskFuture = project.scheduleBuild2(0, new Cause.UserIdCause());
+        FreeStyleBuild build = queueTaskFuture.get();
+      
+        // assert
+        assertEquals(EXPECTED_RESULT, build.getResult());        
+        
+        // assert that we have a message in the console log
+        String log = FileUtils.readFileToString(build.getLogFile());
+        assertTrue(log.contains("[CodeSonar] Request sent to http://10.10.10.10/index.xml"));
     }
 }
