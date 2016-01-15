@@ -21,6 +21,10 @@ public class HttpService implements Serializable {
     
     public String getContentFromUrlAsString(String url) throws AbortException { 
         System.out.println("------------sending request----------------");
+        
+        System.out.println("------------url----------------");
+        System.out.println(url);
+        
         logger.fine(String.format("Request sent to %s", url));        
         String output;
         try {
@@ -35,8 +39,10 @@ public class HttpService implements Serializable {
                 System.out.println(header.getValue());
                 System.out.println("----------------------------");
             }
+            
             InputStream contentStream = httpResponse.getEntity().getContent();
             output = IOUtils.toString(contentStream); 
+            
 //                output = response.returnContent().asString();
 //            output = Request.Get(url).execute().returnContent().asString();
         } catch (Exception e) {
