@@ -37,8 +37,6 @@ public class HttpService implements Serializable {
             }
             InputStream contentStream = httpResponse.getEntity().getContent();
             output = IOUtils.toString(contentStream); 
-            System.out.println("content");
-            System.out.println(output);
 //                output = response.returnContent().asString();
 //            output = Request.Get(url).execute().returnContent().asString();
         } catch (Exception e) {
