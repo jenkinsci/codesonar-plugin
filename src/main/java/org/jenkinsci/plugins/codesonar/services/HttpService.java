@@ -5,6 +5,7 @@ import java.io.InputStream;
 import java.io.Serializable;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.apache.commons.io.IOUtils;
 import org.apache.http.Header;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.fluent.Request;
@@ -34,8 +35,11 @@ public class HttpService implements Serializable {
                 System.out.println(header.getValue());
                 System.out.println("----------------------------");
             }
-//            InputStream content = httpResponse.getEntity().getContent();
-                output = response.returnContent().asString();
+            InputStream contentStream = httpResponse.getEntity().getContent();
+            output = IOUtils.toString(contentStream); 
+            System.out.println("content");
+            System.out.println(output);
+//                output = response.returnContent().asString();
 //            output = Request.Get(url).execute().returnContent().asString();
         } catch (Exception e) {
             logger.log(Level.SEVERE, String.format("[CodeSonar] Error on url: %s", url), e);
