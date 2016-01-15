@@ -1,6 +1,7 @@
 package org.jenkinsci.plugins.codesonar.services;
 
 import hudson.AbortException;
+import java.io.InputStream;
 import java.io.Serializable;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -23,17 +24,19 @@ public class HttpService implements Serializable {
         String output;
         try {
             Response response = Request.Get(url).execute();
+            
+            HttpResponse httpResponse = response.returnResponse();
+
             System.out.println("------------reading headers----------------");
-            Header[] allHeaders = response.returnResponse().getAllHeaders();
+            Header[] allHeaders = httpResponse.getAllHeaders();
             for (Header header : allHeaders) {
                 System.out.println(header.getName());
                 System.out.println(header.getValue());
                 System.out.println("----------------------------");
             }
-            
-            response.returnContent();
-            
-            output = Request.Get(url).execute().returnContent().asString();
+//            InputStream content = httpResponse.getEntity().getContent();
+                output = response.returnContent().asString();
+//            output = Request.Get(url).execute().returnContent().asString();
         } catch (Exception e) {
             logger.log(Level.SEVERE, String.format("[CodeSonar] Error on url: %s", url), e);
             throw new AbortException(String.format("[CodeSonar] Error on url: %s%n[CodeSonar] Message is: %s", url, e.getMessage()));
