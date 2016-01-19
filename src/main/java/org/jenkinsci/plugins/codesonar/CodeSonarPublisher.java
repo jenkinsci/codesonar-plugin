@@ -75,7 +75,6 @@ public class CodeSonarPublisher extends Recorder {
 
     @Override
     public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener) throws InterruptedException, IOException {
-        System.out.println("------------publisher starting----------------");
         String expandedHubAddress = build.getEnvironment(listener).expand(Util.fixNull(hubAddress));
         String expandedProjectName = build.getEnvironment(listener).expand(Util.fixNull(projectName));
         
