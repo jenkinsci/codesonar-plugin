@@ -2,6 +2,7 @@ package org.jenkinsci.plugins.codesonar.services;
 
 import hudson.AbortException;
 import java.io.Serializable;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.apache.http.client.CookieStore;

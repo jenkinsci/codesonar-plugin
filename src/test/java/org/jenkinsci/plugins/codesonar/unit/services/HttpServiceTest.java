@@ -26,14 +26,4 @@ public class HttpServiceTest {
        
         httpService.getContentFromUrlAsString(INVALID_URL);
     }
-    
-    @Test()
-    public void testtest() throws Exception {
-        log.info("---------------starting----------------------");
-        final String URL = "http://10.10.1.131:8010/analysis/29.xml?filter=2";
-       
-        String str = httpService.getContentFromUrlAsString(URL);
-        log.info("---------------result----------------------");
-        log.info(str);
-    }
 }
