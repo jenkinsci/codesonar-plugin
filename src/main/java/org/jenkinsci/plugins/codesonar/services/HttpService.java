@@ -4,6 +4,7 @@ import hudson.AbortException;
 import java.io.Serializable;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
 import org.apache.http.client.fluent.Request;
 
 /**
