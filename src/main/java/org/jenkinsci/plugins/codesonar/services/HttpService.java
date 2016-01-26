@@ -1,6 +1,7 @@
 package org.jenkinsci.plugins.codesonar.services;
 
 import hudson.AbortException;
+import java.io.IOException;
 import java.io.Serializable;
 import java.net.URI;
 import java.util.List;
@@ -43,6 +44,15 @@ public class HttpService implements Serializable {
 
         return output;
     }
+    
+    public void testCall() throws IOException {
+        String url = "https://10.10.1.131:8000/import_annotations/";
+//        url = "https://stackoverflow.com";
+        
+        HttpResponse resp = executor.execute(Request.Get(url)).returnResponse();
+        
+        System.out.println(resp.getStatusLine());
+    }
 
     public void authenticate(String scheme, String host, int port, String username, String password) throws AbortException {
         List<NameValuePair> loginForm = Form.form()
@@ -64,7 +74,9 @@ public class HttpService implements Serializable {
                     .execute(Request.Post(uri)
                     .bodyForm(loginForm))
                     .returnResponse();
-
+            
+            System.out.println(resp.getStatusLine());
+            
             int statusCode = resp.getStatusLine().getStatusCode();
 
             if (statusCode != 200) {

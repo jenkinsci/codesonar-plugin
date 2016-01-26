@@ -1,5 +1,13 @@
 package org.jenkinsci.plugins.codesonar;
 
+import com.cloudbees.plugins.credentials.Credentials;
+import com.cloudbees.plugins.credentials.CredentialsMatcher;
+import com.cloudbees.plugins.credentials.CredentialsMatchers;
+import com.cloudbees.plugins.credentials.CredentialsProvider;
+import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
+import com.cloudbees.plugins.credentials.common.StandardUsernameCredentials;
+import com.cloudbees.plugins.credentials.common.UsernamePasswordCredentials;
+import com.cloudbees.plugins.credentials.domains.DomainRequirement;
 import hudson.AbortException;
 import hudson.DescriptorExtensionList;
 import hudson.Extension;
@@ -9,16 +17,21 @@ import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 import hudson.model.Action;
 import hudson.model.BuildListener;
+import hudson.model.ItemGroup;
 import hudson.model.Result;
+import hudson.model.Run;
+import hudson.security.ACL;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.BuildStepMonitor;
 import hudson.tasks.Publisher;
 import hudson.tasks.Recorder;
 import hudson.util.FormValidation;
+import hudson.util.ListBoxModel;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import org.apache.commons.collections.ListUtils;
 import org.apache.commons.io.IOUtils;
@@ -36,6 +49,7 @@ import org.jenkinsci.plugins.codesonar.services.HttpService;
 import org.jenkinsci.plugins.codesonar.services.MetricsService;
 import org.jenkinsci.plugins.codesonar.services.ProceduresService;
 import org.jenkinsci.plugins.codesonar.services.XmlSerializationService;
+import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 
@@ -56,8 +70,10 @@ public class CodeSonarPublisher extends Recorder {
 
     private List<Condition> conditions;
 
+    private String credentialId;
+    
     @DataBoundConstructor
-    public CodeSonarPublisher(List<Condition> conditions, String hubAddress, String projectName) {
+    public CodeSonarPublisher(List<Condition> conditions, String hubAddress, String projectName, String credentialId) {
         xmlSerializationService = new XmlSerializationService();
         httpService = new HttpService();
         analysisService = new AnalysisService(httpService, xmlSerializationService);
@@ -71,12 +87,26 @@ public class CodeSonarPublisher extends Recorder {
             conditions = ListUtils.EMPTY_LIST;
         }
         this.conditions = conditions;
+        
+        this.credentialId = credentialId;
     }
 
     @Override
     public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener) throws InterruptedException, IOException {
+        System.out.println("starting");
         String expandedHubAddress = build.getEnvironment(listener).expand(Util.fixNull(hubAddress));
         String expandedProjectName = build.getEnvironment(listener).expand(Util.fixNull(projectName));
+        
+        UsernamePasswordCredentials c = CredentialsMatchers.firstOrNull(
+            CredentialsProvider.lookupCredentials(UsernamePasswordCredentials.class, build.getParent(), ACL.SYSTEM,
+                    Collections.<DomainRequirement>emptyList()), CredentialsMatchers.withId(credentialId));
+        
+        System.out.println("\"-------------usr are : " + c.getUsername());
+        System.out.println("\"-------------pass are : " + c.getPassword());
+        
+        httpService.testCall();
+        httpService.authenticate("https", expandedHubAddress, 8000, c.getUsername(), c.getPassword().getPlainText());
+        httpService.testCall();
         
         if (expandedHubAddress.isEmpty()) {
             throw new AbortException("Hub address not provided");
@@ -198,6 +228,14 @@ public class CodeSonarPublisher extends Recorder {
     public void setProceduresService(ProceduresService proceduresService) {
         this.proceduresService = proceduresService;
     }
+    
+    public String getCredentialId() {
+        return credentialId;
+    }
+
+    public void setCredentialId(String credentialId) {
+        this.credentialId = credentialId;
+    }
 
     @Extension
     public static class DescriptorImpl extends BuildStepDescriptor<Publisher> {
@@ -239,6 +277,19 @@ public class CodeSonarPublisher extends Recorder {
                 return FormValidation.ok("Ok");
             }
             return FormValidation.error("Project name cannot be empty.");
+        }
+        
+         public ListBoxModel doFillCredentialIdItems(final @AncestorInPath ItemGroup<?> context) {
+            final List<StandardUsernameCredentials> credentials = CredentialsProvider.lookupCredentials(StandardUsernameCredentials.class, context, ACL.SYSTEM, Collections.<DomainRequirement>emptyList()); 
+            
+            StandardListBoxModel model2 = (StandardListBoxModel) new StandardListBoxModel().withEmptySelection().withMatching(new CredentialsMatcher() {
+                @Override
+                public boolean matches(Credentials item) {
+                    return item instanceof UsernamePasswordCredentials;
+                }
+            }, credentials);     
+            
+            return model2;
         }
     }
 

@@ -1,6 +1,7 @@
 package org.jenkinsci.plugins.codesonar.unit.services;
 
 import hudson.AbortException;
+import java.io.IOException;
 import java.util.logging.Logger;
 import org.jenkinsci.plugins.codesonar.services.HttpService;
 import org.junit.Before;
@@ -25,5 +26,10 @@ public class HttpServiceTest {
         final String INVALID_URL = "invalidurl";
        
         httpService.getContentFromUrlAsString(INVALID_URL);
+    }
+    
+    @Test
+    public void testCertAuthentication() throws IOException {
+        httpService.testCall();
     }
 }
