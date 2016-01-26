@@ -40,12 +40,12 @@ job('myProject_GEN'){
 
 @Extension(optional = true)
 public class CodeSonarJobDslExtension extends ContextExtensionPoint {
-    @RequiresPlugin(id = "codesonar", minimumVersion = "1.0.0")
+    /*@RequiresPlugin(id = "codesonar", minimumVersion = "1.0.0")
     @DslExtensionMethod(context = PublisherContext.class)
     public Object codeSonar(String hubAddress, String projectName, Runnable closure){
         CodeSonarJobDslContext context = new CodeSonarJobDslContext();
         executeInContext(closure, context);
 
         return new CodeSonarPublisher(context.conditions, hubAddress, projectName);
-    }
+    }*/
 }
