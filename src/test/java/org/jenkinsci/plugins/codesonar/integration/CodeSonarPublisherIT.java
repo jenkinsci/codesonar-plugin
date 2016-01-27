@@ -80,6 +80,7 @@ public class CodeSonarPublisherIT {
     
     @Test
     public void testLogging() throws Exception {
+        // arrange 
         final Result EXPECTED_RESULT = Result.FAILURE;
         
         final int RANK_OF_WARNINGS = 30;
@@ -104,7 +105,6 @@ public class CodeSonarPublisherIT {
         
         // assert that we have a message in the console log
         String log = FileUtils.readFileToString(build.getLogFile());
-        assertTrue(log.contains("[CodeSonar] Error on url: http://10.10.10.10/index.xml"));
         assertTrue(log.contains("[CodeSonar] Message is: "));
     }
 }
