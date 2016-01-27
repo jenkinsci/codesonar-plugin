@@ -24,7 +24,7 @@ public class Projects implements Serializable {
         if (projects == null) {
             projects = Collections.EMPTY_LIST;
         }
-
+            
         for (Project project : projects) {
             if (project.getProject().equals(projectName)) {
                 return project;

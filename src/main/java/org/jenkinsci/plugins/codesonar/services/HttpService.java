@@ -4,11 +4,13 @@ import hudson.AbortException;
 import java.io.IOException;
 import java.io.Serializable;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
+import org.apache.http.StatusLine;
 import org.apache.http.client.CookieStore;
 import org.apache.http.client.fluent.Executor;
 import org.apache.http.client.fluent.Form;
@@ -32,6 +34,10 @@ public class HttpService implements Serializable {
 
     private static final Logger logger = Logger.getLogger(HttpService.class.getName());
 
+    public String getContentFromUrlAsString(URI uri) throws AbortException {
+        return getContentFromUrlAsString(uri.toString());
+    }
+    
     public String getContentFromUrlAsString(String url) throws AbortException {
         logger.fine(String.format("Request sent to %s", url));
         String output;
@@ -44,17 +50,8 @@ public class HttpService implements Serializable {
 
         return output;
     }
-    
-    public void testCall() throws IOException {
-        String url = "https://10.10.1.131:8000/import_annotations/";
-//        url = "https://stackoverflow.com";
-        
-        HttpResponse resp = executor.execute(Request.Get(url)).returnResponse();
-        
-        System.out.println(resp.getStatusLine());
-    }
 
-    public void authenticate(String scheme, String host, int port, String username, String password) throws AbortException {
+    public void authenticate(URI uri, String username, String password) throws AbortException {
         List<NameValuePair> loginForm = Form.form()
                 .add("sif_username", username)
                 .add("sif_password", password)
@@ -63,26 +60,21 @@ public class HttpService implements Serializable {
                 .build();
 
         try {
-            URIBuilder uriBuilder = new URIBuilder();
-            uriBuilder.setScheme(scheme);
-            uriBuilder.setHost(host);
-            uriBuilder.setPort(port);
+            URIBuilder uriBuilder = new URIBuilder(uri);
             uriBuilder.setPath("/sign_in.html");
-            URI uri = uriBuilder.build();
+            uri = uriBuilder.build();
 
             HttpResponse resp = executor
                     .execute(Request.Post(uri)
                     .bodyForm(loginForm))
                     .returnResponse();
             
-            System.out.println(resp.getStatusLine());
-            
             int statusCode = resp.getStatusLine().getStatusCode();
 
             if (statusCode != 200) {
                 throw new AbortException("[CodeSonar] failed to authenticate.");
             }
-        } catch (Exception e) {
+        } catch (URISyntaxException | IOException e) {
             throw new AbortException(String.format("[CodeSonar] Error on url: %s%n[CodeSonar] Message is: %s", e.getMessage()));
         }
     }

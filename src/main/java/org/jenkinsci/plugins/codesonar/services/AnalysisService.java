@@ -3,8 +3,11 @@ package org.jenkinsci.plugins.codesonar.services;
 import hudson.AbortException;
 import java.io.IOException;
 import java.io.Serializable;
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.apache.http.client.utils.URIBuilder;
@@ -49,20 +52,27 @@ public class AnalysisService implements Serializable {
         return analysisUrl;
     }
 
-    public String getLatestAnalysisUrlForAProject(String hubAddress, String projectName) throws AbortException {
-        String url = String.format("http://%s/index.xml", hubAddress);
-
+    public String getLatestAnalysisUrlForAProject(URI uri, String projectName) throws IOException {
+        URIBuilder uriBuilder = new URIBuilder(uri);
+        uriBuilder.setPath("/index.xml");
         String xmlContent = null;
-        xmlContent = httpService.getContentFromUrlAsString(url);
+        try {
+            xmlContent = httpService.getContentFromUrlAsString(uriBuilder.build());
+        } catch (URISyntaxException ex) {
+            throw new AbortException(String.format("[CodeSonar] %s", ex.getMessage()));
+        }
 
         Projects projects = null;
         projects = xmlSerializationService.deserialize(xmlContent, Projects.class);
 
         Project project = projects.getProjectByName(projectName);
+        uriBuilder.setPath(project.getUrl());
 
-        String analysisUrl = "http://" + hubAddress + project.getUrl();
-
-        return analysisUrl;
+        try {
+            return uriBuilder.build().toString();
+        } catch (URISyntaxException ex) {
+            throw new AbortException(String.format("[CodeSonar] %s", ex.getMessage()));
+        }
     }
 
     public Analysis getAnalysisFromUrl(String analysisUrl) throws IOException {

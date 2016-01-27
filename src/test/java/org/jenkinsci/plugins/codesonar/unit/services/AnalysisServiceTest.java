@@ -2,6 +2,7 @@ package org.jenkinsci.plugins.codesonar.unit.services;
 
 import hudson.AbortException;
 import java.io.IOException;
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -16,6 +17,7 @@ import static org.junit.Assert.*;
 import org.junit.Before;
 import org.junit.Test;
 import static org.mockito.Mockito.*;
+import java.net.URI;
 
 /**
  *
@@ -60,18 +62,19 @@ public class AnalysisServiceTest {
     }
 
     @Test(expected = AbortException.class)
-    public void providedInvalidHubAddress_shouldThrowAnAbortException() throws IOException {
+    public void providedInvalidHubAddress_shouldThrowAnAbortException() throws IOException, URISyntaxException {
         final String INVALID_HUB_ADDRESS = "99.99.99.99";
         final String PROJECT_NAME = "pojectName";
 
+        when(mockedHttpService.getContentFromUrlAsString(notNull(URI.class))).thenCallRealMethod();
         when(mockedHttpService.getContentFromUrlAsString(any(String.class))).thenCallRealMethod();
 
-        analysisService.getLatestAnalysisUrlForAProject(INVALID_HUB_ADDRESS, PROJECT_NAME);
+        analysisService.getLatestAnalysisUrlForAProject(new URI(INVALID_HUB_ADDRESS), PROJECT_NAME);
     }
 
     @Test(expected = AbortException.class)
     public void projectWithProvidedProjectNameIsNotFoundOnTheHub_shouldThrowAnAbortException() throws Exception {
-        final String VALID_HUB_ADDRESS = "99.99.99.99";
+        final String VALID_HUB_ADDRESS = "http://10.10.1.131";
         final String VALID_PROJECT_NAME = "pojectName";
 
         final String RESPONSE_XML_CONTENT = "valid xml";
@@ -79,10 +82,11 @@ public class AnalysisServiceTest {
         Projects projects = new Projects();
         projects.setProjects(Collections.EMPTY_LIST);
 
+        when(mockedHttpService.getContentFromUrlAsString(notNull(URI.class))).thenCallRealMethod();
         when(mockedHttpService.getContentFromUrlAsString(notNull(String.class))).thenReturn(RESPONSE_XML_CONTENT);
         when(mockedXmlSerializationService.deserialize(notNull(String.class), isA(Class.class))).thenReturn(projects);
 
-        analysisService.getLatestAnalysisUrlForAProject(VALID_HUB_ADDRESS, VALID_PROJECT_NAME);
+        analysisService.getLatestAnalysisUrlForAProject(new URI(VALID_HUB_ADDRESS), VALID_PROJECT_NAME);
     }
 
     @Test(expected = AbortException.class)

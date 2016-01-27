@@ -39,7 +39,7 @@ public class CodeSonarBuildAction implements Action {
 
     @Override
     public String getUrlName() {
-        String hubAddress = buildActionDTO.getHubAddress();
+        String hubAddress = buildActionDTO.getBaseHubUri();
         String analysisId = buildActionDTO.getAnalysisActiveWarnings().getAnalysisId();
         
         return String.format("http://%s/analysis/%s.html", hubAddress, analysisId);

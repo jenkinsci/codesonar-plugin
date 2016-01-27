@@ -27,9 +27,4 @@ public class HttpServiceTest {
        
         httpService.getContentFromUrlAsString(INVALID_URL);
     }
-    
-    @Test
-    public void testCertAuthentication() throws IOException {
-        httpService.testCall();
-    }
 }

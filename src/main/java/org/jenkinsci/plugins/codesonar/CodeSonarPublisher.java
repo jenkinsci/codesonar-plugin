@@ -19,7 +19,6 @@ import hudson.model.Action;
 import hudson.model.BuildListener;
 import hudson.model.ItemGroup;
 import hudson.model.Result;
-import hudson.model.Run;
 import hudson.security.ACL;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.BuildStepMonitor;
@@ -28,6 +27,8 @@ import hudson.tasks.Recorder;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -36,6 +37,7 @@ import java.util.List;
 import org.apache.commons.collections.ListUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
+import org.apache.http.client.utils.URIBuilder;
 import org.javatuples.Pair;
 import org.jenkinsci.plugins.codesonar.Utils.UrlFilters;
 import org.jenkinsci.plugins.codesonar.conditions.Condition;
@@ -61,6 +63,8 @@ public class CodeSonarPublisher extends Recorder {
 
     private String hubAddress;
     private String projectName;
+    private String protocol;
+    private String hubPort;
 
     private XmlSerializationService xmlSerializationService;
     private HttpService httpService;
@@ -71,9 +75,9 @@ public class CodeSonarPublisher extends Recorder {
     private List<Condition> conditions;
 
     private String credentialId;
-    
+
     @DataBoundConstructor
-    public CodeSonarPublisher(List<Condition> conditions, String hubAddress, String projectName, String credentialId) {
+    public CodeSonarPublisher(List<Condition> conditions, String protocol, String hubAddress, String hubPort, String projectName, String credentialId) {
         xmlSerializationService = new XmlSerializationService();
         httpService = new HttpService();
         analysisService = new AnalysisService(httpService, xmlSerializationService);
@@ -82,52 +86,67 @@ public class CodeSonarPublisher extends Recorder {
 
         this.hubAddress = hubAddress;
         this.projectName = projectName;
+        this.protocol = protocol;
+        this.hubPort = hubPort;
 
         if (conditions == null) {
             conditions = ListUtils.EMPTY_LIST;
         }
         this.conditions = conditions;
-        
+
         this.credentialId = credentialId;
     }
 
     @Override
-    public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener) throws InterruptedException, IOException {
-        System.out.println("starting");
+    public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener) throws InterruptedException, IOException, AbortException {
         String expandedHubAddress = build.getEnvironment(listener).expand(Util.fixNull(hubAddress));
         String expandedProjectName = build.getEnvironment(listener).expand(Util.fixNull(projectName));
-        
-        UsernamePasswordCredentials c = CredentialsMatchers.firstOrNull(
-            CredentialsProvider.lookupCredentials(UsernamePasswordCredentials.class, build.getParent(), ACL.SYSTEM,
-                    Collections.<DomainRequirement>emptyList()), CredentialsMatchers.withId(credentialId));
-        
-        System.out.println("\"-------------usr are : " + c.getUsername());
-        System.out.println("\"-------------pass are : " + c.getPassword());
-        
-        httpService.testCall();
-        httpService.authenticate("https", expandedHubAddress, 8000, c.getUsername(), c.getPassword().getPlainText());
-        httpService.testCall();
-        
+        String expandedHubPort = build.getEnvironment(listener).expand(Util.fixNull(getHubPort()));
+
         if (expandedHubAddress.isEmpty()) {
             throw new AbortException("Hub address not provided");
         }
+        if (expandedHubPort.isEmpty()) {
+            throw new AbortException("Hub port not provided");
+        }
         if (expandedProjectName.isEmpty()) {
             throw new AbortException("Project name not provided");
+        }
+
+        URIBuilder uriBuilder = new URIBuilder();
+        uriBuilder.setScheme(getProtocol());
+        uriBuilder.setHost(expandedHubAddress);
+        uriBuilder.setPort(Integer.parseInt(expandedHubPort));
+        URI baseHubUri;
+        try {
+            baseHubUri = uriBuilder.build();
+        } catch (URISyntaxException ex) {
+            throw new AbortException(String.format("[CodeSonar] %s", ex.getMessage()));
+        }
+
+        UsernamePasswordCredentials credentials = CredentialsMatchers.firstOrNull(
+                CredentialsProvider.lookupCredentials(UsernamePasswordCredentials.class, build.getParent(), ACL.SYSTEM,
+                        Collections.<DomainRequirement>emptyList()), CredentialsMatchers.withId(credentialId));
+
+        if (credentials != null) {
+            httpService.authenticate(baseHubUri,
+                    credentials.getUsername(),
+                    credentials.getPassword().getPlainText());
         }
 
         List<String> logFile = IOUtils.readLines(build.getLogReader());
         String analysisUrl = analysisService.getAnalysisUrlFromLogFile(logFile);
 
         if (analysisUrl == null) {
-            analysisUrl = analysisService.getLatestAnalysisUrlForAProject(expandedHubAddress, expandedProjectName);
+            analysisUrl = analysisService.getLatestAnalysisUrlForAProject(baseHubUri, expandedProjectName);
         }
-        
+
         Analysis analysisActiveWarnings = analysisService.getAnalysisFromUrl(analysisUrl, UrlFilters.ACTIVE);
 
-        String metricsUrl = metricsService.getMetricsUrlFromAnAnalysisId(expandedHubAddress, analysisActiveWarnings.getAnalysisId());
+        String metricsUrl = metricsService.getMetricsUrlFromAnAnalysisId(baseHubUri.toString(), analysisActiveWarnings.getAnalysisId());
         Metrics metrics = metricsService.getMetricsFromUrl(metricsUrl);
 
-        String proceduresUrl = proceduresService.getProceduresUrlFromAnAnalysisId(expandedHubAddress, analysisActiveWarnings.getAnalysisId());
+        String proceduresUrl = proceduresService.getProceduresUrlFromAnAnalysisId(baseHubUri.toString(), analysisActiveWarnings.getAnalysisId());
         Procedures procedures = proceduresService.getProceduresFromUrl(proceduresUrl);
 
         Analysis analysisNewWarnings = analysisService.getAnalysisFromUrl(analysisUrl, UrlFilters.NEW);
@@ -135,7 +154,7 @@ public class CodeSonarPublisher extends Recorder {
         List<Pair<String, String>> conditionNamesAndResults = new ArrayList<Pair<String, String>>();
 
         CodeSonarBuildActionDTO buildActionDTO = new CodeSonarBuildActionDTO(analysisActiveWarnings,
-                analysisNewWarnings, metrics, procedures, expandedHubAddress);
+                analysisNewWarnings, metrics, procedures, baseHubUri.toString());
 
         build.addAction(new CodeSonarBuildAction(buildActionDTO, build));
 
@@ -189,6 +208,34 @@ public class CodeSonarPublisher extends Recorder {
     }
 
     /**
+     * @return the hubPort
+     */
+    public String getHubPort() {
+        return hubPort;
+    }
+
+    /**
+     * @return the protocol
+     */
+    public String getProtocol() {
+        return protocol;
+    }
+
+    /**
+     * @param protocol the protocol to set
+     */
+    public void setProtocol(String protocol) {
+        this.protocol = protocol;
+    }
+
+    /**
+     * @param hubPort the hubPort to set
+     */
+    public void setHubPort(String hubPort) {
+        this.hubPort = hubPort;
+    }
+
+    /**
      * @param hubAddress the hubAddress to set
      */
     public void setHubAddress(String hubAddress) {
@@ -228,7 +275,7 @@ public class CodeSonarPublisher extends Recorder {
     public void setProceduresService(ProceduresService proceduresService) {
         this.proceduresService = proceduresService;
     }
-    
+
     public String getCredentialId() {
         return credentialId;
     }
@@ -251,7 +298,7 @@ public class CodeSonarPublisher extends Recorder {
 
         @Override
         public String getDisplayName() {
-            return "CodeSonar";
+            return "Codesonar";
         }
 
         public List<ConditionDescriptor<?>> getAllConditions() {
@@ -267,29 +314,43 @@ public class CodeSonarPublisher extends Recorder {
 
         public FormValidation doCheckHubAddress(@QueryParameter("hubAddress") String hubAddress) {
             if (!StringUtils.isBlank(hubAddress)) {
-                return FormValidation.ok("Ok");
+                return FormValidation.ok();
             }
             return FormValidation.error("Hub address cannot be empty.");
         }
 
+        public FormValidation doCheckHubPort(@QueryParameter("hubPort") String hubPort) {
+            if (!StringUtils.isBlank(hubPort)) {
+                return FormValidation.ok();
+            }
+            return FormValidation.error("Hub port cannot be empty.");
+        }
+
         public FormValidation doCheckProjectName(@QueryParameter("projectName") String projectName) {
             if (!StringUtils.isBlank(projectName)) {
-                return FormValidation.ok("Ok");
+                return FormValidation.ok();
             }
             return FormValidation.error("Project name cannot be empty.");
         }
-        
-         public ListBoxModel doFillCredentialIdItems(final @AncestorInPath ItemGroup<?> context) {
-            final List<StandardUsernameCredentials> credentials = CredentialsProvider.lookupCredentials(StandardUsernameCredentials.class, context, ACL.SYSTEM, Collections.<DomainRequirement>emptyList()); 
-            
+
+        public ListBoxModel doFillCredentialIdItems(final @AncestorInPath ItemGroup<?> context) {
+            final List<StandardUsernameCredentials> credentials = CredentialsProvider.lookupCredentials(StandardUsernameCredentials.class, context, ACL.SYSTEM, Collections.<DomainRequirement>emptyList());
+
             StandardListBoxModel model2 = (StandardListBoxModel) new StandardListBoxModel().withEmptySelection().withMatching(new CredentialsMatcher() {
                 @Override
                 public boolean matches(Credentials item) {
                     return item instanceof UsernamePasswordCredentials;
                 }
-            }, credentials);     
-            
+            }, credentials);
+
             return model2;
+        }
+
+        public ListBoxModel doFillProtocolItems() {
+            ListBoxModel items = new ListBoxModel();
+            items.add("http", "http");
+            items.add("https", "https");
+            return items;
         }
     }
 
