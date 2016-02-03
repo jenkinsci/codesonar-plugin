@@ -71,7 +71,8 @@ public class NewWarningsIncreasedByPercentageConditionIT extends ConditionIntegr
         codeSonarPublisher.setAnalysisService(mockedAnalysisService);
         codeSonarPublisher.setMetricsService(mockedMetricsService);
         codeSonarPublisher.setProceduresService(mockedProceduresService);
-
+        codeSonarPublisher.setAuthenticationService(mockedAuthenticationService);
+        
         FreeStyleProject project = jenkinsRule.createFreeStyleProject();
         project.getPublishersList().add(codeSonarPublisher);
 

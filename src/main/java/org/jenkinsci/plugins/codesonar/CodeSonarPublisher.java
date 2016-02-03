@@ -305,6 +305,10 @@ public class CodeSonarPublisher extends Recorder {
     public void setProceduresService(ProceduresService proceduresService) {
         this.proceduresService = proceduresService;
     }
+    
+    public void setAuthenticationService(AuthenticationService authenticationService) {
+        this.authenticationService = authenticationService;
+    }
 
     public String getCredentialId() {
         return credentialId;

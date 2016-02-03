@@ -62,8 +62,7 @@ public class AnalysisService implements Serializable {
             throw new AbortException(String.format("[CodeSonar] %s", ex.getMessage()));
         }
 
-        Projects projects = null;
-        projects = xmlSerializationService.deserialize(xmlContent, Projects.class);
+        Projects projects = xmlSerializationService.deserialize(xmlContent, Projects.class);
 
         Project project = projects.getProjectByName(projectName);
         uriBuilder.setPath(project.getUrl());

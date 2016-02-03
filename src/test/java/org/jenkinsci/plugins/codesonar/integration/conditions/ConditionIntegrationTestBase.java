@@ -1,5 +1,6 @@
 package org.jenkinsci.plugins.codesonar.integration.conditions;
 
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 import org.jenkinsci.plugins.codesonar.Utils;
@@ -8,6 +9,7 @@ import org.jenkinsci.plugins.codesonar.models.analysis.Warning;
 import org.jenkinsci.plugins.codesonar.models.metrics.Metrics;
 import org.jenkinsci.plugins.codesonar.models.procedures.Procedures;
 import org.jenkinsci.plugins.codesonar.services.AnalysisService;
+import org.jenkinsci.plugins.codesonar.services.AuthenticationService;
 import org.jenkinsci.plugins.codesonar.services.MetricsService;
 import org.jenkinsci.plugins.codesonar.services.ProceduresService;
 import org.junit.Rule;
@@ -23,10 +25,12 @@ import static org.mockito.Mockito.when;
 public abstract class ConditionIntegrationTestBase {
     @Rule
     public JenkinsRule jenkinsRule = new JenkinsRule();
+    
     protected AnalysisService mockedAnalysisService;
     protected MetricsService mockedMetricsService;
     protected ProceduresService mockedProceduresService;
-
+    protected AuthenticationService mockedAuthenticationService;
+    
     protected final String VALID_HUB_ADDRESS = "10.10.10.10";
     protected final String VALID_PROJECT_NAME = "projectName";
 
@@ -34,7 +38,8 @@ public abstract class ConditionIntegrationTestBase {
         mockedAnalysisService = mock(AnalysisService.class);
         mockedMetricsService = mock(MetricsService.class);
         mockedProceduresService = mock(ProceduresService.class);
-
+        mockedAuthenticationService = mock(AuthenticationService.class);
+        
         final String VALID_ANALYSIS_URL = "VALID_ANALYSIS_URL";
         final Analysis VALID_ANALYSIS_ACTIVE_WARNINGS = new Analysis();
         VALID_ANALYSIS_ACTIVE_WARNINGS.setAnalysisId("10");
