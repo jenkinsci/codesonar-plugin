@@ -1,11 +1,12 @@
 package org.jenkinsci.plugins.codesonar;
 
-import com.cloudbees.plugins.credentials.Credentials;
-import com.cloudbees.plugins.credentials.CredentialsMatcher;
 import com.cloudbees.plugins.credentials.CredentialsMatchers;
 import com.cloudbees.plugins.credentials.CredentialsProvider;
+import com.cloudbees.plugins.credentials.common.CertificateCredentials;
+import com.cloudbees.plugins.credentials.common.StandardCertificateCredentials;
+import com.cloudbees.plugins.credentials.common.StandardCredentials;
 import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
-import com.cloudbees.plugins.credentials.common.StandardUsernameCredentials;
+import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
 import com.cloudbees.plugins.credentials.common.UsernamePasswordCredentials;
 import com.cloudbees.plugins.credentials.domains.DomainRequirement;
 import hudson.AbortException;
@@ -47,6 +48,7 @@ import org.jenkinsci.plugins.codesonar.models.analysis.Analysis;
 import org.jenkinsci.plugins.codesonar.models.metrics.Metrics;
 import org.jenkinsci.plugins.codesonar.models.procedures.Procedures;
 import org.jenkinsci.plugins.codesonar.services.AnalysisService;
+import org.jenkinsci.plugins.codesonar.services.AuthenticationService;
 import org.jenkinsci.plugins.codesonar.services.HttpService;
 import org.jenkinsci.plugins.codesonar.services.MetricsService;
 import org.jenkinsci.plugins.codesonar.services.ProceduresService;
@@ -68,6 +70,7 @@ public class CodeSonarPublisher extends Recorder {
 
     private XmlSerializationService xmlSerializationService;
     private HttpService httpService;
+    private AuthenticationService authenticationService;
     private AnalysisService analysisService;
     private MetricsService metricsService;
     private ProceduresService proceduresService;
@@ -80,6 +83,7 @@ public class CodeSonarPublisher extends Recorder {
     public CodeSonarPublisher(List<Condition> conditions, String protocol, String hubAddress, String hubPort, String projectName, String credentialId) {
         xmlSerializationService = new XmlSerializationService();
         httpService = new HttpService();
+        authenticationService = new AuthenticationService(httpService);
         analysisService = new AnalysisService(httpService, xmlSerializationService);
         metricsService = new MetricsService(httpService, xmlSerializationService);
         proceduresService = new ProceduresService(httpService, xmlSerializationService);
@@ -113,27 +117,10 @@ public class CodeSonarPublisher extends Recorder {
             throw new AbortException("Project name not provided");
         }
 
-        URIBuilder uriBuilder = new URIBuilder();
-        uriBuilder.setScheme(getProtocol());
-        uriBuilder.setHost(expandedHubAddress);
-        uriBuilder.setPort(Integer.parseInt(expandedHubPort));
-        URI baseHubUri;
-        try {
-            baseHubUri = uriBuilder.build();
-        } catch (URISyntaxException ex) {
-            throw new AbortException(String.format("[CodeSonar] %s", ex.getMessage()));
-        }
+        URI baseHubUri = createBaseUri(expandedHubAddress, expandedHubPort);
 
-        UsernamePasswordCredentials credentials = CredentialsMatchers.firstOrNull(
-                CredentialsProvider.lookupCredentials(UsernamePasswordCredentials.class, build.getParent(), ACL.SYSTEM,
-                        Collections.<DomainRequirement>emptyList()), CredentialsMatchers.withId(credentialId));
-
-        if (credentials != null) {
-            httpService.authenticate(baseHubUri,
-                    credentials.getUsername(),
-                    credentials.getPassword().getPlainText());
-        }
-
+        authenticate(build, baseHubUri);
+        
         List<String> logFile = IOUtils.readLines(build.getLogReader());
         String analysisUrl = analysisService.getAnalysisUrlFromLogFile(logFile);
 
@@ -171,7 +158,50 @@ public class CodeSonarPublisher extends Recorder {
         build.getAction(CodeSonarBuildAction.class).getBuildActionDTO()
                 .setConditionNamesAndResults(conditionNamesAndResults);
 
+        authenticationService.signOut(baseHubUri);
+        
         return true;
+    }
+
+    private URI createBaseUri(String expandedHubAddress, String expandedHubPort) throws NumberFormatException, AbortException {
+        URIBuilder uriBuilder = new URIBuilder();
+        uriBuilder.setScheme(getProtocol());
+        uriBuilder.setHost(expandedHubAddress);
+        uriBuilder.setPort(Integer.parseInt(expandedHubPort));
+        
+        URI baseHubUri;
+        try {
+            baseHubUri = uriBuilder.build();
+        } catch (URISyntaxException ex) {
+            throw new AbortException(String.format("[CodeSonar] %s", ex.getMessage()));
+        }
+        
+        return baseHubUri;
+    }
+
+    private void authenticate(AbstractBuild<?, ?> build, URI baseHubUri) throws AbortException {
+        StandardCredentials credentials = CredentialsMatchers.firstOrNull(
+                CredentialsProvider.lookupCredentials(StandardCredentials.class, build.getParent(), ACL.SYSTEM,
+                        Collections.<DomainRequirement>emptyList()), CredentialsMatchers.withId(credentialId));
+        
+        if (credentials instanceof StandardUsernamePasswordCredentials) {
+            
+            UsernamePasswordCredentials c = (UsernamePasswordCredentials)credentials;
+            
+            authenticationService.authenticate(baseHubUri,
+                    c.getUsername(),
+                    c.getPassword().getPlainText());
+        }
+        if (credentials instanceof StandardCertificateCredentials) {
+            if (protocol.equals("http"))
+                throw new AbortException("[CodeSonar] Authentication using a certificate is only available while SSL is enabled.");
+            
+            StandardCertificateCredentials c = (StandardCertificateCredentials)credentials;
+            
+            authenticationService.authenticate(baseHubUri,
+                    c.getKeyStore(),
+                    c.getPassword().getPlainText());
+        }
     }
 
     @Override
@@ -334,16 +364,14 @@ public class CodeSonarPublisher extends Recorder {
         }
 
         public ListBoxModel doFillCredentialIdItems(final @AncestorInPath ItemGroup<?> context) {
-            final List<StandardUsernameCredentials> credentials = CredentialsProvider.lookupCredentials(StandardUsernameCredentials.class, context, ACL.SYSTEM, Collections.<DomainRequirement>emptyList());
-
-            StandardListBoxModel model2 = (StandardListBoxModel) new StandardListBoxModel().withEmptySelection().withMatching(new CredentialsMatcher() {
-                @Override
-                public boolean matches(Credentials item) {
-                    return item instanceof UsernamePasswordCredentials;
-                }
-            }, credentials);
-
-            return model2;
+            final List<StandardCredentials> credentials = CredentialsProvider.lookupCredentials(StandardCredentials.class, context, ACL.SYSTEM, Collections.<DomainRequirement>emptyList());
+            
+            return new StandardListBoxModel()
+                    .withEmptySelection()
+                    .withMatching(CredentialsMatchers.anyOf(
+                            CredentialsMatchers.instanceOf(StandardUsernamePasswordCredentials.class),
+                            CredentialsMatchers.instanceOf(CertificateCredentials.class)
+                    ), credentials);
         }
 
         public ListBoxModel doFillProtocolItems() {

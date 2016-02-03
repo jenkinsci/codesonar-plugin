@@ -1,7 +1,6 @@
 package org.jenkinsci.plugins.codesonar.unit.services;
 
 import hudson.AbortException;
-import java.io.IOException;
 import java.util.logging.Logger;
 import org.jenkinsci.plugins.codesonar.services.HttpService;
 import org.junit.Before;
