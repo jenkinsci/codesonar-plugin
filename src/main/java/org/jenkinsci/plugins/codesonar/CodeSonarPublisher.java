@@ -130,11 +130,11 @@ public class CodeSonarPublisher extends Recorder {
 
         Analysis analysisActiveWarnings = analysisService.getAnalysisFromUrl(analysisUrl, UrlFilters.ACTIVE);
 
-        String metricsUrl = metricsService.getMetricsUrlFromAnAnalysisId(baseHubUri.toString(), analysisActiveWarnings.getAnalysisId());
-        Metrics metrics = metricsService.getMetricsFromUrl(metricsUrl);
+        URI metricsUri = metricsService.getMetricsUriFromAnAnalysisId(baseHubUri, analysisActiveWarnings.getAnalysisId());
+        Metrics metrics = metricsService.getMetricsFromUri(metricsUri);
 
-        String proceduresUrl = proceduresService.getProceduresUrlFromAnAnalysisId(baseHubUri.toString(), analysisActiveWarnings.getAnalysisId());
-        Procedures procedures = proceduresService.getProceduresFromUrl(proceduresUrl);
+        URI proceduresUri = proceduresService.getProceduresUriFromAnAnalysisId(baseHubUri, analysisActiveWarnings.getAnalysisId());
+        Procedures procedures = proceduresService.getProceduresFromUri(proceduresUri);
 
         Analysis analysisNewWarnings = analysisService.getAnalysisFromUrl(analysisUrl, UrlFilters.NEW);
 

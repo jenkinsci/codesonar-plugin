@@ -1,6 +1,7 @@
 package org.jenkinsci.plugins.codesonar.services;
 
 import java.io.IOException;
+import java.net.URI;
 import org.jenkinsci.plugins.codesonar.models.procedures.Procedures;
 
 /**
@@ -16,12 +17,12 @@ public class ProceduresService {
         this.xmlSerializationService = xmlSerializationService;
     }
 
-    public String getProceduresUrlFromAnAnalysisId(String hubAddress, String analysisId) {
-        return String.format("http://%s/analysis/%s-procedures.xml", hubAddress, analysisId);
+    public URI getProceduresUriFromAnAnalysisId(URI baseHubUri, String analysisId) {
+        return baseHubUri.resolve(String.format("/analysis/%s-procedures.xml", analysisId));
     }
     
-    public Procedures getProceduresFromUrl(String proceduresUrl) throws IOException {
-        String xmlContent = httpService.getContentFromUrlAsString(proceduresUrl);
+    public Procedures getProceduresFromUri(URI proceduresUri) throws IOException {
+        String xmlContent = httpService.getContentFromUrlAsString(proceduresUri);
 
         Procedures procedures = xmlSerializationService.deserialize(xmlContent, Procedures.class);
 

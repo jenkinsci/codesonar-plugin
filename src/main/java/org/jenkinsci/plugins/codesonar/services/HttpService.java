@@ -6,7 +6,6 @@ import java.io.Serializable;
 import java.net.URI;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.apache.http.StatusLine;
 import org.apache.http.client.CookieStore;
 import org.apache.http.client.fluent.Executor;
 import org.apache.http.client.fluent.Request;

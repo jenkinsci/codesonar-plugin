@@ -24,13 +24,19 @@ public class Projects implements Serializable {
         if (projects == null) {
             projects = Collections.EMPTY_LIST;
         }
-            
+        
         for (Project project : projects) {
-            if (project.getProject().equals(projectName)) {
-                return project;
+            if (project.getName() != null) {
+                if (project.getName().equals(projectName)) {
+                    return project;
+                }
+            } else if (project.getProject() != null) {
+                if (project.getProject().equals(projectName)) {
+                    return project;
+                }
             }
         }
-
+        
         throw new AbortException(String.format("Project by the name %s was not found on the hub", projectName));
     }
 

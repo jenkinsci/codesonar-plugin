@@ -4,7 +4,6 @@ import hudson.AbortException;
 import java.io.IOException;
 import java.io.Serializable;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.security.KeyManagementException;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
@@ -18,7 +17,6 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.client.fluent.Executor;
 import org.apache.http.client.fluent.Form;
 import org.apache.http.client.fluent.Request;
-import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.ssl.SSLContexts;
 
@@ -29,7 +27,7 @@ public class AuthenticationService implements Serializable {
         this.httpService = httpService;
     }
 
-    public void authenticate(URI uri, KeyStore keyStore, String password) throws AbortException {
+    public void authenticate(URI baseHubUri, KeyStore keyStore, String password) throws AbortException {
         SSLContext sslContext;
         try {
             sslContext = SSLContexts.custom().loadKeyMaterial(keyStore, password.toCharArray()).build();
@@ -48,11 +46,7 @@ public class AuthenticationService implements Serializable {
                 .build();
 
         try {
-            URIBuilder uriBuilder = new URIBuilder(uri);
-            uriBuilder.setPath("/sign_in.html");
-            uri = uriBuilder.build();
-
-            HttpResponse resp = httpService.execute(Request.Post(uri)
+            HttpResponse resp = httpService.execute(Request.Post(baseHubUri.resolve("/sign_in.html"))
                     .bodyForm(loginForm))
                     .returnResponse();
 
@@ -61,12 +55,12 @@ public class AuthenticationService implements Serializable {
             if (statusCode != 200) {
                 throw new AbortException("[CodeSonar] failed to authenticate.");
             }
-        } catch (URISyntaxException | IOException e) {
+        } catch (IOException e) {
             throw new AbortException(String.format("[CodeSonar] Error on url: %s%n[CodeSonar] Message is: %s", e.getMessage()));
         }
     }
 
-    public void authenticate(URI uri, String username, String password) throws AbortException {
+    public void authenticate(URI baseHubUri, String username, String password) throws AbortException {
         List<NameValuePair> loginForm = Form.form()
                 .add("sif_username", username)
                 .add("sif_password", password)
@@ -75,11 +69,7 @@ public class AuthenticationService implements Serializable {
                 .build();
 
         try {
-            URIBuilder uriBuilder = new URIBuilder(uri);
-            uriBuilder.setPath("/sign_in.html");
-            uri = uriBuilder.build();
-
-            HttpResponse resp = httpService.execute(Request.Post(uri)
+            HttpResponse resp = httpService.execute(Request.Post(baseHubUri.resolve("/sign_in.html"))
                     .bodyForm(loginForm))
                     .returnResponse();
 
@@ -88,25 +78,21 @@ public class AuthenticationService implements Serializable {
             if (statusCode != 200) {
                 throw new AbortException("[CodeSonar] failed to authenticate.");
             }
-        } catch (URISyntaxException | IOException e) {
+        } catch (IOException e) {
             throw new AbortException(String.format("[CodeSonar] Error on url: %s%n[CodeSonar] Message is: %s", e.getMessage()));
         }
     }
 
-    public void signOut(URI uri) throws AbortException {
+    public void signOut(URI baseHubUri) throws AbortException {
         try {
-            URIBuilder uriBuilder = new URIBuilder(uri);
-            uriBuilder.setPath("/sign_out.html");
-            uri = uriBuilder.build();
-
-            HttpResponse resp = httpService.execute(Request.Get(uri)).returnResponse();
+            HttpResponse resp = httpService.execute(Request.Get(baseHubUri.resolve("/sign_out.html"))).returnResponse();
 
             int statusCode = resp.getStatusLine().getStatusCode();
             
             if (statusCode != 200) {
                 throw new AbortException("[CodeSonar] failed to sign out.");
             }
-        } catch (IOException | URISyntaxException ex) {
+        } catch (IOException ex) {
             throw new AbortException(String.format("[CodeSonar] Failed to sign out.%n[CodeSonar] Message is: %s", ex.getMessage()));
         }
     }

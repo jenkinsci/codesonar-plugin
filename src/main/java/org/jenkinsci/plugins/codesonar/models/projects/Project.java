@@ -15,6 +15,7 @@ public class Project implements Serializable {
     @XmlAttribute
     private String url;
     private String project;
+    private String name;
     private String state;
     private String started;
     @XmlElement
@@ -34,6 +35,14 @@ public class Project implements Serializable {
 
     public void setProject(String project) {
         this.project = project;
+    }
+    
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
     }
 
     public String getState() {
@@ -90,6 +99,8 @@ public class Project implements Serializable {
         sb.append("url: ").append(url);
         sb.append("\n");
         sb.append("project: ").append(project);
+        sb.append("\n");
+        sb.append("name: ").append(name);
         sb.append("\n");
         sb.append("state: ").append(state);
         sb.append("\n");

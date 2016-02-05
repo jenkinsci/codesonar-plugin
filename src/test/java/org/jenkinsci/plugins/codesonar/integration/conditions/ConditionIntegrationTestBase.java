@@ -31,7 +31,7 @@ public abstract class ConditionIntegrationTestBase {
     protected ProceduresService mockedProceduresService;
     protected AuthenticationService mockedAuthenticationService;
     
-    protected final String VALID_HUB_ADDRESS = "10.10.10.10";
+    protected final URI VALID_HUB_ADDRESS = URI.create("http://10.10.10.10");
     protected final String VALID_PROJECT_NAME = "projectName";
 
     public void setUp() throws Exception {
@@ -40,7 +40,7 @@ public abstract class ConditionIntegrationTestBase {
         mockedProceduresService = mock(ProceduresService.class);
         mockedAuthenticationService = mock(AuthenticationService.class);
         
-        final String VALID_ANALYSIS_URL = "VALID_ANALYSIS_URL";
+        final URI VALID_ANALYSIS_URL = URI.create("http://10.10.1.102/VALID_ANALYSIS_URL");
         final Analysis VALID_ANALYSIS_ACTIVE_WARNINGS = new Analysis();
         VALID_ANALYSIS_ACTIVE_WARNINGS.setAnalysisId("10");
 
@@ -56,10 +56,10 @@ public abstract class ConditionIntegrationTestBase {
         ACTIVE_WARNINGS.add(warning);
         VALID_ANALYSIS_ACTIVE_WARNINGS.setWarnings(ACTIVE_WARNINGS);
 
-        final String VALID_METRICS_URL = "VALID_METRICS_URL";
+        final URI VALID_METRICS_URL = URI.create("http://10.10.1.110/VALID_METRICS_URL");
         final Metrics VALID_METRICS = new Metrics();
 
-        final String VALID_PROCEDURES_URL = "VALID_PROCEDURES_URL";
+        final URI VALID_PROCEDURES_URL = URI.create("http://10.10.1.110/VALID_PROCEDURES_URL");
         final Procedures VALID_PROCEDURES = new Procedures();
 
         final Analysis VALID_ANALYSIS_NEW_WARNINGS = new Analysis();
@@ -73,19 +73,19 @@ public abstract class ConditionIntegrationTestBase {
         VALID_ANALYSIS_NEW_WARNINGS.setWarnings(NEW_WARNINGS);
         
         when(mockedAnalysisService.getAnalysisUrlFromLogFile(any(List.class)))
-                .thenReturn(VALID_ANALYSIS_URL);
-        when(mockedAnalysisService.getAnalysisFromUrl(VALID_ANALYSIS_URL, Utils.UrlFilters.ACTIVE))
+                .thenReturn(VALID_ANALYSIS_URL.toString());
+        when(mockedAnalysisService.getAnalysisFromUrl(VALID_ANALYSIS_URL.toString(), Utils.UrlFilters.ACTIVE))
                 .thenReturn(VALID_ANALYSIS_ACTIVE_WARNINGS);
 
-        when(mockedMetricsService.getMetricsUrlFromAnAnalysisId(VALID_HUB_ADDRESS, VALID_ANALYSIS_ACTIVE_WARNINGS.getAnalysisId()))
+        when(mockedMetricsService.getMetricsUriFromAnAnalysisId(VALID_HUB_ADDRESS, VALID_ANALYSIS_ACTIVE_WARNINGS.getAnalysisId()))
                 .thenReturn(VALID_METRICS_URL);
-        when(mockedMetricsService.getMetricsFromUrl(VALID_METRICS_URL)).thenReturn(VALID_METRICS);
+        when(mockedMetricsService.getMetricsFromUri(VALID_METRICS_URL)).thenReturn(VALID_METRICS);
 
-        when(mockedProceduresService.getProceduresUrlFromAnAnalysisId(VALID_HUB_ADDRESS, VALID_ANALYSIS_ACTIVE_WARNINGS.getAnalysisId()))
+        when(mockedProceduresService.getProceduresUriFromAnAnalysisId(VALID_HUB_ADDRESS, VALID_ANALYSIS_ACTIVE_WARNINGS.getAnalysisId()))
                 .thenReturn(VALID_PROCEDURES_URL);
-        when(mockedProceduresService.getProceduresFromUrl(VALID_PROCEDURES_URL)).thenReturn(VALID_PROCEDURES);
+        when(mockedProceduresService.getProceduresFromUri(VALID_PROCEDURES_URL)).thenReturn(VALID_PROCEDURES);
 
-        when(mockedAnalysisService.getAnalysisFromUrl(VALID_ANALYSIS_URL, Utils.UrlFilters.NEW))
+        when(mockedAnalysisService.getAnalysisFromUrl(VALID_ANALYSIS_URL.toString(), Utils.UrlFilters.NEW))
                 .thenReturn(VALID_ANALYSIS_NEW_WARNINGS);
     }
 }

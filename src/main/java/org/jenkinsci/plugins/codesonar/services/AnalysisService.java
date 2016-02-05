@@ -52,26 +52,13 @@ public class AnalysisService implements Serializable {
         return analysisUrl;
     }
 
-    public String getLatestAnalysisUrlForAProject(URI uri, String projectName) throws IOException {
-        URIBuilder uriBuilder = new URIBuilder(uri);
-        uriBuilder.setPath("/index.xml");
-        String xmlContent = null;
-        try {
-            xmlContent = httpService.getContentFromUrlAsString(uriBuilder.build());
-        } catch (URISyntaxException ex) {
-            throw new AbortException(String.format("[CodeSonar] %s", ex.getMessage()));
-        }
-
+    public String getLatestAnalysisUrlForAProject(URI baseHubUri, String projectName) throws IOException {
+        String xmlContent = httpService.getContentFromUrlAsString(baseHubUri.resolve("/index.xml"));
+        
         Projects projects = xmlSerializationService.deserialize(xmlContent, Projects.class);
-
         Project project = projects.getProjectByName(projectName);
-        uriBuilder.setPath(project.getUrl());
-
-        try {
-            return uriBuilder.build().toString();
-        } catch (URISyntaxException ex) {
-            throw new AbortException(String.format("[CodeSonar] %s", ex.getMessage()));
-        }
+        
+        return baseHubUri.resolve(project.getUrl()).toString();
     }
 
     public Analysis getAnalysisFromUrl(String analysisUrl) throws IOException {

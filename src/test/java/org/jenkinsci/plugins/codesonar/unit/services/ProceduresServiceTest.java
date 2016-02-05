@@ -2,10 +2,9 @@ package org.jenkinsci.plugins.codesonar.unit.services;
 
 import hudson.AbortException;
 import java.io.IOException;
-import org.jenkinsci.plugins.codesonar.models.metrics.Metrics;
+import java.net.URI;
 import org.jenkinsci.plugins.codesonar.models.procedures.Procedures;
 import org.jenkinsci.plugins.codesonar.services.HttpService;
-import org.jenkinsci.plugins.codesonar.services.MetricsService;
 import org.jenkinsci.plugins.codesonar.services.ProceduresService;
 import org.jenkinsci.plugins.codesonar.services.XmlSerializationService;
 import org.junit.Assert;
@@ -34,35 +33,26 @@ public class ProceduresServiceTest {
 
     @Test
     public void providedHubAddressAndAnalysisId_shouldReturnAProceduresUrl() {
-        final String HUB_ADDRESS = "10.10.10.10";
+        final String HUB_ADDRESS = "http://10.10.1.131";
         final String ANALYSIS_ID = "10";
 
-        final String EXPECTED_RESULT = String.format("http://%s/analysis/%s-procedures.xml", HUB_ADDRESS, ANALYSIS_ID);
+        final String EXPECTED_RESULT = String.format("%s/analysis/%s-procedures.xml", HUB_ADDRESS, ANALYSIS_ID);
 
-        String result = proceduresService.getProceduresUrlFromAnAnalysisId(HUB_ADDRESS, ANALYSIS_ID);
+        URI result = proceduresService.getProceduresUriFromAnAnalysisId(URI.create(HUB_ADDRESS), ANALYSIS_ID);
 
-        Assert.assertEquals(EXPECTED_RESULT, result);
-    }
-
-    @Test(expected = AbortException.class)
-    public void providedInvalidMetricsUrl_shouldThrowAnAbortException() throws IOException {
-        final String INVALID_URL = "http://10.10.10.10/invalid";
-
-        when(mockedHttpService.getContentFromUrlAsString(INVALID_URL)).thenCallRealMethod();
-
-        proceduresService.getProceduresFromUrl(INVALID_URL);
+        Assert.assertEquals(EXPECTED_RESULT, result.toString());
     }
 
     @Test
     public void providedValidMetricsUrl_shouldReturnMetrics() throws IOException {
-        final String VALID_METRICS_URL = "validUrl";
+        final URI VALID_METRICS_URI = URI.create("http://10.10.10.10/valid");
         final String RESPONSE_XML_CONTENT = "valid xml content";
         final Procedures EXPECTED_RESULT = new Procedures();
 
-        when(mockedHttpService.getContentFromUrlAsString(VALID_METRICS_URL)).thenReturn(RESPONSE_XML_CONTENT);
+        when(mockedHttpService.getContentFromUrlAsString(VALID_METRICS_URI)).thenReturn(RESPONSE_XML_CONTENT);
         when(mockedXmlSerializationService.deserialize(any(String.class), isA(Class.class))).thenReturn(EXPECTED_RESULT);
 
-        Procedures result = proceduresService.getProceduresFromUrl(VALID_METRICS_URL);
+        Procedures result = proceduresService.getProceduresFromUri(VALID_METRICS_URI);
 
         Assert.assertEquals(EXPECTED_RESULT, result);
     }
