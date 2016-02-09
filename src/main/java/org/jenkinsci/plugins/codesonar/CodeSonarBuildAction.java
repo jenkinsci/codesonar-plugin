@@ -5,6 +5,7 @@ import hudson.model.Action;
 import hudson.util.ChartUtil;
 import hudson.util.DataSetBuilder;
 import java.io.IOException;
+import java.net.URI;
 import java.util.List;
 import org.javatuples.Pair;
 import org.jenkinsci.plugins.codesonar.models.CodeSonarBuildActionDTO;
@@ -34,15 +35,15 @@ public class CodeSonarBuildAction implements Action {
 
     @Override
     public String getDisplayName() {
-        return "CodeSonar analysis";
+        return "Codesonar analysis";
     }
 
     @Override
     public String getUrlName() {
-        String hubAddress = buildActionDTO.getBaseHubUri();
+        URI baseHubUri = URI.create(buildActionDTO.getBaseHubUri());
         String analysisId = buildActionDTO.getAnalysisActiveWarnings().getAnalysisId();
         
-        return String.format("http://%s/analysis/%s.html", hubAddress, analysisId);
+        return baseHubUri.resolve(String.format("/analysis/%s.html", analysisId)).toString();
     }
 
     public CodeSonarBuildActionDTO getBuildActionDTO() {
