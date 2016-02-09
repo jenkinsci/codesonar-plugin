@@ -56,7 +56,7 @@ public class AuthenticationService implements Serializable {
                 throw new AbortException("[CodeSonar] failed to authenticate.");
             }
         } catch (IOException e) {
-            throw new AbortException(String.format("[CodeSonar] Error on url: %s%n[CodeSonar] Message is: %s", e.getMessage()));
+            throw new AbortException(String.format("[CodeSonar] %s", e.getMessage()));
         }
     }
 
@@ -79,7 +79,7 @@ public class AuthenticationService implements Serializable {
                 throw new AbortException("[CodeSonar] failed to authenticate.");
             }
         } catch (IOException e) {
-            throw new AbortException(String.format("[CodeSonar] Error on url: %s%n[CodeSonar] Message is: %s", e.getMessage()));
+            throw new AbortException(String.format("[CodeSonar] %s", e.getMessage()));
         }
     }
 
