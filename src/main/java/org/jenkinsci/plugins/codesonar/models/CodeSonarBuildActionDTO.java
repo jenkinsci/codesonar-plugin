@@ -1,5 +1,6 @@
 package org.jenkinsci.plugins.codesonar.models;
 
+import java.net.URI;
 import java.util.List;
 import org.javatuples.Pair;
 import org.jenkinsci.plugins.codesonar.models.analysis.Analysis;
@@ -16,12 +17,12 @@ public class CodeSonarBuildActionDTO {
     private final Analysis analysisNewWarnings;
     private final Metrics metrics;
     private final Procedures procedures;
-    private final String baseHubUri;
+    private final URI baseHubUri;
     private List<Pair<String, String>> conditionNamesAndResults;
 
     public CodeSonarBuildActionDTO(Analysis analysisActiveWarnings,
             Analysis analysisNewWarnings, Metrics metrics, Procedures procedures,
-            String baseHubUri) {
+            URI baseHubUri) {
         this.analysisActiveWarnings = analysisActiveWarnings;
         this.analysisNewWarnings = analysisNewWarnings;
         this.metrics = metrics;
@@ -46,7 +47,7 @@ public class CodeSonarBuildActionDTO {
         return procedures;
     }
 
-    public String getBaseHubUri() {
+    public URI getBaseHubUri() {
         return baseHubUri;
     }
 

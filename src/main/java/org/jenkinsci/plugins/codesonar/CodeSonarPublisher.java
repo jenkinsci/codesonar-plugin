@@ -141,7 +141,7 @@ public class CodeSonarPublisher extends Recorder {
         List<Pair<String, String>> conditionNamesAndResults = new ArrayList<Pair<String, String>>();
 
         CodeSonarBuildActionDTO buildActionDTO = new CodeSonarBuildActionDTO(analysisActiveWarnings,
-                analysisNewWarnings, metrics, procedures, baseHubUri.toString());
+                analysisNewWarnings, metrics, procedures, baseHubUri);
 
         build.addAction(new CodeSonarBuildAction(buildActionDTO, build));
 
