@@ -29,7 +29,6 @@ import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 import java.io.IOException;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -38,7 +37,6 @@ import java.util.List;
 import org.apache.commons.collections.ListUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
-import org.apache.http.client.utils.URIBuilder;
 import org.javatuples.Pair;
 import org.jenkinsci.plugins.codesonar.Utils.UrlFilters;
 import org.jenkinsci.plugins.codesonar.conditions.Condition;
@@ -66,7 +64,6 @@ public class CodeSonarPublisher extends Recorder {
     private String hubAddress;
     private String projectName;
     private String protocol;
-    private String hubPort;
 
     private XmlSerializationService xmlSerializationService;
     private HttpService httpService;
@@ -80,7 +77,7 @@ public class CodeSonarPublisher extends Recorder {
     private String credentialId;
 
     @DataBoundConstructor
-    public CodeSonarPublisher(List<Condition> conditions, String protocol, String hubAddress, String hubPort, String projectName, String credentialId) {
+    public CodeSonarPublisher(List<Condition> conditions, String protocol, String hubAddress, String projectName, String credentialId) {
         xmlSerializationService = new XmlSerializationService();
         httpService = new HttpService();
         authenticationService = new AuthenticationService(httpService);
@@ -91,7 +88,6 @@ public class CodeSonarPublisher extends Recorder {
         this.hubAddress = hubAddress;
         this.projectName = projectName;
         this.protocol = protocol;
-        this.hubPort = hubPort;
 
         if (conditions == null) {
             conditions = ListUtils.EMPTY_LIST;
@@ -105,19 +101,15 @@ public class CodeSonarPublisher extends Recorder {
     public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener) throws InterruptedException, IOException, AbortException {
         String expandedHubAddress = build.getEnvironment(listener).expand(Util.fixNull(hubAddress));
         String expandedProjectName = build.getEnvironment(listener).expand(Util.fixNull(projectName));
-        String expandedHubPort = build.getEnvironment(listener).expand(Util.fixNull(getHubPort()));
 
         if (expandedHubAddress.isEmpty()) {
             throw new AbortException("Hub address not provided");
-        }
-        if (expandedHubPort.isEmpty()) {
-            throw new AbortException("Hub port not provided");
         }
         if (expandedProjectName.isEmpty()) {
             throw new AbortException("Project name not provided");
         }
 
-        URI baseHubUri = createBaseUri(expandedHubAddress, expandedHubPort);
+        URI baseHubUri = URI.create(String.format("%s://%s", getProtocol(), expandedHubAddress));
 
         authenticate(build, baseHubUri);
         
@@ -161,22 +153,6 @@ public class CodeSonarPublisher extends Recorder {
         authenticationService.signOut(baseHubUri);
         
         return true;
-    }
-
-    private URI createBaseUri(String expandedHubAddress, String expandedHubPort) throws NumberFormatException, AbortException {
-        URIBuilder uriBuilder = new URIBuilder();
-        uriBuilder.setScheme(getProtocol());
-        uriBuilder.setHost(expandedHubAddress);
-        uriBuilder.setPort(Integer.parseInt(expandedHubPort));
-        
-        URI baseHubUri;
-        try {
-            baseHubUri = uriBuilder.build();
-        } catch (URISyntaxException ex) {
-            throw new AbortException(String.format("[CodeSonar] %s", ex.getMessage()));
-        }
-        
-        return baseHubUri;
     }
 
     private void authenticate(AbstractBuild<?, ?> build, URI baseHubUri) throws AbortException {
@@ -238,13 +214,6 @@ public class CodeSonarPublisher extends Recorder {
     }
 
     /**
-     * @return the hubPort
-     */
-    public String getHubPort() {
-        return hubPort;
-    }
-
-    /**
      * @return the protocol
      */
     public String getProtocol() {
@@ -256,13 +225,6 @@ public class CodeSonarPublisher extends Recorder {
      */
     public void setProtocol(String protocol) {
         this.protocol = protocol;
-    }
-
-    /**
-     * @param hubPort the hubPort to set
-     */
-    public void setHubPort(String hubPort) {
-        this.hubPort = hubPort;
     }
 
     /**
@@ -351,13 +313,6 @@ public class CodeSonarPublisher extends Recorder {
                 return FormValidation.ok();
             }
             return FormValidation.error("Hub address cannot be empty.");
-        }
-
-        public FormValidation doCheckHubPort(@QueryParameter("hubPort") String hubPort) {
-            if (!StringUtils.isBlank(hubPort)) {
-                return FormValidation.ok();
-            }
-            return FormValidation.error("Hub port cannot be empty.");
         }
 
         public FormValidation doCheckProjectName(@QueryParameter("projectName") String projectName) {

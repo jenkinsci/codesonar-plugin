@@ -16,7 +16,6 @@ public class HttpServiceTest {
 
     @Before
     public void setUp() {
-        
         httpService = new HttpService();
     }
 

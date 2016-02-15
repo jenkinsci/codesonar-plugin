@@ -42,14 +42,14 @@ public class CodeSonarJobDslExtension extends ContextExtensionPoint {
 
     @RequiresPlugin(id = "codesonar", minimumVersion = "2.0.0")
     @DslExtensionMethod(context = PublisherContext.class)
-    public Object codesonar(String protocol, String hubAddress, String hubPort, String projectName, String credentialId, Runnable closure) {
+    public Object codesonar(String protocol, String hubAddress, String projectName, String credentialId, Runnable closure) {
         CodeSonarJobDslContext context = new CodeSonarJobDslContext();
         executeInContext(closure, context);
 
-        return new CodeSonarPublisher(context.conditions, protocol, hubAddress, hubPort, projectName, credentialId);
+        return new CodeSonarPublisher(context.conditions, protocol, hubAddress, projectName, credentialId);
     }
 
-    public Object codesonar(String protocol, String hubAddress, String hubPort, String projectName, Runnable closure) {
-        return codesonar(protocol, hubAddress, hubPort, projectName, null, closure);
+    public Object codesonar(String protocol, String hubAddress, String projectName, Runnable closure) {
+        return codesonar(protocol, hubAddress, projectName, null, closure);
     }
 }
