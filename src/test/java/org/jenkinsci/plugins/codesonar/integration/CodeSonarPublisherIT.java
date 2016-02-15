@@ -7,7 +7,6 @@ import hudson.model.Result;
 import hudson.model.queue.QueueTaskFuture;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
 import org.apache.commons.io.FileUtils;
 import static org.junit.Assert.*;
 import org.jenkinsci.plugins.codesonar.CodeSonarPublisher;
@@ -42,7 +41,7 @@ public class CodeSonarPublisherIT {
         FreeStyleProject project = jenkinsRule.createFreeStyleProject();
         
         List<Condition> conditions = new ArrayList<Condition>();
-        project.getPublishersList().add(new CodeSonarPublisher(conditions, "http", EMPTY_HUB_ADDRESS, "8000", VALID_PROJECT_NAME, ""));
+        project.getPublishersList().add(new CodeSonarPublisher(conditions, "http", EMPTY_HUB_ADDRESS, VALID_PROJECT_NAME, ""));
         
         // act
         QueueTaskFuture<FreeStyleBuild> queueTaskFuture = project.scheduleBuild2(0, new Cause.UserIdCause());
@@ -68,7 +67,7 @@ public class CodeSonarPublisherIT {
         FreeStyleProject project = jenkinsRule.createFreeStyleProject();
         
         List<Condition> conditions = new ArrayList<Condition>();
-        project.getPublishersList().add(new CodeSonarPublisher(conditions, "http", VALID_HUB_ADDRESS, "8000", EMPTY_PROJECT_NAME,""));
+        project.getPublishersList().add(new CodeSonarPublisher(conditions, "http", VALID_HUB_ADDRESS, EMPTY_PROJECT_NAME,""));
         
         // act
         QueueTaskFuture<FreeStyleBuild> queueTaskFuture = project.scheduleBuild2(0, new Cause.UserIdCause());
@@ -94,7 +93,7 @@ public class CodeSonarPublisherIT {
         FreeStyleProject project = jenkinsRule.createFreeStyleProject();
         
         List<Condition> conditions = new ArrayList<Condition>();
-        project.getPublishersList().add(new CodeSonarPublisher(conditions, "http", VALID_HUB_ADDRESS, "8000", RANDOM_NAME, ""));
+        project.getPublishersList().add(new CodeSonarPublisher(conditions, "http", VALID_HUB_ADDRESS, RANDOM_NAME, ""));
         
         // act
         QueueTaskFuture<FreeStyleBuild> queueTaskFuture = project.scheduleBuild2(0, new Cause.UserIdCause());
