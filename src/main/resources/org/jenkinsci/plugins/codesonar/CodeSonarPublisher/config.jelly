@@ -6,11 +6,11 @@
     </f:entry>
 
     <f:entry field="hubAddress" title="Hub address">
-        <f:textbox  default="$${JOB_NAME}" />
+        <f:textbox/>
     </f:entry>
     
     <f:entry field="projectName" title="Project name">
-        <f:textbox/>
+        <f:textbox default="$${JOB_NAME}" />
     </f:entry>
 
     <f:entry title="Credentials" field="credentialId">
