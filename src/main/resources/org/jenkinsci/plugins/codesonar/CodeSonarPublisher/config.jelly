@@ -6,13 +6,9 @@
     </f:entry>
 
     <f:entry field="hubAddress" title="Hub address">
-        <f:textbox/>
+        <f:textbox  default="$${JOB_NAME}" />
     </f:entry>
     
-    <f:entry field="hubPort" title="Hub port">
-        <f:textbox/>
-    </f:entry>
-
     <f:entry field="projectName" title="Project name">
         <f:textbox/>
     </f:entry>
