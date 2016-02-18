@@ -68,18 +68,20 @@ public class AuthenticationService implements Serializable {
                 .add("sif_log_out_competitor", "yes")
                 .build();
 
+        int status = -1;
+        
         try {
             HttpResponse resp = httpService.execute(Request.Post(baseHubUri.resolve("/sign_in.html"))
                     .bodyForm(loginForm))
                     .returnResponse();
-
-            int statusCode = resp.getStatusLine().getStatusCode();
-
-            if (statusCode != 200) {
-                throw new AbortException("[CodeSonar] failed to authenticate.");
-            }
+            
+            status = resp.getStatusLine().getStatusCode();
         } catch (IOException e) {
             throw new AbortException(String.format("[CodeSonar] %s", e.getMessage()));
+        }
+        
+        if (status != 200) {
+            throw new AbortException("[CodeSonar] failed to authenticate.");
         }
     }
 
