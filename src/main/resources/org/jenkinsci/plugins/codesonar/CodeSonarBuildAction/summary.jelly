@@ -3,7 +3,7 @@
         <b>Conditions</b>
         <j:set var="conditionNamesAndResults" value="${it.getConditionNamesAndResults()}"/>
         <j:choose>
-            <j:when test="${it.getConditionNamesAndResults() == null || it.getConditionNamesAndResults().isEmpty()}"  
+            <j:when test="${it.getConditionNamesAndResults() == null || it.getConditionNamesAndResults().isEmpty()}">  
                 <b>No conditions selected<b>
             </j:when>
             <j:otherwise>
