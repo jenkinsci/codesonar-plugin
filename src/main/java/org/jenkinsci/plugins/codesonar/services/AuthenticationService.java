@@ -59,7 +59,7 @@ public class AuthenticationService implements Serializable {
         }
         
         if (status != 200) {
-            throw new AbortException("[CodeSonar] failed to authenticate.");
+            throw new AbortException(String.format("[CodeSonar] failed to authenticate. %n[CodeSonar] HTTP status code: %s", status));
         }
     }
 
@@ -84,7 +84,7 @@ public class AuthenticationService implements Serializable {
         }
         
         if (status != 200) {
-            throw new AbortException("[CodeSonar] failed to authenticate.");
+            throw new AbortException(String.format("[CodeSonar] failed to authenticate. %n[CodeSonar] HTTP status code: %s", status));
         }
     }
 
