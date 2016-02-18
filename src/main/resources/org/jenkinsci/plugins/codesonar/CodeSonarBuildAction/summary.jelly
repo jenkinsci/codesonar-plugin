@@ -2,10 +2,17 @@
     <t:summary icon="${it.getIconFileName()}">
         <b>Conditions</b>
         <j:set var="conditionNamesAndResults" value="${it.getConditionNamesAndResults()}"/>
-        <ul>
-            <j:forEach var="pair" items="${it.getConditionNamesAndResults()}">  
-                <li>"${pair.getValue0()}": <i>${pair.getValue1()}</i></li>
-            </j:forEach> 
-        </ul>
+        <j:choose>
+            <j:when test="${it.getConditionNamesAndResults() == null || it.getConditionNamesAndResults().isEmpty()}"  
+                <h3>No conditions set</h3>
+            </j:when>
+            <j:otherwise>
+                <ul>
+                    <j:forEach var="pair" items="${it.getConditionNamesAndResults()}">  
+                        <li>"${pair.getValue0()}": <i>${pair.getValue1()}</i></li>
+                    </j:forEach> 
+                </ul>
+            </j:otherwise>
+        </j:choose>
     </t:summary>
 </j:jelly>
