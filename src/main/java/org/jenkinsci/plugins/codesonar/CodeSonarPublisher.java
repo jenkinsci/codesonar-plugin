@@ -63,7 +63,7 @@ public class CodeSonarPublisher extends Recorder {
 
     private String hubAddress;
     private String projectName;
-    private String protocol;
+    private String protocol = "http";
 
     private XmlSerializationService xmlSerializationService;
     private HttpService httpService;
@@ -112,7 +112,7 @@ public class CodeSonarPublisher extends Recorder {
         URI baseHubUri = URI.create(String.format("%s://%s", getProtocol(), expandedHubAddress));
 
         authenticate(build, baseHubUri);
-        
+
         List<String> logFile = IOUtils.readLines(build.getLogReader());
         String analysisUrl = analysisService.getAnalysisUrlFromLogFile(logFile);
 
@@ -151,7 +151,7 @@ public class CodeSonarPublisher extends Recorder {
                 .setConditionNamesAndResults(conditionNamesAndResults);
 
         authenticationService.signOut(baseHubUri);
-        
+
         return true;
     }
 
@@ -159,11 +159,11 @@ public class CodeSonarPublisher extends Recorder {
         StandardCredentials credentials = CredentialsMatchers.firstOrNull(
                 CredentialsProvider.lookupCredentials(StandardCredentials.class, build.getParent(), ACL.SYSTEM,
                         Collections.<DomainRequirement>emptyList()), CredentialsMatchers.withId(credentialId));
-        
+
         if (credentials instanceof StandardUsernamePasswordCredentials) {
-            
+
             UsernamePasswordCredentials c = (UsernamePasswordCredentials)credentials;
-            
+
             authenticationService.authenticate(baseHubUri,
                     c.getUsername(),
                     c.getPassword().getPlainText());
@@ -171,9 +171,9 @@ public class CodeSonarPublisher extends Recorder {
         if (credentials instanceof StandardCertificateCredentials) {
             if (protocol.equals("http"))
                 throw new AbortException("[CodeSonar] Authentication using a certificate is only available while SSL is enabled.");
-            
+
             StandardCertificateCredentials c = (StandardCertificateCredentials)credentials;
-            
+
             authenticationService.authenticate(baseHubUri,
                     c.getKeyStore(),
                     c.getPassword().getPlainText());
@@ -267,7 +267,7 @@ public class CodeSonarPublisher extends Recorder {
     public void setProceduresService(ProceduresService proceduresService) {
         this.proceduresService = proceduresService;
     }
-    
+
     public void setAuthenticationService(AuthenticationService authenticationService) {
         this.authenticationService = authenticationService;
     }
@@ -324,7 +324,7 @@ public class CodeSonarPublisher extends Recorder {
 
         public ListBoxModel doFillCredentialIdItems(final @AncestorInPath ItemGroup<?> context) {
             final List<StandardCredentials> credentials = CredentialsProvider.lookupCredentials(StandardCredentials.class, context, ACL.SYSTEM, Collections.<DomainRequirement>emptyList());
-            
+
             return new StandardListBoxModel()
                     .withEmptySelection()
                     .withMatching(CredentialsMatchers.anyOf(
