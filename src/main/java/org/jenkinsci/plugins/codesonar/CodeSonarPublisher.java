@@ -119,7 +119,10 @@ public class CodeSonarPublisher extends Recorder {
         if (analysisUrl == null) {
             analysisUrl = analysisService.getLatestAnalysisUrlForAProject(baseHubUri, expandedProjectName);
         }
-
+        
+        String info = httpService.getContentFromUrlAsString(baseHubUri.resolve("/command/info/"));
+        float version = Utils.getVersion(info);
+        
         Analysis analysisActiveWarnings = analysisService.getAnalysisFromUrl(analysisUrl, UrlFilters.ACTIVE);
 
         URI metricsUri = metricsService.getMetricsUriFromAnAnalysisId(baseHubUri, analysisActiveWarnings.getAnalysisId());
@@ -128,8 +131,14 @@ public class CodeSonarPublisher extends Recorder {
         URI proceduresUri = proceduresService.getProceduresUriFromAnAnalysisId(baseHubUri, analysisActiveWarnings.getAnalysisId());
         Procedures procedures = proceduresService.getProceduresFromUri(proceduresUri);
 
-        Analysis analysisNewWarnings = analysisService.getAnalysisFromUrl(analysisUrl, UrlFilters.NEW);
-
+        Analysis analysisNewWarnings;
+        if (version >= 4.2f) {
+            analysisNewWarnings = analysisService.getAnalysisFromUrl(analysisUrl, UrlFilters.NEW);
+        }
+        else {
+            analysisNewWarnings = analysisService.getAnalysisFromUrl(analysisUrl, UrlFilters.OLD_NEW);
+        }
+        
         List<Pair<String, String>> conditionNamesAndResults = new ArrayList<Pair<String, String>>();
 
         CodeSonarBuildActionDTO buildActionDTO = new CodeSonarBuildActionDTO(analysisActiveWarnings,
