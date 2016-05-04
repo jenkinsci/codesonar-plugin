@@ -18,7 +18,7 @@ public class XmlSerializationService implements Serializable {
             JAXBContext context = JAXBContext.newInstance(t);
             Unmarshaller un = context.createUnmarshaller();
 
-            String cleanContent = content.replaceAll("&", "&amp;");
+            String cleanContent = content.replace("&", "&amp;");
             StringReader reader = new StringReader(cleanContent);
 
             return (T) un.unmarshal(reader);
