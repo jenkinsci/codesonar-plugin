@@ -2,6 +2,7 @@ package org.jenkinsci.plugins.codesonar.models.projects;
 
 import org.jenkinsci.plugins.codesonar.models.Metric;
 import java.io.Serializable;
+import java.util.Objects;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlAttribute;
@@ -10,12 +11,11 @@ import javax.xml.bind.annotation.XmlRootElement;
 
 @XmlRootElement(name = "project")
 @XmlAccessorType(XmlAccessType.FIELD)
-public class Project implements Serializable {
+public class Project40 implements Serializable {
 
     @XmlAttribute
     private String url;
     private String project;
-    private String name;
     private String state;
     private String started;
     @XmlElement
@@ -37,14 +37,6 @@ public class Project implements Serializable {
         this.project = project;
     }
     
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
     public String getState() {
         return state;
     }
@@ -71,21 +63,9 @@ public class Project implements Serializable {
 
     @Override
     public boolean equals(Object obj) {
-        Project other = (Project) obj;
+        Project40 other = (Project40) obj;
 
-        if (!this.url.equals(other.url)) {
-            return false;
-        }
         if (!this.project.equals(other.project)) {
-            return false;
-        }
-        if (!this.state.equals(other.state)) {
-            return false;
-        }
-        if (!this.started.equals(other.started)) {
-            return false;
-        }
-        if (!this.metric.equals(other.metric)) {
             return false;
         }
 
@@ -93,22 +73,15 @@ public class Project implements Serializable {
     }
 
     @Override
-    public String toString() {
-        StringBuilder sb = new StringBuilder();
-
-        sb.append("url: ").append(url);
-        sb.append("\n");
-        sb.append("project: ").append(project);
-        sb.append("\n");
-        sb.append("name: ").append(name);
-        sb.append("\n");
-        sb.append("state: ").append(state);
-        sb.append("\n");
-        sb.append("started: ").append(started);
-        sb.append("\n");
-        sb.append("metric: ").append(metric);
-        sb.append("\n");
-
-        return sb.toString();
+    public int hashCode() {
+        int hash = 5;
+        hash = 97 * hash + Objects.hashCode(this.project);
+        return hash;
     }
+
+    @Override
+    public String toString() {
+        return "Project40{" + "url=" + url + ", project=" + project + ", state=" + state + ", started=" + started + ", metric=" + metric + '}';
+    }
+
 }

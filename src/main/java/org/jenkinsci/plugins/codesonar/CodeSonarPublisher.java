@@ -34,20 +34,21 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import org.apache.commons.collections.ListUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.javatuples.Pair;
-import org.jenkinsci.plugins.codesonar.Utils.UrlFilters;
 import org.jenkinsci.plugins.codesonar.conditions.Condition;
 import org.jenkinsci.plugins.codesonar.conditions.ConditionDescriptor;
 import org.jenkinsci.plugins.codesonar.models.CodeSonarBuildActionDTO;
 import org.jenkinsci.plugins.codesonar.models.analysis.Analysis;
 import org.jenkinsci.plugins.codesonar.models.metrics.Metrics;
 import org.jenkinsci.plugins.codesonar.models.procedures.Procedures;
-import org.jenkinsci.plugins.codesonar.services.AnalysisService;
 import org.jenkinsci.plugins.codesonar.services.AuthenticationService;
 import org.jenkinsci.plugins.codesonar.services.HttpService;
+import org.jenkinsci.plugins.codesonar.services.IAnalysisService;
 import org.jenkinsci.plugins.codesonar.services.MetricsService;
 import org.jenkinsci.plugins.codesonar.services.ProceduresService;
 import org.jenkinsci.plugins.codesonar.services.XmlSerializationService;
@@ -69,7 +70,7 @@ public class CodeSonarPublisher extends Recorder {
     private transient XmlSerializationService xmlSerializationService = null;
     private transient HttpService httpService = null;
     private transient AuthenticationService authenticationService = null;
-    private transient AnalysisService analysisService = null;
+    private transient IAnalysisService analysisService = null;
     private transient MetricsService metricsService = null;
     private transient ProceduresService proceduresService = null;
 
@@ -93,10 +94,10 @@ public class CodeSonarPublisher extends Recorder {
 
     @Override
     public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener) throws InterruptedException, IOException, AbortException {
+        
         xmlSerializationService = new XmlSerializationService();
         httpService = new HttpService();
         authenticationService = new AuthenticationService(httpService);
-        analysisService = new AnalysisService(httpService, xmlSerializationService);
         metricsService = new MetricsService(httpService, xmlSerializationService);
         proceduresService = new ProceduresService(httpService, xmlSerializationService);
         
@@ -114,6 +115,11 @@ public class CodeSonarPublisher extends Recorder {
 
         authenticate(build, baseHubUri);
 
+        float hubVersion = getHubVersion(baseHubUri);
+        
+        AnalysisServiceFactory analysisServiceFactory = new AnalysisServiceFactory(hubVersion);
+        analysisService = analysisServiceFactory.getAnalysisService(httpService, xmlSerializationService);
+        
         List<String> logFile = IOUtils.readLines(build.getLogReader());
         String analysisUrl = analysisService.getAnalysisUrlFromLogFile(logFile);
 
@@ -121,10 +127,7 @@ public class CodeSonarPublisher extends Recorder {
             analysisUrl = analysisService.getLatestAnalysisUrlForAProject(baseHubUri, expandedProjectName);
         }
         
-        String info = httpService.getContentFromUrlAsString(baseHubUri.resolve("/command/info/"));
-        float version = Utils.getVersion(info);
-        
-        Analysis analysisActiveWarnings = analysisService.getAnalysisFromUrl(analysisUrl, UrlFilters.ACTIVE);
+        Analysis analysisActiveWarnings = analysisService.getAnalysisFromUrlWithActiveWarnings(analysisUrl);
 
         URI metricsUri = metricsService.getMetricsUriFromAnAnalysisId(baseHubUri, analysisActiveWarnings.getAnalysisId());
         Metrics metrics = metricsService.getMetricsFromUri(metricsUri);
@@ -132,13 +135,7 @@ public class CodeSonarPublisher extends Recorder {
         URI proceduresUri = proceduresService.getProceduresUriFromAnAnalysisId(baseHubUri, analysisActiveWarnings.getAnalysisId());
         Procedures procedures = proceduresService.getProceduresFromUri(proceduresUri);
 
-        Analysis analysisNewWarnings;
-        if (version >= 4.2f) {
-            analysisNewWarnings = analysisService.getAnalysisFromUrl(analysisUrl, UrlFilters.NEW);
-        }
-        else {
-            analysisNewWarnings = analysisService.getAnalysisFromUrl(analysisUrl, UrlFilters.OLD_NEW);
-        }
+        Analysis analysisNewWarnings = analysisService.getAnalysisFromUrlWithNewWarnings(analysisUrl);
         
         List<Pair<String, String>> conditionNamesAndResults = new ArrayList<Pair<String, String>>();
 
@@ -163,6 +160,19 @@ public class CodeSonarPublisher extends Recorder {
         authenticationService.signOut(baseHubUri);
 
         return true;
+    }
+    
+    private float getHubVersion(URI baseHubUri) throws AbortException {
+        String info = httpService.getContentFromUrlAsString(baseHubUri.resolve("/command/info/"));
+        
+        Pattern pattern = Pattern.compile("Version:\\s(\\d+\\.\\d+)");
+        
+        Matcher matcher = pattern.matcher(info);
+        if (matcher.find()) {
+            return Float.valueOf(matcher.group(1));
+        }
+        
+        throw new AbortException("Hub version could not be determined");
     }
 
     private void authenticate(AbstractBuild<?, ?> build, URI baseHubUri) throws AbortException {
@@ -266,7 +276,7 @@ public class CodeSonarPublisher extends Recorder {
         this.httpService = httpService;
     }
 
-    public void setAnalysisService(AnalysisService analysisService) {
+    public void setAnalysisService(IAnalysisService analysisService) {
         this.analysisService = analysisService;
     }
 

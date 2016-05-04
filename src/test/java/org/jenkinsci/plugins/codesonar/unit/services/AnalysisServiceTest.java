@@ -2,15 +2,11 @@ package org.jenkinsci.plugins.codesonar.unit.services;
 
 import hudson.AbortException;
 import java.io.IOException;
-import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import org.jenkinsci.plugins.codesonar.Utils;
 import org.jenkinsci.plugins.codesonar.models.analysis.Analysis;
-import org.jenkinsci.plugins.codesonar.models.projects.Projects;
-import org.jenkinsci.plugins.codesonar.services.AnalysisService;
 import org.jenkinsci.plugins.codesonar.services.HttpService;
 import org.jenkinsci.plugins.codesonar.services.XmlSerializationService;
 import static org.junit.Assert.*;
@@ -18,6 +14,9 @@ import org.junit.Before;
 import org.junit.Test;
 import static org.mockito.Mockito.*;
 import java.net.URI;
+import org.jenkinsci.plugins.codesonar.models.projects.Projects42;
+import org.jenkinsci.plugins.codesonar.services.AnalysisService42;
+import org.jenkinsci.plugins.codesonar.services.IAnalysisService;
 
 /**
  *
@@ -27,13 +26,13 @@ public class AnalysisServiceTest {
 
     private XmlSerializationService mockedXmlSerializationService;
     private HttpService mockedHttpService;
-    private AnalysisService analysisService;
+    private IAnalysisService analysisService;
 
     @Before
     public void setUp() {
         mockedXmlSerializationService = mock(XmlSerializationService.class);
         mockedHttpService = mock(HttpService.class);
-        analysisService = new AnalysisService(mockedHttpService, mockedXmlSerializationService);
+        analysisService = new AnalysisService42(mockedHttpService, mockedXmlSerializationService);
     }
 
     @Test
@@ -79,7 +78,7 @@ public class AnalysisServiceTest {
 
         final String RESPONSE_XML_CONTENT = "valid xml";
 
-        Projects projects = new Projects();
+        Projects42 projects = new Projects42();
         projects.setProjects(Collections.EMPTY_LIST);
 
         when(mockedHttpService.getContentFromUrlAsString(notNull(URI.class))).thenCallRealMethod();
@@ -121,7 +120,7 @@ public class AnalysisServiceTest {
         when(mockedHttpService.getContentFromUrlAsString(any(String.class))).thenReturn(RESPONSE_XML_CONTENT);
         when(mockedXmlSerializationService.deserialize(any(String.class), isA(Class.class))).thenReturn(ANALYSIS);
 
-        Analysis analysis = analysisService.getAnalysisFromUrl(VALID_ANALYSIS_URL, Utils.UrlFilters.NEW);
+        Analysis analysis = analysisService.getAnalysisFromUrlWithNewWarnings(VALID_ANALYSIS_URL);
 
         assertNotNull(analysis);
     }

@@ -3,13 +3,13 @@ package org.jenkinsci.plugins.codesonar.integration.conditions;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
-import org.jenkinsci.plugins.codesonar.Utils;
 import org.jenkinsci.plugins.codesonar.models.analysis.Analysis;
 import org.jenkinsci.plugins.codesonar.models.analysis.Warning;
 import org.jenkinsci.plugins.codesonar.models.metrics.Metrics;
 import org.jenkinsci.plugins.codesonar.models.procedures.Procedures;
-import org.jenkinsci.plugins.codesonar.services.AnalysisService;
+import org.jenkinsci.plugins.codesonar.services.AnalysisService42;
 import org.jenkinsci.plugins.codesonar.services.AuthenticationService;
+import org.jenkinsci.plugins.codesonar.services.IAnalysisService;
 import org.jenkinsci.plugins.codesonar.services.MetricsService;
 import org.jenkinsci.plugins.codesonar.services.ProceduresService;
 import org.junit.Rule;
@@ -26,7 +26,7 @@ public abstract class ConditionIntegrationTestBase {
     @Rule
     public JenkinsRule jenkinsRule = new JenkinsRule();
     
-    protected AnalysisService mockedAnalysisService;
+    protected IAnalysisService mockedAnalysisService;
     protected MetricsService mockedMetricsService;
     protected ProceduresService mockedProceduresService;
     protected AuthenticationService mockedAuthenticationService;
@@ -35,7 +35,7 @@ public abstract class ConditionIntegrationTestBase {
     protected final String VALID_PROJECT_NAME = "projectName";
 
     public void setUp() throws Exception {
-        mockedAnalysisService = mock(AnalysisService.class);
+        mockedAnalysisService = mock(AnalysisService42.class);
         mockedMetricsService = mock(MetricsService.class);
         mockedProceduresService = mock(ProceduresService.class);
         mockedAuthenticationService = mock(AuthenticationService.class);
@@ -74,7 +74,7 @@ public abstract class ConditionIntegrationTestBase {
         
         when(mockedAnalysisService.getAnalysisUrlFromLogFile(any(List.class)))
                 .thenReturn(VALID_ANALYSIS_URL.toString());
-        when(mockedAnalysisService.getAnalysisFromUrl(VALID_ANALYSIS_URL.toString(), Utils.UrlFilters.ACTIVE))
+        when(mockedAnalysisService.getAnalysisFromUrlWithActiveWarnings(VALID_ANALYSIS_URL.toString()))
                 .thenReturn(VALID_ANALYSIS_ACTIVE_WARNINGS);
 
         when(mockedMetricsService.getMetricsUriFromAnAnalysisId(VALID_HUB_ADDRESS, VALID_ANALYSIS_ACTIVE_WARNINGS.getAnalysisId()))
@@ -85,7 +85,7 @@ public abstract class ConditionIntegrationTestBase {
                 .thenReturn(VALID_PROCEDURES_URL);
         when(mockedProceduresService.getProceduresFromUri(VALID_PROCEDURES_URL)).thenReturn(VALID_PROCEDURES);
 
-        when(mockedAnalysisService.getAnalysisFromUrl(VALID_ANALYSIS_URL.toString(), Utils.UrlFilters.NEW))
+        when(mockedAnalysisService.getAnalysisFromUrlWithNewWarnings(VALID_ANALYSIS_URL.toString()))
                 .thenReturn(VALID_ANALYSIS_NEW_WARNINGS);
     }
 }

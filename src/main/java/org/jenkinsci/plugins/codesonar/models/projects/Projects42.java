@@ -15,36 +15,30 @@ import javax.xml.bind.annotation.XmlRootElement;
  */
 @XmlRootElement(name = "projects")
 @XmlAccessorType(XmlAccessType.FIELD)
-public class Projects implements Serializable {
+public class Projects42 implements Serializable {
 
     @XmlElement(name = "project")
-    private List<Project> projects;
+    private List<Project42> projects;
 
-    public Project getProjectByName(String projectName) throws AbortException {
+    public Project42 getProjectByName(String projectName) throws AbortException {
         if (projects == null) {
             projects = Collections.EMPTY_LIST;
         }
         
-        for (Project project : projects) {
-            if (project.getName() != null) {
-                if (project.getName().equals(projectName)) {
-                    return project;
-                }
-            } else if (project.getProject() != null) {
-                if (project.getProject().equals(projectName)) {
-                    return project;
-                }
+        for (Project42 project : projects) {
+            if (project.getName().equals(projectName)) {
+                return project;
             }
         }
         
         throw new AbortException(String.format("Project by the name %s was not found on the hub", projectName));
     }
 
-    public List<Project> getProjects() {
+    public List<Project42> getProjects() {
         return projects;
     }
 
-    public void setProjects(List<Project> projects) {
+    public void setProjects(List<Project42> projects) {
         this.projects = projects;
     }
 }

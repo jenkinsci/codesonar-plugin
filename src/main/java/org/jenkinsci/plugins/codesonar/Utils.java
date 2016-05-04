@@ -1,10 +1,7 @@
 package org.jenkinsci.plugins.codesonar;
 
-import hudson.AbortException;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  *
@@ -41,32 +38,5 @@ public class Utils {
         } while (build != null);
 
         return null;
-    }
-    
-    public static float getVersion(String info) throws AbortException {
-        Pattern pattern = Pattern.compile("Version:\\s(\\d+\\.\\d+)");
-        
-        Matcher matcher = pattern.matcher(info);
-        if (matcher.find()) {
-            return Float.valueOf(matcher.group(1));
-        }
-        
-        throw new AbortException("Hub version could not be determined");
-    }
-
-    public enum UrlFilters {
-
-        NEW("5"), ACTIVE("2"), OLD_NEW("4");
-
-        private final String value;
-
-        private UrlFilters(String value) {
-            this.value = value;
-        }
-
-        public String getValue() {
-            return value;
-        }
-
     }
 }

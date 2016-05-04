@@ -6,34 +6,44 @@ import java.io.Serializable;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.apache.http.client.utils.URIBuilder;
-import org.jenkinsci.plugins.codesonar.Utils.UrlFilters;
 import org.jenkinsci.plugins.codesonar.models.analysis.Analysis;
-import org.jenkinsci.plugins.codesonar.models.projects.Project;
-import org.jenkinsci.plugins.codesonar.models.projects.Projects;
+import org.jenkinsci.plugins.codesonar.models.projects.Project42;
+import org.jenkinsci.plugins.codesonar.models.projects.Projects42;
 
 /**
  *
  * @author Andrius
  */
-public class AnalysisService implements Serializable {
+public class AnalysisService42 implements IAnalysisService, Serializable {
 
     private HttpService httpService;
     private XmlSerializationService xmlSerializationService;
 
-    public XmlSerializationService getXmlSerializationService() {
-        return xmlSerializationService;
-    }
+    private enum UrlFilters {
 
-    public AnalysisService(HttpService httpService, XmlSerializationService xmlSerializationService) {
+        NEW("5"), ACTIVE("2");
+
+        private final String value;
+
+        private UrlFilters(String value) {
+            this.value = value;
+        }
+
+        public String getValue() {
+            return value;
+        }
+
+    }
+    
+    public AnalysisService42(HttpService httpService, XmlSerializationService xmlSerializationService) {
         this.httpService = httpService;
         this.xmlSerializationService = xmlSerializationService;
     }
 
+    @Override
     public String getAnalysisUrlFromLogFile(List<String> logFile) {
         Pattern pattern = Pattern.compile("codesonar:\\s+(.*/analysis/.*)");
 
@@ -52,26 +62,42 @@ public class AnalysisService implements Serializable {
         return analysisUrl;
     }
 
+    @Override
     public String getLatestAnalysisUrlForAProject(URI baseHubUri, String projectName) throws IOException {
         String xmlContent = httpService.getContentFromUrlAsString(baseHubUri.resolve("/index.xml"));
         
-        Projects projects = xmlSerializationService.deserialize(xmlContent, Projects.class);
-        Project project = projects.getProjectByName(projectName);
+        Projects42 projects = xmlSerializationService.deserialize(xmlContent, Projects42.class);
+        Project42 project = projects.getProjectByName(projectName);
         
         return baseHubUri.resolve(project.getUrl()).toString();
     }
 
+    @Override
     public Analysis getAnalysisFromUrl(String analysisUrl) throws IOException {
         String xmlContent = httpService.getContentFromUrlAsString(analysisUrl);
 
         return xmlSerializationService.deserialize(xmlContent, Analysis.class);
     }
     
-    public Analysis getAnalysisFromUrl(String analysisUrl, UrlFilters urlFilter) throws IOException {
+    @Override
+    public Analysis getAnalysisFromUrlWithNewWarnings(String analysisUrl) throws IOException {
         URIBuilder uriBuilder;
         try {
             uriBuilder = new URIBuilder(analysisUrl);
-            uriBuilder.addParameter("filter", urlFilter.getValue());
+            uriBuilder.addParameter("filter", UrlFilters.NEW.getValue());
+        } catch (URISyntaxException ex) {
+            throw new AbortException(ex.getMessage());
+        }
+        
+        return getAnalysisFromUrl(uriBuilder.toString());
+    }
+    
+    @Override
+    public Analysis getAnalysisFromUrlWithActiveWarnings(String analysisUrl) throws IOException {
+        URIBuilder uriBuilder;
+        try {
+            uriBuilder = new URIBuilder(analysisUrl);
+            uriBuilder.addParameter("filter", UrlFilters.ACTIVE.getValue());
         } catch (URISyntaxException ex) {
             throw new AbortException(ex.getMessage());
         }
