@@ -65,12 +65,13 @@ public class CodeSonarPublisher extends Recorder {
     private String projectName;
     private String protocol = "http";
 
-    private XmlSerializationService xmlSerializationService;
-    private HttpService httpService;
-    private AuthenticationService authenticationService;
-    private AnalysisService analysisService;
-    private MetricsService metricsService;
-    private ProceduresService proceduresService;
+    
+    private transient XmlSerializationService xmlSerializationService = null;
+    private transient HttpService httpService = null;
+    private transient AuthenticationService authenticationService = null;
+    private transient AnalysisService analysisService = null;
+    private transient MetricsService metricsService = null;
+    private transient ProceduresService proceduresService = null;
 
     private List<Condition> conditions;
 
@@ -78,13 +79,6 @@ public class CodeSonarPublisher extends Recorder {
 
     @DataBoundConstructor
     public CodeSonarPublisher(List<Condition> conditions, String protocol, String hubAddress, String projectName, String credentialId) {
-        xmlSerializationService = new XmlSerializationService();
-        httpService = new HttpService();
-        authenticationService = new AuthenticationService(httpService);
-        analysisService = new AnalysisService(httpService, xmlSerializationService);
-        metricsService = new MetricsService(httpService, xmlSerializationService);
-        proceduresService = new ProceduresService(httpService, xmlSerializationService);
-
         this.hubAddress = hubAddress;
         this.projectName = projectName;
         this.protocol = protocol;
@@ -99,6 +93,13 @@ public class CodeSonarPublisher extends Recorder {
 
     @Override
     public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener) throws InterruptedException, IOException, AbortException {
+        xmlSerializationService = new XmlSerializationService();
+        httpService = new HttpService();
+        authenticationService = new AuthenticationService(httpService);
+        analysisService = new AnalysisService(httpService, xmlSerializationService);
+        metricsService = new MetricsService(httpService, xmlSerializationService);
+        proceduresService = new ProceduresService(httpService, xmlSerializationService);
+        
         String expandedHubAddress = build.getEnvironment(listener).expand(Util.fixNull(hubAddress));
         String expandedProjectName = build.getEnvironment(listener).expand(Util.fixNull(projectName));
 
