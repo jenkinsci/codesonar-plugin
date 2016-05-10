@@ -113,9 +113,9 @@ public class CodeSonarPublisher extends Recorder {
 
         URI baseHubUri = URI.create(String.format("%s://%s", getProtocol(), expandedHubAddress));
 
-        authenticate(build, baseHubUri);
-
         float hubVersion = getHubVersion(baseHubUri);
+        
+        authenticate(build, baseHubUri);
         
         AnalysisServiceFactory analysisServiceFactory = new AnalysisServiceFactory(hubVersion);
         analysisService = analysisServiceFactory.getAnalysisService(httpService, xmlSerializationService);
