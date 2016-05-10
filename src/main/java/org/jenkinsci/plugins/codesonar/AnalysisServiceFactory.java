@@ -14,7 +14,7 @@ public class AnalysisServiceFactory {
     }
     
     public IAnalysisService getAnalysisService(HttpService httpService, XmlSerializationService xmlSerializationService) {
-        if (version >= 4.2) {
+        if (version >= 4.2f) {
             return new AnalysisService42(httpService, xmlSerializationService);
         }
         else {

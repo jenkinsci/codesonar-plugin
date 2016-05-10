@@ -163,8 +163,14 @@ public class CodeSonarPublisher extends Recorder {
     }
     
     private float getHubVersion(URI baseHubUri) throws AbortException {
-        String info = httpService.getContentFromUrlAsString(baseHubUri.resolve("/command/info/"));
-        
+        String info;
+        try {
+            info = httpService.getContentFromUrlAsString(baseHubUri.resolve("/command/anon_info/"));
+        } catch (AbortException e) {
+            // /command/anon_info/ is not available which means the hub is > 4.2
+            return 4.0f;
+        }
+                
         Pattern pattern = Pattern.compile("Version:\\s(\\d+\\.\\d+)");
         
         Matcher matcher = pattern.matcher(info);
