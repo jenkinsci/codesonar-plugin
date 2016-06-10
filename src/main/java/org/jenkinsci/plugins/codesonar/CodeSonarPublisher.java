@@ -65,7 +65,6 @@ public class CodeSonarPublisher extends Recorder {
     private String hubAddress;
     private String projectName;
     private String protocol = "http";
-
     
     private transient XmlSerializationService xmlSerializationService = null;
     private transient HttpService httpService = null;
@@ -74,6 +73,9 @@ public class CodeSonarPublisher extends Recorder {
     private transient MetricsService metricsService = null;
     private transient ProceduresService proceduresService = null;
 
+    private transient AnalysisServiceFactory analysisServiceFactory;
+
+            
     private List<Condition> conditions;
 
     private String credentialId;
@@ -90,17 +92,18 @@ public class CodeSonarPublisher extends Recorder {
         this.conditions = conditions;
 
         this.credentialId = credentialId;
-    }
 
-    @Override
-    public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener) throws InterruptedException, IOException, AbortException {
-        
         xmlSerializationService = new XmlSerializationService();
         httpService = new HttpService();
         authenticationService = new AuthenticationService(httpService);
         metricsService = new MetricsService(httpService, xmlSerializationService);
         proceduresService = new ProceduresService(httpService, xmlSerializationService);
         
+        analysisServiceFactory = new AnalysisServiceFactory();
+    }
+
+    @Override
+    public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener) throws InterruptedException, IOException, AbortException {
         String expandedHubAddress = build.getEnvironment(listener).expand(Util.fixNull(hubAddress));
         String expandedProjectName = build.getEnvironment(listener).expand(Util.fixNull(projectName));
 
@@ -116,8 +119,8 @@ public class CodeSonarPublisher extends Recorder {
         float hubVersion = getHubVersion(baseHubUri);
         
         authenticate(build, baseHubUri);
-        
-        AnalysisServiceFactory analysisServiceFactory = new AnalysisServiceFactory(hubVersion);
+    
+        analysisServiceFactory.setVersion(hubVersion);
         analysisService = analysisServiceFactory.getAnalysisService(httpService, xmlSerializationService);
         
         List<String> logFile = IOUtils.readLines(build.getLogReader());
@@ -253,6 +256,14 @@ public class CodeSonarPublisher extends Recorder {
         this.protocol = protocol;
     }
 
+    public AnalysisServiceFactory getAnalysisServiceFactory() {
+        return analysisServiceFactory;
+    }
+
+    public void setAnalysisServiceFactory(AnalysisServiceFactory analysisServiceFactory) {
+        this.analysisServiceFactory = analysisServiceFactory;
+    }
+    
     /**
      * @param hubAddress the hubAddress to set
      */

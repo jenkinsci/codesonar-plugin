@@ -72,6 +72,7 @@ public class NewWarningsIncreasedByPercentageConditionIT extends ConditionIntegr
         codeSonarPublisher.setMetricsService(mockedMetricsService);
         codeSonarPublisher.setProceduresService(mockedProceduresService);
         codeSonarPublisher.setAuthenticationService(mockedAuthenticationService);
+        codeSonarPublisher.setAnalysisServiceFactory(mockedAnalysisServiceFactory);
         
         FreeStyleProject project = jenkinsRule.createFreeStyleProject();
         project.getPublishersList().add(codeSonarPublisher);
@@ -79,7 +80,7 @@ public class NewWarningsIncreasedByPercentageConditionIT extends ConditionIntegr
         // act
         QueueTaskFuture<FreeStyleBuild> queueTaskFuture = project.scheduleBuild2(0, new Cause.UserIdCause());
         FreeStyleBuild build = queueTaskFuture.get();
-
+        
         // assert
         Assert.assertEquals(EXPECTED_RESULT, build.getResult());
     }

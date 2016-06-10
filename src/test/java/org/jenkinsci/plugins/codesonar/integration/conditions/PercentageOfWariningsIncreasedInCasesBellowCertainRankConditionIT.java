@@ -78,6 +78,7 @@ public class PercentageOfWariningsIncreasedInCasesBellowCertainRankConditionIT e
         codeSonarPublisher.setMetricsService(mockedMetricsService);
         codeSonarPublisher.setProceduresService(mockedProceduresService);
         codeSonarPublisher.setAuthenticationService(mockedAuthenticationService);
+        codeSonarPublisher.setAnalysisServiceFactory(mockedAnalysisServiceFactory);
         
         FreeStyleProject project = jenkinsRule.createFreeStyleProject();
         project.getPublishersList().add(codeSonarPublisher);
