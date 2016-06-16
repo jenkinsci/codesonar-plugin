@@ -157,7 +157,10 @@ public class Analysis implements Serializable {
 
     public List<Alert> getRedAlerts() {
         List<Alert> redAlerts = new ArrayList<Alert>();
-
+        
+        if (alerts == null)
+            return redAlerts;
+        
         for (Alert alert : alerts) {
             boolean isRed = false;
 
@@ -204,6 +207,9 @@ public class Analysis implements Serializable {
     public List<Alert> getYellowAlerts() {
         List<Alert> yellowAlerts = new ArrayList<Alert>();
 
+        if (alerts == null)
+        	return yellowAlerts;
+        
         for (Alert alert : alerts) {
             boolean isYellow = false;
 
