@@ -281,14 +281,13 @@ job(PUSH_TO_JENKINSCI_JOB_NAME) {
     }
 
     steps {
-        shell('''
-                git checkout master
-                git fetch --tags git@github.com:Praqma/codesonar-plugin.git
+        shell('''git checkout master
+                |git fetch --tags git@github.com:Praqma/codesonar-plugin.git
 
-                # push for JenkinsCI github repo:
+                |# push for JenkinsCI github repo:
 
-                #git push git@github.com:jenkinsci/codesonar-plugin.git ${BRANCH}
-                #git push git@github.com:jenkinsci/codesonar-plugin.git --tags''')
+                |git push git@github.com:jenkinsci/codesonar-plugin.git ${BRANCH}
+                |git push git@github.com:jenkinsci/codesonar-plugin.git --tags'''.stripMargin())
     }
 
     wrappers {
@@ -376,14 +375,13 @@ job(SYNC_JOB_NAME) {
     }
 
     steps {
-        shell('''
-                git checkout master
-                git fetch --tags git@github.com:Praqma/codesonar-plugin.git
+        shell('''git checkout master
+                |git fetch --tags git@github.com:Praqma/codesonar-plugin.git
 
-                # push for JenkinsCI github repo:
+                |# push for JenkinsCI github repo:
 
-                #git push git@github.com:jenkinsci/codesonar-plugin.git ${BRANCH}
-                #git push git@github.com:jenkinsci/codesonar-plugin.git --tags''')
+                |git push git@github.com:jenkinsci/codesonar-plugin.git ${BRANCH}
+                |git push git@github.com:jenkinsci/codesonar-plugin.git --tags'''.stripMargin())
     }
 
     wrappers {
