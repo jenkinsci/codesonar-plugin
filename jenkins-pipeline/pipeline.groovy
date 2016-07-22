@@ -4,6 +4,8 @@ REMOTE_NAME = 'origin'
 NUM_OF_BUILDS_TO_KEEP = 100
 GITHUB_PRAQMA_CREDENTIALS = '100247a2-70f4-4a4e-a9f6-266d139da9db'
 
+JENKINS_SLAVE_LABELS = 'jenkinsubuntu'
+
 PRETESTED_INTEGRATION_JOB_NAME = '1_pretested-integration_codesonar'
 UNIT_TESTS_JOB_NAME = '2_unit-tests_codesonar'
 INTEGRATION_TESTS_JOB_NAME = '3_integration-tests_codesonar'
@@ -16,6 +18,8 @@ job(PRETESTED_INTEGRATION_JOB_NAME) {
     logRotator {
         numToKeep(NUM_OF_BUILDS_TO_KEEP)
     }
+
+    label(JENKINS_SLAVE_LABELS)
 
     properties {
         ownership {
@@ -68,6 +72,8 @@ job(UNIT_TESTS_JOB_NAME) {
     logRotator {
         numToKeep(NUM_OF_BUILDS_TO_KEEP)
     }
+
+    label(JENKINS_SLAVE_LABELS)
 
     properties {
         ownership {
@@ -123,6 +129,8 @@ job(INTEGRATION_TESTS_JOB_NAME) {
         numToKeep(NUM_OF_BUILDS_TO_KEEP)
     }
 
+    label(JENKINS_SLAVE_LABELS)
+
     properties {
         ownership {
             primaryOwnerId('and')
@@ -166,6 +174,8 @@ job(ANALYSIS_JOB_NAME) {
     logRotator {
         numToKeep(NUM_OF_BUILDS_TO_KEEP)
     }
+
+    label(JENKINS_SLAVE_LABELS)
 
     properties {
         ownership {
@@ -258,6 +268,8 @@ job(PUSH_TO_JENKINSCI_JOB_NAME) {
         numToKeep(NUM_OF_BUILDS_TO_KEEP)
     }
 
+    label(JENKINS_SLAVE_LABELS)
+
     properties {
         ownership {
             primaryOwnerId('and')
@@ -310,6 +322,8 @@ job(RELEASE_JOB_NAME) {
         numToKeep(NUM_OF_BUILDS_TO_KEEP)
     }
 
+    label(JENKINS_SLAVE_LABELS)
+
     properties {
         ownership {
             primaryOwnerId('and')
@@ -351,6 +365,8 @@ job(SYNC_JOB_NAME) {
     logRotator {
         numToKeep(NUM_OF_BUILDS_TO_KEEP)
     }
+
+    label(JENKINS_SLAVE_LABELS)
 
     properties {
         ownership {
