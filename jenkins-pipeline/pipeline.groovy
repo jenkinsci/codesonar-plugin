@@ -4,7 +4,8 @@ REMOTE_NAME = 'origin'
 NUM_OF_BUILDS_TO_KEEP = 100
 GITHUB_PRAQMA_CREDENTIALS = '100247a2-70f4-4a4e-a9f6-266d139da9db'
 
-JENKINS_SLAVE_LABELS = 'jenkinsubuntu'
+DOCKERHOST1_SLAVE_LABEL = 'dockerhost1'
+JENKINSUBUNTU_LABEL = 'jenkinsubuntu'
 
 PRETESTED_INTEGRATION_JOB_NAME = '1_pretested-integration_codesonar'
 UNIT_TESTS_JOB_NAME = '2_unit-tests_codesonar'
@@ -19,7 +20,7 @@ job(PRETESTED_INTEGRATION_JOB_NAME) {
         numToKeep(NUM_OF_BUILDS_TO_KEEP)
     }
 
-    label(JENKINS_SLAVE_LABELS)
+    label(DOCKERHOST1_SLAVE_LABEL)
 
     properties {
         ownership {
@@ -52,7 +53,10 @@ job(PRETESTED_INTEGRATION_JOB_NAME) {
     }
 
     steps {
-        shell('mvn clean test')
+        maven {
+            goals('clean test')
+            mavenInstallation('Latest')
+        }
     }
 
     wrappers {
@@ -73,7 +77,7 @@ job(UNIT_TESTS_JOB_NAME) {
         numToKeep(NUM_OF_BUILDS_TO_KEEP)
     }
 
-    label(JENKINS_SLAVE_LABELS)
+    label(DOCKERHOST1_SLAVE_LABEL)
 
     properties {
         ownership {
@@ -98,7 +102,10 @@ job(UNIT_TESTS_JOB_NAME) {
     }
 
     steps {
-        shell('mvn clean compile test-compile cobertura:cobertura')
+        maven {
+            goals('clean compile test-compile cobertura:cobertura')
+            mavenInstallation('Latest')
+        }
     }
 
     wrappers {
@@ -129,7 +136,7 @@ job(INTEGRATION_TESTS_JOB_NAME) {
         numToKeep(NUM_OF_BUILDS_TO_KEEP)
     }
 
-    label(JENKINS_SLAVE_LABELS)
+    label(DOCKERHOST1_SLAVE_LABEL)
 
     properties {
         ownership {
@@ -154,7 +161,10 @@ job(INTEGRATION_TESTS_JOB_NAME) {
     }
 
     steps {
-        shell('mvn clean integration-test')
+        maven {
+            goals('clean integration-test')
+            mavenInstallation('Latest')
+        }
     }
 
     wrappers {
@@ -175,7 +185,7 @@ job(ANALYSIS_JOB_NAME) {
         numToKeep(NUM_OF_BUILDS_TO_KEEP)
     }
 
-    label(JENKINS_SLAVE_LABELS)
+    label(DOCKERHOST1_SLAVE_LABEL)
 
     properties {
         ownership {
@@ -200,7 +210,10 @@ job(ANALYSIS_JOB_NAME) {
     }
 
     steps {
-        shell('mvnclean package findbugs:findbugs checkstyle:checkstyle pmd:pmd pmd:cpd javancss:check javadoc:javadoc')
+        maven {
+            goals('clean package findbugs:findbugs checkstyle:checkstyle pmd:pmd')
+            mavenInstallation('Latest')
+        }
     }
 
     wrappers {
@@ -268,7 +281,7 @@ job(PUSH_TO_JENKINSCI_JOB_NAME) {
         numToKeep(NUM_OF_BUILDS_TO_KEEP)
     }
 
-    label(JENKINS_SLAVE_LABELS)
+    label(JENKINSUBUNTU_LABEL)
 
     properties {
         ownership {
@@ -322,7 +335,7 @@ job(RELEASE_JOB_NAME) {
         numToKeep(NUM_OF_BUILDS_TO_KEEP)
     }
 
-    label(JENKINS_SLAVE_LABELS)
+    label(JENKINSUBUNTU_LABEL)
 
     properties {
         ownership {
@@ -347,7 +360,10 @@ job(RELEASE_JOB_NAME) {
     }
 
     steps {
-        shell('mvn release:clean release:prepare release:perform -B')
+        maven {
+            goals('release:clean release:prepare release:perform -B')
+            mavenInstallation('Latest')
+        }
     }
 
     wrappers {
@@ -366,7 +382,7 @@ job(SYNC_JOB_NAME) {
         numToKeep(NUM_OF_BUILDS_TO_KEEP)
     }
 
-    label(JENKINS_SLAVE_LABELS)
+    label(JENKINSUBUNTU_LABEL)
 
     properties {
         ownership {
@@ -408,9 +424,3 @@ job(SYNC_JOB_NAME) {
         mailer('and@praqma.net', false, false)
     }
 }
-
-
-
-
-
-
