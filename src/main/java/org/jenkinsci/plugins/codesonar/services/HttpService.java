@@ -16,7 +16,7 @@ import org.apache.http.impl.client.BasicCookieStore;
  *
  * @author Andrius
  */
-public class HttpService implements Serializable {
+public class HttpService {
 
     private CookieStore httpCookieStore;
     private Executor executor;
