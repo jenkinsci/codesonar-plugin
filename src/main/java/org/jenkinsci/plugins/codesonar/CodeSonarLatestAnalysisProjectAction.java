@@ -2,9 +2,6 @@ package org.jenkinsci.plugins.codesonar;
 
 import hudson.model.AbstractProject;
 import hudson.model.Action;
-import java.io.IOException;
-import org.kohsuke.stapler.StaplerRequest;
-import org.kohsuke.stapler.StaplerResponse;
 
 /**
  *

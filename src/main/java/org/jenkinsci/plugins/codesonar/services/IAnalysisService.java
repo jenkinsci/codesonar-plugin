@@ -6,13 +6,13 @@ import java.util.List;
 import org.jenkinsci.plugins.codesonar.models.analysis.Analysis;
 
 public interface IAnalysisService {
-    public String getAnalysisUrlFromLogFile(List<String> logFile);
+    String getAnalysisUrlFromLogFile(List<String> logFile);
     
-    public String getLatestAnalysisUrlForAProject(URI baseHubUri, String projectName) throws IOException;
+    String getLatestAnalysisUrlForAProject(URI baseHubUri, String projectName) throws IOException;
     
-    public Analysis getAnalysisFromUrl(String analysisUrl) throws IOException;
+    Analysis getAnalysisFromUrl(String analysisUrl) throws IOException;
     
-    public Analysis getAnalysisFromUrlWithNewWarnings(String analysisUrl) throws IOException;
+    Analysis getAnalysisFromUrlWithNewWarnings(String analysisUrl) throws IOException;
     
-    public Analysis getAnalysisFromUrlWithActiveWarnings(String analysisUrl) throws IOException;
+    Analysis getAnalysisFromUrlWithActiveWarnings(String analysisUrl) throws IOException;
 }

@@ -154,7 +154,7 @@ public class CodeSonarPublisher extends Recorder {
             conditionNamesAndResults.add(pair);
 
             build.setResult(validationResult);
-            listener.getLogger().println(String.format(("'%s' marked the build as %s"), condition.getDescriptor().getDisplayName(), validationResult.toString()));
+            listener.getLogger().println(String.format("'%s' marked the build as %s", condition.getDescriptor().getDisplayName(), validationResult.toString()));
         }
 
         build.getAction(CodeSonarBuildAction.class).getBuildActionDTO()
