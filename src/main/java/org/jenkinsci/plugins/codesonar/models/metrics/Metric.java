@@ -1,5 +1,6 @@
 package org.jenkinsci.plugins.codesonar.models.metrics;
 
+import java.io.Serializable;
 import java.util.Objects;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
@@ -12,7 +13,7 @@ import javax.xml.bind.annotation.XmlRootElement;
  */
 @XmlRootElement(name = "metric")
 @XmlAccessorType(XmlAccessType.FIELD)
-public class Metric {
+public class Metric implements Serializable {
     @XmlAttribute
     private String url;
     private String name;
