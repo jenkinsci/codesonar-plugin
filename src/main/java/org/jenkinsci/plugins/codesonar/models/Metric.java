@@ -46,6 +46,9 @@ public class Metric implements Serializable {
         if (obj == null) {
             return false;
         }
+        if (!(obj instanceof Metric)) {
+            return false;
+        }
         
         Metric other = (Metric) obj;
 
