@@ -1,5 +1,6 @@
 package org.jenkinsci.plugins.codesonar;
 
+import hudson.AbortException;
 import hudson.model.AbstractProject;
 import hudson.model.Action;
 import java.io.IOException;
@@ -44,12 +45,13 @@ public class CodeSonarProjectAction implements Action {
         return project.getBuilds().size() >= 2;
     }
 
-    public void doReportGraphs(StaplerRequest req, StaplerResponse rsp) {
+    public void doReportGraphs(StaplerRequest req, StaplerResponse rsp) throws AbortException {
         CodeSonarBuildAction action = getLatestActionInProject();
         if (action != null) {
             try {
                 action.doReportGraphs(req, rsp);
-            } catch (IOException exception) {
+            } catch (IOException e) {
+                throw new AbortException(e.getMessage());
             }
         }
     }
