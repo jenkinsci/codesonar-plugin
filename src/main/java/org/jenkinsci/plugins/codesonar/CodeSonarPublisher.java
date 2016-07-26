@@ -249,9 +249,6 @@ public class CodeSonarPublisher extends Recorder {
         return protocol;
     }
 
-    /**
-     * @param protocol the protocol to set
-     */
     public void setProtocol(String protocol) {
         this.protocol = protocol;
     }
