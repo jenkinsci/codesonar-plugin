@@ -1,6 +1,7 @@
 package org.jenkinsci.plugins.codesonar.models;
 
 import java.io.Serializable;
+import java.util.Objects;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlAttribute;
@@ -42,6 +43,10 @@ public class Metric implements Serializable {
 
     @Override
     public boolean equals(Object obj) {
+        if (obj == null) {
+            return false;
+        }
+        
         Metric other = (Metric) obj;
 
         if (!this.name.equals(other.name)) {
@@ -52,6 +57,14 @@ public class Metric implements Serializable {
         }
 
         return true;
+    }
+
+    @Override
+    public int hashCode() {
+        int hash = 7;
+        hash = 47 * hash + Objects.hashCode(this.name);
+        hash = 47 * hash + Objects.hashCode(this.value);
+        return hash;
     }
 
     @Override
