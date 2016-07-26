@@ -63,6 +63,12 @@ public class Project42 implements Serializable {
 
     @Override
     public boolean equals(Object obj) {
+        if (obj == null) {
+            return false;
+        }
+        if (!(obj instanceof Project42)) {
+            return false;
+        }
         Project42 other = (Project42) obj;
 
         if (!this.name.equals(other.getName())) {
