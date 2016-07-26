@@ -7,69 +7,12 @@ GITHUB_PRAQMA_CREDENTIALS = '100247a2-70f4-4a4e-a9f6-266d139da9db'
 DOCKERHOST1_SLAVE_LABEL = 'dockerhost1'
 JENKINSUBUNTU_LABEL = 'jenkinsubuntu'
 
-PRETESTED_INTEGRATION_JOB_NAME = '1_pretested-integration_codesonar'
-UNIT_TESTS_JOB_NAME = '2_unit-tests_codesonar'
-INTEGRATION_TESTS_JOB_NAME = '3_integration-tests_codesonar'
-ANALYSIS_JOB_NAME = '4_analysis_codesonar'
-PUSH_TO_JENKINSCI_JOB_NAME = '5_push_to_jenkinsci_codesonar'
-RELEASE_JOB_NAME = '6_release_codesonar'
-SYNC_JOB_NAME = '7_sync_jenkinsci_codesonar'
-
-job(PRETESTED_INTEGRATION_JOB_NAME) {
-    logRotator {
-        numToKeep(NUM_OF_BUILDS_TO_KEEP)
-    }
-
-    label(DOCKERHOST1_SLAVE_LABEL)
-
-    properties {
-        ownership {
-            primaryOwnerId('and')
-            coOwnerIds('man')
-        }
-    }
-
-    authorization {
-        permission('hudson.model.Item.Read', 'anonymous')
-    }
-
-    scm {
-        git {
-            remote {
-                name(REMOTE_NAME)
-                url(REPOSITORY_URL)
-                credentials(GITHUB_PRAQMA_CREDENTIALS)
-            }
-            branch("$REMOTE_NAME/ready/**")
-
-            extensions {
-                wipeOutWorkspace()
-            }
-        }
-    }
-
-    triggers {
-        githubPush()
-    }
-
-    steps {
-        maven {
-            goals('clean test')
-            mavenInstallation('Latest')
-        }
-    }
-
-    wrappers {
-        buildName('${BUILD_NUMBER}#${GIT_REVISION,length=8}(${GIT_BRANCH})')
-        pretestedIntegration("SQUASHED", MAIN_BRANCH, REMOTE_NAME)
-    }
-
-    publishers {
-        pretestedIntegration()
-        downstream(UNIT_TESTS_JOB_NAME, 'SUCCESS')
-        mailer('and@praqma.net', false, false)
-    }
-}
+UNIT_TESTS_JOB_NAME = '1_unit-tests_codesonar'
+INTEGRATION_TESTS_JOB_NAME = '2_integration-tests_codesonar'
+ANALYSIS_JOB_NAME = '3_analysis_codesonar'
+PUSH_TO_JENKINSCI_JOB_NAME = '4_push_to_jenkinsci_codesonar'
+RELEASE_JOB_NAME = '5_release_codesonar'
+SYNC_JOB_NAME = '6_sync_jenkinsci_codesonar'
 
 job(UNIT_TESTS_JOB_NAME) {
 
@@ -95,6 +38,10 @@ job(UNIT_TESTS_JOB_NAME) {
             branch(MAIN_BRANCH)
             extensions {}
         }
+    }
+
+    triggers {
+        githubPush()
     }
 
     authorization {
