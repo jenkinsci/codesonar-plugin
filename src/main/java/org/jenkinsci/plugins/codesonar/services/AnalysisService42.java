@@ -2,7 +2,6 @@ package org.jenkinsci.plugins.codesonar.services;
 
 import hudson.AbortException;
 import java.io.IOException;
-import java.io.Serializable;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
@@ -17,7 +16,7 @@ import org.jenkinsci.plugins.codesonar.models.projects.Projects42;
  *
  * @author Andrius
  */
-public class AnalysisService42 implements IAnalysisService, Serializable {
+public class AnalysisService42 implements IAnalysisService {
 
     private HttpService httpService;
     private XmlSerializationService xmlSerializationService;

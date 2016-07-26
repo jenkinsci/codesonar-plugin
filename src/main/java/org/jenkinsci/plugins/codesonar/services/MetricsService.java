@@ -1,7 +1,6 @@
 package org.jenkinsci.plugins.codesonar.services;
 
 import java.io.IOException;
-import java.io.Serializable;
 import java.net.URI;
 import org.jenkinsci.plugins.codesonar.models.metrics.Metrics;
 
@@ -9,7 +8,7 @@ import org.jenkinsci.plugins.codesonar.models.metrics.Metrics;
  *
  * @author Andrius
  */
-public class MetricsService implements Serializable {
+public class MetricsService {
     private HttpService httpService;
     private XmlSerializationService xmlSerializationService;
 

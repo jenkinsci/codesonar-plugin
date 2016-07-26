@@ -2,7 +2,6 @@ package org.jenkinsci.plugins.codesonar.services;
 
 import hudson.AbortException;
 import java.io.IOException;
-import java.io.Serializable;
 import java.net.URI;
 import java.security.KeyManagementException;
 import java.security.KeyStore;
@@ -20,7 +19,7 @@ import org.apache.http.client.fluent.Request;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.ssl.SSLContexts;
 
-public class AuthenticationService implements Serializable {
+public class AuthenticationService {
     private HttpService httpService;
 
     public AuthenticationService(HttpService httpService) {

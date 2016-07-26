@@ -2,7 +2,6 @@ package org.jenkinsci.plugins.codesonar.services;
 
 import hudson.AbortException;
 import java.io.IOException;
-import java.io.Serializable;
 import java.net.URI;
 import java.util.logging.Level;
 import java.util.logging.Logger;
