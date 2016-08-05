@@ -14,7 +14,7 @@ import org.jenkinsci.plugins.codesonar.conditions.YellowAlertLimitCondition;
 
 class CodeSonarJobDslContext implements Context {
 
-    List<Condition> conditions = new ArrayList<>();
+    List<Condition> conditions = new ArrayList<Condition>();
 
     public void cyclomaticComplexity(int max, boolean fail) {
         ProcedureCyclomaticComplexityExceededCondition condition = new ProcedureCyclomaticComplexityExceededCondition(max);

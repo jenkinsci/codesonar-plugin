@@ -21,7 +21,7 @@ import org.jvnet.hudson.test.JenkinsRule;
  * @author Andrius
  */
 public class CodeSonarPublisherIT {
-        @Rule
+    @Rule
     public JenkinsRule jenkinsRule = new JenkinsRule();
 
 

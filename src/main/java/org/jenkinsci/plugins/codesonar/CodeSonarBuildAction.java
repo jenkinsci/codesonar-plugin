@@ -2,6 +2,7 @@ package org.jenkinsci.plugins.codesonar;
 
 import hudson.model.AbstractBuild;
 import hudson.model.Action;
+import hudson.model.Run;
 import hudson.util.ChartUtil;
 import hudson.util.DataSetBuilder;
 import java.io.IOException;
@@ -72,7 +73,7 @@ public class CodeSonarBuildAction implements Action {
                 }
 
                 int totalNubmerOfWarnings = prevBuildActionDTO.getAnalysisActiveWarnings().getWarnings().size();
-                label = new ChartUtil.NumberOnlyBuildLabel(codeSonarBuildAction.build);
+                label = new ChartUtil.NumberOnlyBuildLabel((Run<?, ?>)codeSonarBuildAction.build);
 
                 dsb.add(totalNubmerOfWarnings, title, label);
             }
@@ -89,7 +90,7 @@ public class CodeSonarBuildAction implements Action {
                 Metric metric = prevBuildActionDTO.getMetrics().getMetricByName("LCodeOnly");
                 int value = Integer.parseInt(metric.getValue());
 
-                label = new ChartUtil.NumberOnlyBuildLabel(codeSonarBuildAction.build);
+                label = new ChartUtil.NumberOnlyBuildLabel((Run<?, ?>)codeSonarBuildAction.build);
 
                 dsb.add(value, title, label);
 
