@@ -167,6 +167,8 @@ job(ANALYSIS_JOB_NAME) {
         buildName('${BUILD_NUMBER}#${GIT_REVISION,length=8}(${GIT_BRANCH})')
     }
     publishers {
+        archiveArtifacts('target/codesonar.*')
+
         findbugs('target/findbugsXml.xml', false) {
             healthLimits(3, 20)
             thresholdLimit('high')
@@ -233,7 +235,9 @@ job(PUSH_TO_JENKINSCI_JOB_NAME) {
                 url(REPOSITORY_URL)
             }
             branch(MAIN_BRANCH)
-            extensions {}
+            extensions {
+                cleanBeforeCheckout()
+            }
         }
     }
 
@@ -287,7 +291,10 @@ job(RELEASE_JOB_NAME) {
                 url(REPOSITORY_URL)
             }
             branch(MAIN_BRANCH)
-            extensions {}
+            extensions {
+                wipeOutWorkspace()
+                localBranch(MAIN_BRANCH)
+            }
         }
     }
 
