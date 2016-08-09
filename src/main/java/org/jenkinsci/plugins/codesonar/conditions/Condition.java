@@ -9,6 +9,7 @@ import hudson.model.BuildListener;
 import hudson.model.Describable;
 import hudson.model.Descriptor;
 import hudson.model.Result;
+import java.util.Objects;
 import jenkins.model.Jenkins;
 
 /**
@@ -21,10 +22,12 @@ public abstract class Condition implements Describable<Condition>, ExtensionPoin
     
     @Override
     public Descriptor<Condition> getDescriptor() {
-        return (ConditionDescriptor<?>) Jenkins.getInstance().getDescriptorOrDie(getClass());
+        Jenkins instance = Objects.requireNonNull(Jenkins.getInstance());
+        return (ConditionDescriptor<?>) instance.getDescriptorOrDie(getClass());
     }
-
+    
     public static DescriptorExtensionList<Condition, ConditionDescriptor<Condition>> getAll() {
-        return Jenkins.getInstance().<Condition, ConditionDescriptor<Condition>>getDescriptorList(Condition.class);
+        Jenkins instance = Objects.requireNonNull(Jenkins.getInstance());
+        return instance.<Condition, ConditionDescriptor<Condition>>getDescriptorList(Condition.class);
     }
 }
