@@ -236,7 +236,7 @@ job(PUSH_TO_JENKINSCI_JOB_NAME) {
             }
             branch(MAIN_BRANCH)
             extensions {
-                cleanBeforeCheckout()
+                wipeOutWorkspace()
             }
         }
     }
