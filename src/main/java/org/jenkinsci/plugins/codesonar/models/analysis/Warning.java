@@ -20,7 +20,10 @@ public class Warning implements Serializable {
     private String id;
     @XmlElement(name = "class")
     private String clazz;
+    
     private int rank;
+    private int score;
+    
     private String file;
     @XmlElement(name = "line_number")
     private String lineNumber;
@@ -60,6 +63,14 @@ public class Warning implements Serializable {
 
     public void setRank(int rank) {
         this.rank = rank;
+    }
+    
+    public int getScore() {
+        return score;
+    }
+
+    public void setScore(int score) {
+        this.score = score;
     }
 
     public String getFile() {

@@ -44,19 +44,19 @@ public class PercentageOfWariningsIncreasedInCasesBellowCertainRankCondition ext
         }
 
         Analysis analysis = buildActionDTO.getAnalysisActiveWarnings();
-
+        
         int totalNumberOfWarnings = analysis.getWarnings().size();
-
+        
         float severeWarnings = 0.0f;
         List<Warning> warnings = analysis.getWarnings();
         for (Warning warning : warnings) {
-            if (warning.getRank() < rankOfWarnings) {
+            if (warning.getScore() < rankOfWarnings) {
                 severeWarnings++;
             }
         }
 
         float calculatedWarningPercentage = (severeWarnings / totalNumberOfWarnings) * 100;
-
+        
         if (calculatedWarningPercentage > warningPercentage) {
             Result result = Result.fromString(warrantedResult);
             return result;
