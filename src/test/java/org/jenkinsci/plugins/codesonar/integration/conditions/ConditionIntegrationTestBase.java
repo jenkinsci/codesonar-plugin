@@ -53,11 +53,13 @@ public abstract class ConditionIntegrationTestBase {
         final List<Warning> ACTIVE_WARNINGS = new ArrayList<Warning>();
         Warning warning = new Warning();
         warning.setRank(25);
+        warning.setScore(25);
         ACTIVE_WARNINGS.add(warning);
         ACTIVE_WARNINGS.add(warning);
         ACTIVE_WARNINGS.add(warning);
         warning = new Warning();
         warning.setRank(35);
+        warning.setScore(35);
         ACTIVE_WARNINGS.add(warning);
         ACTIVE_WARNINGS.add(warning);
         VALID_ANALYSIS_ACTIVE_WARNINGS.setWarnings(ACTIVE_WARNINGS);
