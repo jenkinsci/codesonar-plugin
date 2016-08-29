@@ -43,7 +43,7 @@ public class PercentageOfWariningsIncreasedInCasesBellowCertainRankCondition ext
             return Result.SUCCESS;
         }
         
-        listener.getLogger().println(String.format("[codesonar debug] specified rank/score of warnings: %s", rankOfWarnings));
+        listener.getLogger().println(String.format("[codesonar debug] specified score of warnings: %s", rankOfWarnings));
         listener.getLogger().println(String.format("[codesonar debug] specified warning precentage: %s", warningPercentage));
 
         Analysis analysis = buildActionDTO.getAnalysisActiveWarnings();
@@ -55,12 +55,12 @@ public class PercentageOfWariningsIncreasedInCasesBellowCertainRankCondition ext
         float severeWarnings = 0.0f;
         List<Warning> warnings = analysis.getWarnings();
         for (Warning warning : warnings) {
-            if (warning.getScore() < rankOfWarnings) {
+            if (warning.getScore() > rankOfWarnings) {
                 severeWarnings++;
             }
         }
         
-        listener.getLogger().println(String.format("[codesonar debug] number of warning found with score bellow the specified limit: %s", severeWarnings));
+        listener.getLogger().println(String.format("[codesonar debug] number of warning found with score above the specified limit: %s", severeWarnings));
 
         float calculatedWarningPercentage = (severeWarnings / totalNumberOfWarnings) * 100;
         
