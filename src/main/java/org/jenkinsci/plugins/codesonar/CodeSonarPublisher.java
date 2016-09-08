@@ -66,12 +66,12 @@ public class CodeSonarPublisher extends Recorder {
     private String projectName;
     private String protocol = "http";
     
-    private transient XmlSerializationService xmlSerializationService = null;
-    private transient HttpService httpService = null;
-    private transient AuthenticationService authenticationService = null;
-    private transient IAnalysisService analysisService = null;
-    private transient MetricsService metricsService = null;
-    private transient ProceduresService proceduresService = null;
+    private XmlSerializationService xmlSerializationService = null;
+    private HttpService httpService = null;
+    private AuthenticationService authenticationService = null;
+    private IAnalysisService analysisService = null;
+    private MetricsService metricsService = null;
+    private ProceduresService proceduresService = null;
 
     private transient AnalysisServiceFactory analysisServiceFactory;
 
