@@ -65,7 +65,7 @@ public class CodeSonarPublisher extends Recorder {
     private String hubAddress;
     private String projectName;
     private String protocol = "http";
-    
+
     private XmlSerializationService xmlSerializationService = null;
     private HttpService httpService = null;
     private AuthenticationService authenticationService = null;
@@ -73,9 +73,8 @@ public class CodeSonarPublisher extends Recorder {
     private MetricsService metricsService = null;
     private ProceduresService proceduresService = null;
 
-    private transient AnalysisServiceFactory analysisServiceFactory;
+    private AnalysisServiceFactory analysisServiceFactory = null;
 
-            
     private List<Condition> conditions;
 
     private String credentialId;
@@ -92,18 +91,17 @@ public class CodeSonarPublisher extends Recorder {
         this.conditions = conditions;
 
         this.credentialId = credentialId;
-
-        xmlSerializationService = new XmlSerializationService();
-        httpService = new HttpService();
-        authenticationService = new AuthenticationService(httpService);
-        metricsService = new MetricsService(httpService, xmlSerializationService);
-        proceduresService = new ProceduresService(httpService, xmlSerializationService);
-        
-        analysisServiceFactory = new AnalysisServiceFactory();
     }
 
     @Override
     public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener) throws InterruptedException, IOException, AbortException {
+        xmlSerializationService = getXmlSerializationService();
+        httpService = getHttpService();
+        authenticationService = getAuthenticationService();
+        metricsService = getMetricsService();
+        proceduresService = getProceduresService();
+        analysisServiceFactory = getAnalysisServiceFactory();
+        
         String expandedHubAddress = build.getEnvironment(listener).expand(Util.fixNull(hubAddress));
         String expandedProjectName = build.getEnvironment(listener).expand(Util.fixNull(projectName));
 
@@ -117,19 +115,20 @@ public class CodeSonarPublisher extends Recorder {
         URI baseHubUri = URI.create(String.format("%s://%s", getProtocol(), expandedHubAddress));
 
         float hubVersion = getHubVersion(baseHubUri);
-        
+
         authenticate(build, baseHubUri);
-    
+
+        analysisServiceFactory = getAnalysisServiceFactory();
         analysisServiceFactory.setVersion(hubVersion);
         analysisService = analysisServiceFactory.getAnalysisService(httpService, xmlSerializationService);
-        
+
         List<String> logFile = IOUtils.readLines(build.getLogReader());
         String analysisUrl = analysisService.getAnalysisUrlFromLogFile(logFile);
 
         if (analysisUrl == null) {
             analysisUrl = analysisService.getLatestAnalysisUrlForAProject(baseHubUri, expandedProjectName);
         }
-        
+
         Analysis analysisActiveWarnings = analysisService.getAnalysisFromUrlWithActiveWarnings(analysisUrl);
 
         URI metricsUri = metricsService.getMetricsUriFromAnAnalysisId(baseHubUri, analysisActiveWarnings.getAnalysisId());
@@ -139,7 +138,7 @@ public class CodeSonarPublisher extends Recorder {
         Procedures procedures = proceduresService.getProceduresFromUri(proceduresUri);
 
         Analysis analysisNewWarnings = analysisService.getAnalysisFromUrlWithNewWarnings(analysisUrl);
-        
+
         List<Pair<String, String>> conditionNamesAndResults = new ArrayList<Pair<String, String>>();
 
         CodeSonarBuildActionDTO buildActionDTO = new CodeSonarBuildActionDTO(analysisActiveWarnings,
@@ -164,7 +163,7 @@ public class CodeSonarPublisher extends Recorder {
 
         return true;
     }
-    
+
     private float getHubVersion(URI baseHubUri) throws AbortException {
         String info;
         try {
@@ -173,14 +172,14 @@ public class CodeSonarPublisher extends Recorder {
             // /command/anon_info/ is not available which means the hub is > 4.2
             return 4.0f;
         }
-                
+
         Pattern pattern = Pattern.compile("Version:\\s(\\d+\\.\\d+)");
-        
+
         Matcher matcher = pattern.matcher(info);
         if (matcher.find()) {
             return Float.valueOf(matcher.group(1));
         }
-        
+
         throw new AbortException("Hub version could not be determined");
     }
 
@@ -191,17 +190,18 @@ public class CodeSonarPublisher extends Recorder {
 
         if (credentials instanceof StandardUsernamePasswordCredentials) {
 
-            UsernamePasswordCredentials c = (UsernamePasswordCredentials)credentials;
+            UsernamePasswordCredentials c = (UsernamePasswordCredentials) credentials;
 
             authenticationService.authenticate(baseHubUri,
                     c.getUsername(),
                     c.getPassword().getPlainText());
         }
         if (credentials instanceof StandardCertificateCredentials) {
-            if (protocol.equals("http"))
+            if (protocol.equals("http")) {
                 throw new AbortException("[CodeSonar] Authentication using a certificate is only available while SSL is enabled.");
+            }
 
-            StandardCertificateCredentials c = (StandardCertificateCredentials)credentials;
+            StandardCertificateCredentials c = (StandardCertificateCredentials) credentials;
 
             authenticationService.authenticate(baseHubUri,
                     c.getKeyStore(),
@@ -253,14 +253,10 @@ public class CodeSonarPublisher extends Recorder {
         this.protocol = protocol;
     }
 
-    public AnalysisServiceFactory getAnalysisServiceFactory() {
-        return analysisServiceFactory;
-    }
-
     public void setAnalysisServiceFactory(AnalysisServiceFactory analysisServiceFactory) {
         this.analysisServiceFactory = analysisServiceFactory;
     }
-    
+
     /**
      * @param hubAddress the hubAddress to set
      */
@@ -314,6 +310,48 @@ public class CodeSonarPublisher extends Recorder {
         this.credentialId = credentialId;
     }
 
+    public XmlSerializationService getXmlSerializationService() {
+        if (xmlSerializationService == null) {
+            xmlSerializationService = new XmlSerializationService();
+        }
+        return xmlSerializationService;
+    }
+
+    public HttpService getHttpService() {
+        if (httpService == null) {
+            httpService = new HttpService();
+        }
+        return httpService;
+    }
+
+    public AuthenticationService getAuthenticationService() {
+        if (authenticationService == null) {
+            authenticationService = new AuthenticationService(getHttpService());
+        }
+        return authenticationService;
+    }
+
+    public MetricsService getMetricsService() {
+        if (metricsService == null) {
+            metricsService = new MetricsService(getHttpService(), getXmlSerializationService());
+        }
+        return metricsService;
+    }
+
+    public ProceduresService getProceduresService() {
+        if (proceduresService == null) {
+            proceduresService = new ProceduresService(getHttpService(), getXmlSerializationService());
+        }
+        return proceduresService;
+    }
+    
+    public AnalysisServiceFactory getAnalysisServiceFactory() {
+        if (analysisServiceFactory == null) {
+            analysisServiceFactory = new AnalysisServiceFactory();
+        }
+        return analysisServiceFactory;
+    }
+
     @Extension
     public static class DescriptorImpl extends BuildStepDescriptor<Publisher> {
 
@@ -362,9 +400,9 @@ public class CodeSonarPublisher extends Recorder {
             return new StandardListBoxModel()
                     .withEmptySelection()
                     .withMatching(CredentialsMatchers.anyOf(
-                            CredentialsMatchers.instanceOf(StandardUsernamePasswordCredentials.class),
-                            CredentialsMatchers.instanceOf(CertificateCredentials.class)
-                    ), credentials);
+                                    CredentialsMatchers.instanceOf(StandardUsernamePasswordCredentials.class),
+                                    CredentialsMatchers.instanceOf(CertificateCredentials.class)
+                            ), credentials);
         }
 
         public ListBoxModel doFillProtocolItems() {
