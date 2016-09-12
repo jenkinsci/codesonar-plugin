@@ -17,7 +17,7 @@ import org.kohsuke.stapler.DataBoundSetter;
  *
  * @author andrius
  */
-public class PercentageOfWariningsIncreasedInCasesBellowCertainRankCondition extends Condition {
+public class WariningCountIncreaseSpecifiedScoreAndHigherCondition extends Condition {
 
     private static final String NAME = "Warning count increase: specified score and higher";
 
@@ -26,7 +26,7 @@ public class PercentageOfWariningsIncreasedInCasesBellowCertainRankCondition ext
     private String warrantedResult = Result.UNSTABLE.toString();
 
     @DataBoundConstructor
-    public PercentageOfWariningsIncreasedInCasesBellowCertainRankCondition(int rankOfWarnings, float warningPercentage) {
+    public WariningCountIncreaseSpecifiedScoreAndHigherCondition(int rankOfWarnings, float warningPercentage) {
         this.rankOfWarnings = rankOfWarnings;
         this.warningPercentage = warningPercentage;
     }
@@ -100,7 +100,7 @@ public class PercentageOfWariningsIncreasedInCasesBellowCertainRankCondition ext
     }
 
     @Extension
-    public static final class DescriptorImpl extends ConditionDescriptor<PercentageOfWariningsIncreasedInCasesBellowCertainRankCondition> {
+    public static final class DescriptorImpl extends ConditionDescriptor<WariningCountIncreaseSpecifiedScoreAndHigherCondition> {
 
         public DescriptorImpl() {
             load();

@@ -6,10 +6,10 @@ import java.util.List;
 import javaposse.jobdsl.dsl.Context;
 import org.jenkinsci.plugins.codesonar.conditions.Condition;
 import org.jenkinsci.plugins.codesonar.conditions.NewWarningsIncreasedByPercentageCondition;
-import org.jenkinsci.plugins.codesonar.conditions.PercentageOfWariningsIncreasedInCasesBellowCertainRankCondition;
+import org.jenkinsci.plugins.codesonar.conditions.WariningCountIncreaseSpecifiedScoreAndHigherCondition;
 import org.jenkinsci.plugins.codesonar.conditions.ProcedureCyclomaticComplexityExceededCondition;
 import org.jenkinsci.plugins.codesonar.conditions.RedAlertLimitCondition;
-import org.jenkinsci.plugins.codesonar.conditions.WarningCountIncreasedByPercentageCondition;
+import org.jenkinsci.plugins.codesonar.conditions.WarningCountIncreaseOverallCondition;
 import org.jenkinsci.plugins.codesonar.conditions.YellowAlertLimitCondition;
 
 class CodeSonarJobDslContext implements Context {
@@ -57,7 +57,7 @@ class CodeSonarJobDslContext implements Context {
     }
 
     public void overallWarningCountIncrease(float percentage, boolean fail) {
-        WarningCountIncreasedByPercentageCondition condition = new WarningCountIncreasedByPercentageCondition(percentage);
+        WarningCountIncreaseOverallCondition condition = new WarningCountIncreaseOverallCondition(percentage);
         if (fail) {
             condition.setWarrantedResult(Result.FAILURE.toString());
         } else {
@@ -67,7 +67,7 @@ class CodeSonarJobDslContext implements Context {
     }
 
     public void rankedWarningCountIncrease(int rank, float percentage, boolean fail) {
-        PercentageOfWariningsIncreasedInCasesBellowCertainRankCondition condition = new PercentageOfWariningsIncreasedInCasesBellowCertainRankCondition(rank, percentage);
+        WariningCountIncreaseSpecifiedScoreAndHigherCondition condition = new WariningCountIncreaseSpecifiedScoreAndHigherCondition(rank, percentage);
         if (fail) {
             condition.setWarrantedResult(Result.FAILURE.toString());
         } else {

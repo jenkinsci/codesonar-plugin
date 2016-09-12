@@ -9,7 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 import org.jenkinsci.plugins.codesonar.CodeSonarPublisher;
 import org.jenkinsci.plugins.codesonar.conditions.Condition;
-import org.jenkinsci.plugins.codesonar.conditions.PercentageOfWariningsIncreasedInCasesBellowCertainRankCondition;
+import org.jenkinsci.plugins.codesonar.conditions.WariningCountIncreaseSpecifiedScoreAndHigherCondition;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -18,7 +18,7 @@ import org.junit.Test;
  *
  * @author Andrius
  */
-public class PercentageOfWariningsIncreasedInCasesBellowCertainRankConditionIT extends ConditionIntegrationTestBase {
+public class WariningCountIncreaseSpecifiedScoreAndHigherConditionIT extends ConditionIntegrationTestBase {
 
     @Before
     public void setUp() throws Exception {
@@ -26,7 +26,7 @@ public class PercentageOfWariningsIncreasedInCasesBellowCertainRankConditionIT e
     }
 
     @Test
-    public void percentageOfWariningsBellowTheDesignatedRankIsAboveTheThreshold_BuildIsSetToWarrantedResult() throws Exception {
+    public void percentageOfWariningsBellowTheDesignatedScoreIsAboveTheThreshold_BuildIsSetToWarrantedResult() throws Exception {
         // arrange
         final Result EXPECTED_RESULT = Result.FAILURE;
         final String WARRANTED_RESULT = Result.FAILURE.toString();
@@ -34,8 +34,8 @@ public class PercentageOfWariningsIncreasedInCasesBellowCertainRankConditionIT e
         final int RANK_OF_WARNINGS = 30;
         final float WARNING_PERCENTAGE = 50.0f;
 
-        PercentageOfWariningsIncreasedInCasesBellowCertainRankCondition condition
-                = new PercentageOfWariningsIncreasedInCasesBellowCertainRankCondition(RANK_OF_WARNINGS, WARNING_PERCENTAGE);
+        WariningCountIncreaseSpecifiedScoreAndHigherCondition condition
+                = new WariningCountIncreaseSpecifiedScoreAndHigherCondition(RANK_OF_WARNINGS, WARNING_PERCENTAGE);
         condition.setWarrantedResult(WARRANTED_RESULT);
 
         List<Condition> conditions = new ArrayList<Condition>();
@@ -66,8 +66,8 @@ public class PercentageOfWariningsIncreasedInCasesBellowCertainRankConditionIT e
         final int RANK_OF_WARNINGS = 30;
         final float WARNING_PERCENTAGE = 70.0f;
 
-        PercentageOfWariningsIncreasedInCasesBellowCertainRankCondition condition
-                = new PercentageOfWariningsIncreasedInCasesBellowCertainRankCondition(RANK_OF_WARNINGS, WARNING_PERCENTAGE);
+        WariningCountIncreaseSpecifiedScoreAndHigherCondition condition
+                = new WariningCountIncreaseSpecifiedScoreAndHigherCondition(RANK_OF_WARNINGS, WARNING_PERCENTAGE);
         condition.setWarrantedResult(WARRANTED_RESULT);
 
         List<Condition> conditions = new ArrayList<Condition>();

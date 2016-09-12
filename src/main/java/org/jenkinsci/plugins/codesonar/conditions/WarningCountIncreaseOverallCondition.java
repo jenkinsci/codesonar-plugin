@@ -13,14 +13,14 @@ import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 
-public class WarningCountIncreasedByPercentageCondition extends Condition {
+public class WarningCountIncreaseOverallCondition extends Condition {
 
     private static final String NAME = "Warning count increase: overall";
     private float percentage = 5.0f;
     private String warrantedResult = Result.UNSTABLE.toString();
 
     @DataBoundConstructor
-    public WarningCountIncreasedByPercentageCondition(float percentage) {
+    public WarningCountIncreaseOverallCondition(float percentage) {
         this.percentage = percentage;
     }
 
@@ -87,7 +87,7 @@ public class WarningCountIncreasedByPercentageCondition extends Condition {
     }
 
     @Extension
-    public static final class DescriptorImpl extends ConditionDescriptor<WarningCountIncreasedByPercentageCondition> {
+    public static final class DescriptorImpl extends ConditionDescriptor<WarningCountIncreaseOverallCondition> {
 
         public DescriptorImpl() {
             load();
