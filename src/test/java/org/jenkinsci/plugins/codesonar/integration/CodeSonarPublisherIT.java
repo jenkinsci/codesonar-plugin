@@ -11,7 +11,7 @@ import org.apache.commons.io.FileUtils;
 import static org.junit.Assert.*;
 import org.jenkinsci.plugins.codesonar.CodeSonarPublisher;
 import org.jenkinsci.plugins.codesonar.conditions.Condition;
-import org.jenkinsci.plugins.codesonar.conditions.WariningCountIncreaseSpecifiedScoreAndHigherCondition;
+import org.jenkinsci.plugins.codesonar.conditions.WarningCountIncreaseSpecifiedScoreAndHigherCondition;
 import org.junit.Rule;
 import org.junit.Test;
 import org.jvnet.hudson.test.JenkinsRule;
@@ -32,8 +32,8 @@ public class CodeSonarPublisherIT {
         
         final int RANK_OF_WARNINGS = 30;
         final float WARNING_PERCENTAGE = 50.0f;
-        WariningCountIncreaseSpecifiedScoreAndHigherCondition condition = 
-                new WariningCountIncreaseSpecifiedScoreAndHigherCondition(RANK_OF_WARNINGS, WARNING_PERCENTAGE);
+        WarningCountIncreaseSpecifiedScoreAndHigherCondition condition = 
+                new WarningCountIncreaseSpecifiedScoreAndHigherCondition(RANK_OF_WARNINGS, WARNING_PERCENTAGE);
         
         final String EMPTY_HUB_ADDRESS = "";
         final String VALID_PROJECT_NAME = "projectName";
@@ -58,8 +58,8 @@ public class CodeSonarPublisherIT {
         
         final int RANK_OF_WARNINGS = 30;
         final float WARNING_PERCENTAGE = 50.0f;
-        WariningCountIncreaseSpecifiedScoreAndHigherCondition condition = 
-                new WariningCountIncreaseSpecifiedScoreAndHigherCondition(RANK_OF_WARNINGS, WARNING_PERCENTAGE);
+        WarningCountIncreaseSpecifiedScoreAndHigherCondition condition = 
+                new WarningCountIncreaseSpecifiedScoreAndHigherCondition(RANK_OF_WARNINGS, WARNING_PERCENTAGE);
         
         final String VALID_HUB_ADDRESS = "10.10.10.10";
         final String EMPTY_PROJECT_NAME = "";
@@ -84,8 +84,8 @@ public class CodeSonarPublisherIT {
         
         final int RANK_OF_WARNINGS = 30;
         final float WARNING_PERCENTAGE = 50.0f;
-        WariningCountIncreaseSpecifiedScoreAndHigherCondition condition = 
-                new WariningCountIncreaseSpecifiedScoreAndHigherCondition(RANK_OF_WARNINGS, WARNING_PERCENTAGE);
+        WarningCountIncreaseSpecifiedScoreAndHigherCondition condition = 
+                new WarningCountIncreaseSpecifiedScoreAndHigherCondition(RANK_OF_WARNINGS, WARNING_PERCENTAGE);
         
         final String VALID_HUB_ADDRESS = "10.10.10.10";
         final String RANDOM_NAME = "projectNotThere";

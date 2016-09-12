@@ -6,7 +6,7 @@ import java.util.List;
 import javaposse.jobdsl.dsl.Context;
 import org.jenkinsci.plugins.codesonar.conditions.Condition;
 import org.jenkinsci.plugins.codesonar.conditions.NewWarningsIncreasedByPercentageCondition;
-import org.jenkinsci.plugins.codesonar.conditions.WariningCountIncreaseSpecifiedScoreAndHigherCondition;
+import org.jenkinsci.plugins.codesonar.conditions.WarningCountIncreaseSpecifiedScoreAndHigherCondition;
 import org.jenkinsci.plugins.codesonar.conditions.ProcedureCyclomaticComplexityExceededCondition;
 import org.jenkinsci.plugins.codesonar.conditions.RedAlertLimitCondition;
 import org.jenkinsci.plugins.codesonar.conditions.WarningCountIncreaseOverallCondition;
@@ -67,7 +67,7 @@ class CodeSonarJobDslContext implements Context {
     }
 
     public void rankedWarningCountIncrease(int rank, float percentage, boolean fail) {
-        WariningCountIncreaseSpecifiedScoreAndHigherCondition condition = new WariningCountIncreaseSpecifiedScoreAndHigherCondition(rank, percentage);
+        WarningCountIncreaseSpecifiedScoreAndHigherCondition condition = new WarningCountIncreaseSpecifiedScoreAndHigherCondition(rank, percentage);
         if (fail) {
             condition.setWarrantedResult(Result.FAILURE.toString());
         } else {
