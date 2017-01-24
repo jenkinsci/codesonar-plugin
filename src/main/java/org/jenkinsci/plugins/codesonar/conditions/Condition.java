@@ -4,11 +4,11 @@ import hudson.AbortException;
 import hudson.DescriptorExtensionList;
 import hudson.ExtensionPoint;
 import hudson.Launcher;
-import hudson.model.AbstractBuild;
-import hudson.model.BuildListener;
+import hudson.model.Run;
 import hudson.model.Describable;
 import hudson.model.Descriptor;
 import hudson.model.Result;
+import hudson.model.TaskListener;
 import jenkins.model.Jenkins;
 
 /**
@@ -17,7 +17,7 @@ import jenkins.model.Jenkins;
  */
 public abstract class Condition implements Describable<Condition>, ExtensionPoint {
 
-    public abstract Result validate(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener) throws AbortException;
+    public abstract Result validate(Run<?, ?> run, Launcher launcher, TaskListener listener) throws AbortException;
     
     @Override
     public Descriptor<Condition> getDescriptor() {

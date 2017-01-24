@@ -1,7 +1,7 @@
 package org.jenkinsci.plugins.codesonar;
 
-import hudson.model.AbstractBuild;
-import hudson.model.AbstractProject;
+import hudson.model.Run;
+import hudson.model.Job;
 
 /**
  *
@@ -9,8 +9,8 @@ import hudson.model.AbstractProject;
  */
 public class Utils {
 
-    public static CodeSonarBuildAction getLatestCodeSonarBuildActionFromProject(AbstractProject<?, ?> project) {
-        AbstractBuild lastBuild = project.getLastBuild();
+    public static CodeSonarBuildAction getLatestCodeSonarBuildActionFromProject(Job<?, ?> job) {
+        Run lastBuild = job.getLastBuild();
 
         if (lastBuild == null) {
             return null;
@@ -22,7 +22,7 @@ public class Utils {
             return action;
         }
 
-        AbstractBuild build = lastBuild.getPreviousBuild();
+        Run build = lastBuild.getPreviousBuild();
         if (build == null) {
             return null;
         }

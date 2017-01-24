@@ -1,7 +1,7 @@
 package org.jenkinsci.plugins.codesonar;
 
 import hudson.AbortException;
-import hudson.model.AbstractProject;
+import hudson.model.Job;
 import hudson.model.Action;
 import java.io.IOException;
 import org.kohsuke.stapler.StaplerRequest;
@@ -13,9 +13,9 @@ import org.kohsuke.stapler.StaplerResponse;
  */
 public class CodeSonarProjectAction implements Action {
 
-    private final AbstractProject<?, ?> project;
+    private final Job<?, ?> project;
 
-    public CodeSonarProjectAction(AbstractProject<?, ?> project) {
+    public CodeSonarProjectAction(Job<?, ?> project) {
         this.project = project;
     }
 

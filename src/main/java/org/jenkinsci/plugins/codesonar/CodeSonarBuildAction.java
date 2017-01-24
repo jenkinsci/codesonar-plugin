@@ -1,32 +1,36 @@
 package org.jenkinsci.plugins.codesonar;
 
-import hudson.model.AbstractBuild;
 import hudson.model.Action;
 import hudson.model.Run;
 import hudson.util.ChartUtil;
 import hudson.util.DataSetBuilder;
 import java.io.IOException;
 import java.net.URI;
+import java.util.Collection;
 import java.util.List;
 import org.javatuples.Pair;
 import org.jenkinsci.plugins.codesonar.models.CodeSonarBuildActionDTO;
 import org.jenkinsci.plugins.codesonar.models.metrics.Metric;
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.StaplerResponse;
-
+import jenkins.tasks.SimpleBuildStep;
+import java.util.Arrays;
+        
 /**
  *
  * @author andrius
  */
-public class CodeSonarBuildAction implements Action {
+public class CodeSonarBuildAction implements Action, SimpleBuildStep.LastBuildAction {
 
+//    private static final Logger LOGGER = Logger.getLogger("totalWarningGraph");
+    
     private final CodeSonarBuildActionDTO buildActionDTO;
 
-    private final AbstractBuild<?, ?> build;
+    private final Run<?, ?> run;
 
-    public CodeSonarBuildAction(CodeSonarBuildActionDTO buildActionDTO, AbstractBuild<?, ?> build) {
+    public CodeSonarBuildAction(CodeSonarBuildActionDTO buildActionDTO, Run<?, ?> run) {
         this.buildActionDTO = buildActionDTO;
-        this.build = build;
+        this.run = run;
     }
 
     @Override
@@ -65,15 +69,20 @@ public class CodeSonarBuildAction implements Action {
         ChartUtil.NumberOnlyBuildLabel label = null;
 
         if (graphName.equals("totalWarnings")) {
+//            LOGGER.fine("generating total warnings graph");
+            
             String title = "Total number of warnings";
             for (CodeSonarBuildAction codeSonarBuildAction = this; codeSonarBuildAction != null; codeSonarBuildAction = codeSonarBuildAction.getPreviousAction()) {
                 CodeSonarBuildActionDTO prevBuildActionDTO = codeSonarBuildAction.getBuildActionDTO();
                 if (prevBuildActionDTO == null) {
                     continue;
                 }
-
+                 
                 int totalNubmerOfWarnings = prevBuildActionDTO.getAnalysisActiveWarnings().getWarnings().size();
-                label = new ChartUtil.NumberOnlyBuildLabel((Run<?, ?>)codeSonarBuildAction.build);
+                
+//                LOGGER.log(Level.FINE, "total number of warnings {0}", totalNubmerOfWarnings );
+                
+                label = new ChartUtil.NumberOnlyBuildLabel((Run<?, ?>)codeSonarBuildAction.run);
 
                 dsb.add(totalNubmerOfWarnings, title, label);
             }
@@ -90,7 +99,7 @@ public class CodeSonarBuildAction implements Action {
                 Metric metric = prevBuildActionDTO.getMetrics().getMetricByName("LCodeOnly");
                 int value = Integer.parseInt(metric.getValue());
 
-                label = new ChartUtil.NumberOnlyBuildLabel((Run<?, ?>)codeSonarBuildAction.build);
+                label = new ChartUtil.NumberOnlyBuildLabel((Run<?, ?>)codeSonarBuildAction.run);
 
                 dsb.add(value, title, label);
 
@@ -102,12 +111,12 @@ public class CodeSonarBuildAction implements Action {
     }
 
     public CodeSonarBuildAction getPreviousAction() {
-        return getPreviousAction(build);
+        return getPreviousAction(run);
     }
 
-    private CodeSonarBuildAction getPreviousAction(AbstractBuild<?, ?> base) {
+    private CodeSonarBuildAction getPreviousAction(Run<?, ?> base) {
         CodeSonarBuildAction action = null;
-        AbstractBuild<?, ?> start = base;
+        Run<?, ?> start = base;
         while (true) {
             start = start.getPreviousNotFailedBuild();
             if (start == null) {
@@ -118,6 +127,14 @@ public class CodeSonarBuildAction implements Action {
                 return action;
             }
         }
+    }
+
+    @Override
+    public Collection<? extends Action> getProjectActions() {
+             return Arrays.asList(
+                new CodeSonarProjectAction(run.getParent()),
+                new CodeSonarLatestAnalysisProjectAction(run.getParent())
+        );
     }
 
 }

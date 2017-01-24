@@ -12,6 +12,7 @@ import com.cloudbees.plugins.credentials.domains.DomainRequirement;
 import hudson.AbortException;
 import hudson.DescriptorExtensionList;
 import hudson.Extension;
+import hudson.FilePath;
 import hudson.Launcher;
 import hudson.Util;
 import hudson.model.AbstractBuild;
@@ -20,6 +21,8 @@ import hudson.model.Action;
 import hudson.model.BuildListener;
 import hudson.model.ItemGroup;
 import hudson.model.Result;
+import hudson.model.Run;
+import hudson.model.TaskListener;
 import hudson.security.ACL;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.BuildStepMonitor;
@@ -34,6 +37,8 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.apache.commons.collections.ListUtils;
@@ -55,13 +60,16 @@ import org.jenkinsci.plugins.codesonar.services.XmlSerializationService;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
+import jenkins.tasks.SimpleBuildStep;
+import org.jenkinsci.plugins.workflow.steps.AbstractStepDescriptorImpl;
+import org.jenkinsci.Symbol;
 
 /**
  *
  * @author andrius
  */
-public class CodeSonarPublisher extends Recorder {
-
+public class CodeSonarPublisher extends Recorder implements SimpleBuildStep  {
+    private static final Logger LOGGER = Logger.getLogger("totalWarningGraph");
     private String hubAddress;
     private String projectName;
     private String protocol = "http";
@@ -94,7 +102,7 @@ public class CodeSonarPublisher extends Recorder {
     }
 
     @Override
-    public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener) throws InterruptedException, IOException, AbortException {
+    public void perform(Run<?, ?> run, FilePath workspace, Launcher launcher, TaskListener listener) throws InterruptedException, IOException {
         xmlSerializationService = getXmlSerializationService();
         httpService = getHttpService();
         authenticationService = getAuthenticationService();
@@ -102,8 +110,8 @@ public class CodeSonarPublisher extends Recorder {
         proceduresService = getProceduresService();
         analysisServiceFactory = getAnalysisServiceFactory();
         
-        String expandedHubAddress = build.getEnvironment(listener).expand(Util.fixNull(hubAddress));
-        String expandedProjectName = build.getEnvironment(listener).expand(Util.fixNull(projectName));
+        String expandedHubAddress = run.getEnvironment(listener).expand(Util.fixNull(hubAddress));
+        String expandedProjectName = run.getEnvironment(listener).expand(Util.fixNull(projectName));
 
         if (expandedHubAddress.isEmpty()) {
             throw new AbortException("Hub address not provided");
@@ -113,55 +121,48 @@ public class CodeSonarPublisher extends Recorder {
         }
 
         URI baseHubUri = URI.create(String.format("%s://%s", getProtocol(), expandedHubAddress));
-
+        
         float hubVersion = getHubVersion(baseHubUri);
-
-        authenticate(build, baseHubUri);
+        LOGGER.log(Level.FINE, "hub version: {0}", hubVersion);
+        
+        authenticate(run, baseHubUri);
 
         analysisServiceFactory = getAnalysisServiceFactory();
         analysisServiceFactory.setVersion(hubVersion);
         analysisService = analysisServiceFactory.getAnalysisService(httpService, xmlSerializationService);
-
-        List<String> logFile = IOUtils.readLines(build.getLogReader());
+        List<String> logFile = IOUtils.readLines(run.getLogReader());
         String analysisUrl = analysisService.getAnalysisUrlFromLogFile(logFile);
 
         if (analysisUrl == null) {
             analysisUrl = analysisService.getLatestAnalysisUrlForAProject(baseHubUri, expandedProjectName);
         }
-
         Analysis analysisActiveWarnings = analysisService.getAnalysisFromUrlWithActiveWarnings(analysisUrl);
-
         URI metricsUri = metricsService.getMetricsUriFromAnAnalysisId(baseHubUri, analysisActiveWarnings.getAnalysisId());
         Metrics metrics = metricsService.getMetricsFromUri(metricsUri);
-
         URI proceduresUri = proceduresService.getProceduresUriFromAnAnalysisId(baseHubUri, analysisActiveWarnings.getAnalysisId());
         Procedures procedures = proceduresService.getProceduresFromUri(proceduresUri);
 
         Analysis analysisNewWarnings = analysisService.getAnalysisFromUrlWithNewWarnings(analysisUrl);
-
         List<Pair<String, String>> conditionNamesAndResults = new ArrayList<Pair<String, String>>();
 
         CodeSonarBuildActionDTO buildActionDTO = new CodeSonarBuildActionDTO(analysisActiveWarnings,
                 analysisNewWarnings, metrics, procedures, baseHubUri);
 
-        build.addAction(new CodeSonarBuildAction(buildActionDTO, build));
-
+        run.addAction(new CodeSonarBuildAction(buildActionDTO, run));
         for (Condition condition : conditions) {
-            Result validationResult = condition.validate(build, launcher, listener);
+            Result validationResult = condition.validate(run, launcher, listener);
 
             Pair<String, String> pair = Pair.with(condition.getDescriptor().getDisplayName(), validationResult.toString());
             conditionNamesAndResults.add(pair);
 
-            build.setResult(validationResult);
+            run.setResult(validationResult);
             listener.getLogger().println(String.format("'%s' marked the build as %s", condition.getDescriptor().getDisplayName(), validationResult.toString()));
         }
 
-        build.getAction(CodeSonarBuildAction.class).getBuildActionDTO()
+        run.getAction(CodeSonarBuildAction.class).getBuildActionDTO()
                 .setConditionNamesAndResults(conditionNamesAndResults);
 
         authenticationService.signOut(baseHubUri);
-
-        return true;
     }
 
     private float getHubVersion(URI baseHubUri) throws AbortException {
@@ -183,13 +184,13 @@ public class CodeSonarPublisher extends Recorder {
         throw new AbortException("Hub version could not be determined");
     }
 
-    private void authenticate(AbstractBuild<?, ?> build, URI baseHubUri) throws AbortException {
+    private void authenticate(Run<?, ?> run, URI baseHubUri) throws AbortException {
         StandardCredentials credentials = CredentialsMatchers.firstOrNull(
-                CredentialsProvider.lookupCredentials(StandardCredentials.class, build.getParent(), ACL.SYSTEM,
+                CredentialsProvider.lookupCredentials(StandardCredentials.class, run.getParent(), ACL.SYSTEM,
                         Collections.<DomainRequirement>emptyList()), CredentialsMatchers.withId(credentialId));
 
         if (credentials instanceof StandardUsernamePasswordCredentials) {
-
+            LOGGER.log(Level.FINE, "authenticating using username and password");
             UsernamePasswordCredentials c = (UsernamePasswordCredentials) credentials;
 
             authenticationService.authenticate(baseHubUri,
@@ -197,6 +198,7 @@ public class CodeSonarPublisher extends Recorder {
                     c.getPassword().getPlainText());
         }
         if (credentials instanceof StandardCertificateCredentials) {
+             LOGGER.log(Level.FINE, "authenticating using ssl certificate");
             if (protocol.equals("http")) {
                 throw new AbortException("[CodeSonar] Authentication using a certificate is only available while SSL is enabled.");
             }
@@ -209,7 +211,7 @@ public class CodeSonarPublisher extends Recorder {
         }
     }
 
-    @Override
+    @Override              
     public Collection<? extends Action> getProjectActions(AbstractProject<?, ?> project) {
         return Arrays.asList(
                 new CodeSonarProjectAction(project),
@@ -352,10 +354,12 @@ public class CodeSonarPublisher extends Recorder {
         return analysisServiceFactory;
     }
 
+    @Symbol("codesonar")
     @Extension
     public static class DescriptorImpl extends BuildStepDescriptor<Publisher> {
 
         public DescriptorImpl() {
+            super(CodeSonarPublisher.class);
             load();
         }
 

@@ -1,6 +1,6 @@
 package org.jenkinsci.plugins.codesonar;
 
-import hudson.model.AbstractProject;
+import hudson.model.Job;
 import hudson.model.Action;
 
 /**
@@ -9,10 +9,10 @@ import hudson.model.Action;
  */
 public class CodeSonarLatestAnalysisProjectAction implements Action {
 
-    private final AbstractProject<?, ?> project;
+    private final Job<?, ?> job;
 
-    public CodeSonarLatestAnalysisProjectAction(AbstractProject<?, ?> project) {
-        this.project = project;
+    public CodeSonarLatestAnalysisProjectAction(Job<?, ?> job) {
+        this.job = job;
     }
 
     @Override
@@ -33,7 +33,7 @@ public class CodeSonarLatestAnalysisProjectAction implements Action {
 
     @Override
     public String getUrlName() {
-        CodeSonarBuildAction buildAction = Utils.getLatestCodeSonarBuildActionFromProject(project);
+        CodeSonarBuildAction buildAction = Utils.getLatestCodeSonarBuildActionFromProject(job);
 
         if (buildAction == null) {
             return null;
@@ -43,6 +43,6 @@ public class CodeSonarLatestAnalysisProjectAction implements Action {
     }
 
     public boolean isBuildActionPresent() {
-        return Utils.getLatestCodeSonarBuildActionFromProject(project) != null;
+        return Utils.getLatestCodeSonarBuildActionFromProject(job) != null;
     }
 }

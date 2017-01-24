@@ -2,8 +2,7 @@ package org.jenkinsci.plugins.codesonar.conditions;
 
 import hudson.Extension;
 import hudson.Launcher;
-import hudson.model.AbstractBuild;
-import hudson.model.BuildListener;
+import hudson.model.TaskListener;
 import hudson.model.Result;
 import java.util.List;
 import org.jenkinsci.plugins.codesonar.CodeSonarBuildAction;
@@ -11,7 +10,7 @@ import org.jenkinsci.plugins.codesonar.models.CodeSonarBuildActionDTO;
 import org.jenkinsci.plugins.codesonar.models.analysis.Alert;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
-
+import hudson.model.Run;
 /**
  *
  * @author Andrius
@@ -29,8 +28,8 @@ public class RedAlertLimitCondition extends Condition {
     }
 
     @Override
-    public Result validate(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener) {
-        CodeSonarBuildAction buildAction = build.getAction(CodeSonarBuildAction.class);
+    public Result validate(Run<?, ?> run, Launcher launcher, TaskListener listener) {
+        CodeSonarBuildAction buildAction = run.getAction(CodeSonarBuildAction.class);
         if (buildAction == null) {
             return Result.SUCCESS;
         }

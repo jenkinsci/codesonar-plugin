@@ -3,7 +3,7 @@
     <parent>
         <groupId>org.jenkins-ci.plugins</groupId>
         <artifactId>plugin</artifactId>
-        <version>1.609.2</version>
+        <version>1.642.4</version>
     </parent>
 
     <url>https://wiki.jenkins-ci.org/display/JENKINS/CodeSonar+Plugin</url>
@@ -445,6 +445,28 @@
     </reporting>
 
     <dependencies>
+       
+       <dependency>
+            <groupId>org.jenkins-ci.plugins.workflow</groupId>
+            <artifactId>workflow-job</artifactId>
+            <version>2.9</version>
+        </dependency>
+        <dependency>
+            <groupId>org.jenkins-ci.plugins.workflow</groupId>
+            <artifactId>workflow-cps</artifactId>
+            <version>2.23</version>
+        </dependency>
+        <dependency>
+            <groupId>org.jenkins-ci.plugins.workflow</groupId>
+            <artifactId>workflow-basic-steps</artifactId>
+            <version>2.3</version>
+        </dependency>
+        <dependency>
+            <groupId>org.jenkins-ci.plugins.workflow</groupId>
+            <artifactId>workflow-aggregator</artifactId>
+            <version>2.4</version>
+        </dependency>
+        
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
             <artifactId>job-dsl</artifactId>
@@ -483,6 +505,7 @@
             <artifactId>credentials</artifactId>
             <version>1.24</version>
         </dependency>
+
     </dependencies>
 
     <!--

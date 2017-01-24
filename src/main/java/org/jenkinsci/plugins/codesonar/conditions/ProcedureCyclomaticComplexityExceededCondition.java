@@ -4,7 +4,7 @@ import hudson.AbortException;
 import hudson.Extension;
 import hudson.Launcher;
 import hudson.model.AbstractBuild;
-import hudson.model.BuildListener;
+import hudson.model.TaskListener;
 import hudson.model.Result;
 import java.util.List;
 import org.jenkinsci.plugins.codesonar.CodeSonarBuildAction;
@@ -13,6 +13,8 @@ import org.jenkinsci.plugins.codesonar.models.Metric;
 import org.jenkinsci.plugins.codesonar.models.procedures.ProcedureRow;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
+import hudson.model.Run;
+import org.jenkinsci.Symbol;
 
 /**
  *
@@ -31,8 +33,8 @@ public class ProcedureCyclomaticComplexityExceededCondition extends Condition {
     }
 
     @Override
-    public Result validate(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener) throws AbortException {
-        CodeSonarBuildAction buildAction = build.getAction(CodeSonarBuildAction.class);
+    public Result validate(Run<?, ?> run, Launcher launcher, TaskListener listener) throws AbortException {
+        CodeSonarBuildAction buildAction = run.getAction(CodeSonarBuildAction.class);
         if (buildAction == null) {
             return Result.SUCCESS;
         }
@@ -73,7 +75,8 @@ public class ProcedureCyclomaticComplexityExceededCondition extends Condition {
     public void setWarrantedResult(String warrantedResult) {
         this.warrantedResult = warrantedResult;
     }
-
+    
+    @Symbol("cyclomaticComplexity")
     @Extension
     public static final class DescriptorImpl extends ConditionDescriptor<ProcedureCyclomaticComplexityExceededCondition> {
 
