@@ -7,6 +7,9 @@ import hudson.model.AbstractBuild;
 import hudson.model.TaskListener;
 import hudson.model.Result;
 import java.util.List;
+
+import hudson.util.FormValidation;
+import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.plugins.codesonar.CodeSonarBuildAction;
 import org.jenkinsci.plugins.codesonar.models.CodeSonarBuildActionDTO;
 import org.jenkinsci.plugins.codesonar.models.Metric;
@@ -15,6 +18,7 @@ import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import hudson.model.Run;
 import org.jenkinsci.Symbol;
+import org.kohsuke.stapler.QueryParameter;
 
 /**
  *
@@ -87,6 +91,14 @@ public class ProcedureCyclomaticComplexityExceededCondition extends Condition {
         @Override
         public String getDisplayName() {
             return NAME;
+        }
+
+        public FormValidation doCheckMaxCyclomaticComplexity(@QueryParameter("maxCyclomaticComplexity") int maxCyclomaticComplexity) {
+            if (maxCyclomaticComplexity < 0) {
+                return FormValidation.error("Cannot be a negative number");
+            }
+
+            return FormValidation.ok();
         }
     }
 }

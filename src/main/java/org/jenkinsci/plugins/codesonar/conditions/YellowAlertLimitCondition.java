@@ -6,11 +6,15 @@ import hudson.model.Run;
 import hudson.model.TaskListener;
 import hudson.model.Result;
 import java.util.List;
+
+import hudson.util.FormValidation;
+import org.jenkinsci.Symbol;
 import org.jenkinsci.plugins.codesonar.CodeSonarBuildAction;
 import org.jenkinsci.plugins.codesonar.models.CodeSonarBuildActionDTO;
 import org.jenkinsci.plugins.codesonar.models.analysis.Alert;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
+import org.kohsuke.stapler.QueryParameter;
 
 /**
  *
@@ -66,6 +70,7 @@ public class YellowAlertLimitCondition extends Condition {
         this.warrantedResult = warrantedResult;
     }
 
+    @Symbol("yellowAlerts")
     @Extension
     public static final class DescriptorImpl extends ConditionDescriptor<YellowAlertLimitCondition> {
 
@@ -76,6 +81,14 @@ public class YellowAlertLimitCondition extends Condition {
         @Override
         public String getDisplayName() {
             return NAME;
+        }
+
+        public FormValidation doCheckAlertLimit(@QueryParameter("alertLimit") int alertLimit) {
+            if (alertLimit < 0) {
+                return FormValidation.error("Cannot be a negative number");
+            }
+
+            return FormValidation.ok();
         }
     }
 }

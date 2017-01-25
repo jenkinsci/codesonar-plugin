@@ -30,7 +30,7 @@ public class NewWarningsIncreasedByPercentageConditionIT extends ConditionIntegr
         final float PERCENTAGE = 10.0f;
 
         NewWarningsIncreasedByPercentageCondition condition
-                = new NewWarningsIncreasedByPercentageCondition(PERCENTAGE);
+                = new NewWarningsIncreasedByPercentageCondition(Float.toString(PERCENTAGE));
         condition.setWarrantedResult(WARRANTED_RESULT);
 
         List<Condition> conditions = new ArrayList<Condition>();
@@ -61,7 +61,7 @@ public class NewWarningsIncreasedByPercentageConditionIT extends ConditionIntegr
         final float PERCENTAGE = 70.0f;
 
         NewWarningsIncreasedByPercentageCondition condition
-                = new NewWarningsIncreasedByPercentageCondition(PERCENTAGE);
+                = new NewWarningsIncreasedByPercentageCondition(Float.toString(PERCENTAGE));
         condition.setWarrantedResult(WARRANTED_RESULT);
 
         List<Condition> conditions = new ArrayList<Condition>();

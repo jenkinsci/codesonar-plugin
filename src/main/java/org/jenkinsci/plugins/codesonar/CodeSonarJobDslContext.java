@@ -47,7 +47,7 @@ class CodeSonarJobDslContext implements Context {
     }
 
     public void newWarningCountIncrease(float percentage, boolean fail) {
-        NewWarningsIncreasedByPercentageCondition condition = new NewWarningsIncreasedByPercentageCondition(percentage);
+        NewWarningsIncreasedByPercentageCondition condition = new NewWarningsIncreasedByPercentageCondition(Float.toString(percentage));
         if (fail) {
             condition.setWarrantedResult(Result.FAILURE.toString());
         } else {
@@ -57,7 +57,7 @@ class CodeSonarJobDslContext implements Context {
     }
 
     public void overallWarningCountIncrease(float percentage, boolean fail) {
-        WarningCountIncreaseOverallCondition condition = new WarningCountIncreaseOverallCondition(percentage);
+        WarningCountIncreaseOverallCondition condition = new WarningCountIncreaseOverallCondition(Float.toString(percentage));
         if (fail) {
             condition.setWarrantedResult(Result.FAILURE.toString());
         } else {
@@ -67,7 +67,7 @@ class CodeSonarJobDslContext implements Context {
     }
 
     public void rankedWarningCountIncrease(int rank, float percentage, boolean fail) {
-        WarningCountIncreaseSpecifiedScoreAndHigherCondition condition = new WarningCountIncreaseSpecifiedScoreAndHigherCondition(rank, percentage);
+        WarningCountIncreaseSpecifiedScoreAndHigherCondition condition = new WarningCountIncreaseSpecifiedScoreAndHigherCondition(rank, Float.toString(percentage));
         if (fail) {
             condition.setWarrantedResult(Result.FAILURE.toString());
         } else {

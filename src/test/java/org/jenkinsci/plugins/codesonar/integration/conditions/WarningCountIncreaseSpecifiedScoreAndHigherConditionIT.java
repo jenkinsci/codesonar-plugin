@@ -35,7 +35,7 @@ public class WarningCountIncreaseSpecifiedScoreAndHigherConditionIT extends Cond
         final float WARNING_PERCENTAGE = 50.0f;
 
         WarningCountIncreaseSpecifiedScoreAndHigherCondition condition
-                = new WarningCountIncreaseSpecifiedScoreAndHigherCondition(RANK_OF_WARNINGS, WARNING_PERCENTAGE);
+                = new WarningCountIncreaseSpecifiedScoreAndHigherCondition(RANK_OF_WARNINGS, Float.toString(WARNING_PERCENTAGE));
         condition.setWarrantedResult(WARRANTED_RESULT);
 
         List<Condition> conditions = new ArrayList<Condition>();
@@ -67,7 +67,7 @@ public class WarningCountIncreaseSpecifiedScoreAndHigherConditionIT extends Cond
         final float WARNING_PERCENTAGE = 70.0f;
 
         WarningCountIncreaseSpecifiedScoreAndHigherCondition condition
-                = new WarningCountIncreaseSpecifiedScoreAndHigherCondition(RANK_OF_WARNINGS, WARNING_PERCENTAGE);
+                = new WarningCountIncreaseSpecifiedScoreAndHigherCondition(RANK_OF_WARNINGS, Float.toString(WARNING_PERCENTAGE));
         condition.setWarrantedResult(WARRANTED_RESULT);
 
         List<Condition> conditions = new ArrayList<Condition>();

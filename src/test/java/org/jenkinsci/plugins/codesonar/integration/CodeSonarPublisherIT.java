@@ -6,12 +6,21 @@ import hudson.model.FreeStyleProject;
 import hudson.model.Result;
 import hudson.model.queue.QueueTaskFuture;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import org.apache.commons.io.FileUtils;
+
+import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.*;
+
+import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.plugins.codesonar.CodeSonarPublisher;
 import org.jenkinsci.plugins.codesonar.conditions.Condition;
 import org.jenkinsci.plugins.codesonar.conditions.WarningCountIncreaseSpecifiedScoreAndHigherCondition;
+import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
+import org.jenkinsci.plugins.workflow.job.WorkflowJob;
+import org.jenkinsci.plugins.workflow.job.WorkflowRun;
+import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
 import org.jvnet.hudson.test.JenkinsRule;
@@ -24,7 +33,6 @@ public class CodeSonarPublisherIT {
     @Rule
     public JenkinsRule jenkinsRule = new JenkinsRule();
 
-
     @Test
     public void providedHubAddressIsEmpty_BuildFails() throws Exception {
         // arrange
@@ -33,7 +41,7 @@ public class CodeSonarPublisherIT {
         final int RANK_OF_WARNINGS = 30;
         final float WARNING_PERCENTAGE = 50.0f;
         WarningCountIncreaseSpecifiedScoreAndHigherCondition condition = 
-                new WarningCountIncreaseSpecifiedScoreAndHigherCondition(RANK_OF_WARNINGS, WARNING_PERCENTAGE);
+                new WarningCountIncreaseSpecifiedScoreAndHigherCondition(RANK_OF_WARNINGS, Float.toString(WARNING_PERCENTAGE));
         
         final String EMPTY_HUB_ADDRESS = "";
         final String VALID_PROJECT_NAME = "projectName";
@@ -59,7 +67,7 @@ public class CodeSonarPublisherIT {
         final int RANK_OF_WARNINGS = 30;
         final float WARNING_PERCENTAGE = 50.0f;
         WarningCountIncreaseSpecifiedScoreAndHigherCondition condition = 
-                new WarningCountIncreaseSpecifiedScoreAndHigherCondition(RANK_OF_WARNINGS, WARNING_PERCENTAGE);
+                new WarningCountIncreaseSpecifiedScoreAndHigherCondition(RANK_OF_WARNINGS, Float.toString(WARNING_PERCENTAGE));
         
         final String VALID_HUB_ADDRESS = "10.10.10.10";
         final String EMPTY_PROJECT_NAME = "";
@@ -85,7 +93,7 @@ public class CodeSonarPublisherIT {
         final int RANK_OF_WARNINGS = 30;
         final float WARNING_PERCENTAGE = 50.0f;
         WarningCountIncreaseSpecifiedScoreAndHigherCondition condition = 
-                new WarningCountIncreaseSpecifiedScoreAndHigherCondition(RANK_OF_WARNINGS, WARNING_PERCENTAGE);
+                new WarningCountIncreaseSpecifiedScoreAndHigherCondition(RANK_OF_WARNINGS, Float.toString(WARNING_PERCENTAGE));
         
         final String VALID_HUB_ADDRESS = "10.10.10.10";
         final String RANDOM_NAME = "projectNotThere";
@@ -105,5 +113,31 @@ public class CodeSonarPublisherIT {
         // assert that we have a message in the console log
         String log = FileUtils.readFileToString(build.getLogFile());
         assertTrue(log.contains("[CodeSonar] Message is: "));
+    }
+
+
+
+    @Test
+    public void pipelineIntegration_validation() throws Exception {
+        WorkflowJob foo = jenkinsRule.jenkins.createProject(WorkflowJob.class, "foo");
+        CpsFlowDefinition flowDef = new CpsFlowDefinition(StringUtils.join(Arrays.asList(
+                "node {",
+                "  codesonar conditions: [cyclomaticComplexity(maxCyclomaticComplexity: 30), redAlerts(alertLimit: 1), warningCountIncreaseNewOnly(percentage: '5.0'), warningCountIncreaseOverall('5.0'), warningCountIncreaseSpecifiedScoreAndHigher(rankOfWarnings: 30, warningPercentage: '5.0'), yellowAlerts(alertLimit: 1)], credentialId: '', hubAddress: '10', projectName: '${JOB_NAME}', protocol: 'http'",
+
+                "}"), "\n"), true);
+        foo.setDefinition(flowDef);
+
+        WorkflowRun b = foo.scheduleBuild2(0).get();
+
+        boolean valid = false;
+        List<String> log = b.getLog(500);
+        for (String line : log) {
+            if (line.equals("ERROR: [CodeSonar] Error on url: http://10/index.xml")) {
+                valid = true;
+                break;
+            }
+        }
+
+        Assert.assertThat(valid, is(true));
     }
 }

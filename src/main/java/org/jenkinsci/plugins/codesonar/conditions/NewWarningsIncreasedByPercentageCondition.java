@@ -5,21 +5,26 @@ import hudson.Launcher;
 import hudson.model.Run;
 import hudson.model.TaskListener;
 import hudson.model.Result;
+import hudson.util.FormValidation;
 import org.jenkinsci.plugins.codesonar.CodeSonarBuildAction;
 import org.jenkinsci.plugins.codesonar.models.CodeSonarBuildActionDTO;
 import org.jenkinsci.plugins.codesonar.models.analysis.Analysis;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.jenkinsci.Symbol;
+import org.apache.commons.lang.StringUtils;
+import org.kohsuke.stapler.QueryParameter;
+
+import javax.annotation.CheckForNull;
 
 public class NewWarningsIncreasedByPercentageCondition extends Condition {
 
     private static final String NAME = "Warning count increase: new only";
-    private Float percentage = 5.0f;
+    private String percentage = "5.0f";
     private String warrantedResult = Result.UNSTABLE.toString();
     
     @DataBoundConstructor
-    public NewWarningsIncreasedByPercentageCondition(Float percentage) {
+    public NewWarningsIncreasedByPercentageCondition(String percentage) {
         this.percentage = percentage;
     }
 
@@ -43,7 +48,7 @@ public class NewWarningsIncreasedByPercentageCondition extends Condition {
 
         float result = (newWarningCount * 100.0f) / activeWarningCount; 
 
-        if (result > percentage) {
+        if (result > Float.parseFloat(percentage)) {
             return Result.fromString(warrantedResult);
         }
 
@@ -53,7 +58,7 @@ public class NewWarningsIncreasedByPercentageCondition extends Condition {
     /**
      * @return the percentage
      */
-    public Float getPercentage() {
+    public String getPercentage() {
         return percentage;
     }
 
@@ -61,7 +66,7 @@ public class NewWarningsIncreasedByPercentageCondition extends Condition {
      * @param percentage the percentage to set
      */
     @DataBoundSetter
-    public void setPercentage(Float percentage) {
+    public void setPercentage(String percentage) {
         this.percentage = percentage;
     }
 
@@ -86,6 +91,23 @@ public class NewWarningsIncreasedByPercentageCondition extends Condition {
         public String getDisplayName() {
             return NAME;
         }
+        
+        public FormValidation doCheckPercentage(@QueryParameter("percentage") String percentage) {
+            if (StringUtils.isBlank(percentage)) {
+                return FormValidation.error("Cannot be empty");
+            }
+            
+            try {
+                float v = Float.parseFloat(percentage);
 
+                if(v < 0) {
+                    return FormValidation.error("The provided value must be zero or greater");
+                }
+            } catch (NumberFormatException numberFormatException) {
+                return FormValidation.error("Not a valid decimal number");
+            }
+
+            return FormValidation.ok();
+        }
     }
 }

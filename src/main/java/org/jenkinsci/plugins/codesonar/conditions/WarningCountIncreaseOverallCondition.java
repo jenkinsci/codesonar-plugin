@@ -6,6 +6,8 @@ import hudson.model.Run;
 import hudson.model.TaskListener;
 import hudson.model.Result;
 import hudson.util.FormValidation;
+import org.apache.commons.lang.StringUtils;
+import org.jenkinsci.Symbol;
 import org.jenkinsci.plugins.codesonar.CodeSonarBuildAction;
 import org.jenkinsci.plugins.codesonar.models.CodeSonarBuildActionDTO;
 import org.jenkinsci.plugins.codesonar.models.analysis.Analysis;
@@ -16,11 +18,11 @@ import org.kohsuke.stapler.QueryParameter;
 public class WarningCountIncreaseOverallCondition extends Condition {
 
     private static final String NAME = "Warning count increase: overall";
-    private float percentage = 5.0f;
+    private String percentage = String.valueOf(5.0f);
     private String warrantedResult = Result.UNSTABLE.toString();
 
     @DataBoundConstructor
-    public WarningCountIncreaseOverallCondition(float percentage) {
+    public WarningCountIncreaseOverallCondition(String percentage) {
         this.percentage = percentage;
     }
 
@@ -54,7 +56,7 @@ public class WarningCountIncreaseOverallCondition extends Condition {
         float currentCount = (float) current.getWarnings().size();
         float diff = currentCount - previousCount;
 
-        if ((diff / previousCount) * 100 > percentage) {
+        if ((diff / previousCount) * 100 > Float.parseFloat(percentage)) {
             Result result = Result.fromString(warrantedResult);
             return result;
         }
@@ -66,14 +68,14 @@ public class WarningCountIncreaseOverallCondition extends Condition {
     /**
      * @return the percentage
      */
-    public float getPercentage() {
+    public String getPercentage() {
         return percentage;
     }
 
     /**
      * @param percentage the percentage to set
      */
-    public void setPercentage(float percentage) {
+    public void setPercentage(String percentage) {
         this.percentage = percentage;
     }
 
@@ -86,6 +88,7 @@ public class WarningCountIncreaseOverallCondition extends Condition {
         this.warrantedResult = warrantedResult;
     }
 
+    @Symbol("warningCountIncreaseOverall")
     @Extension
     public static final class DescriptorImpl extends ConditionDescriptor<WarningCountIncreaseOverallCondition> {
 
@@ -97,20 +100,22 @@ public class WarningCountIncreaseOverallCondition extends Condition {
         public String getDisplayName() {
             return NAME;
         }
-        
+
         public FormValidation doCheckPercentage(@QueryParameter("percentage") String percentage) {
+            if (StringUtils.isBlank(percentage)) {
+                return FormValidation.error("Cannot be empty");
+            }
+
             try {
-                Float.parseFloat(percentage);
-            } catch (NumberFormatException nex) {
-                return FormValidation.error("The input must be a number"); 
+                float v = Float.parseFloat(percentage);
+
+                if(v < 0) {
+                    return FormValidation.error("The provided value must be zero or greater");
+                }
+            } catch (NumberFormatException numberFormatException) {
+                return FormValidation.error("Not a valid decimal number");
             }
-            
-            float value = Float.parseFloat(percentage);
-            
-            if(value < 0) {
-                return FormValidation.error("The provided value must be zero or greater"); 
-            }
-            
+
             return FormValidation.ok();
         }
 
