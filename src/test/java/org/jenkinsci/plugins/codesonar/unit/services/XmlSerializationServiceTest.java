@@ -6,7 +6,8 @@ import org.jenkinsci.plugins.codesonar.models.projects.Project42;
 import org.jenkinsci.plugins.codesonar.services.XmlSerializationService;
 import org.junit.Before;
 import org.junit.Test;
-import static org.junit.Assert.*;
+
+import static org.junit.Assert.assertEquals;
 
 /**
  *

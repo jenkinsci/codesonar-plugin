@@ -1,33 +1,34 @@
-package org.jenkinsci.plugins.codesonar.models.projects;
+package org.jenkinsci.plugins.codesonar.models;
 
 import hudson.AbortException;
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import org.jenkinsci.plugins.codesonar.models.projects.Project40;
+import org.jenkinsci.plugins.codesonar.models.projects.Project42;
+
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
 
-/**
- *
- * @author andrius
- */
-@XmlRootElement(name = "projects")
+@XmlRootElement(name = "search_results")
 @XmlAccessorType(XmlAccessType.FIELD)
-public class Projects40 implements Serializable {
-
+public class SearchResults implements Serializable {
     @XmlElement(name = "project")
     private List<Project40> projects;
 
     public Project40 getProjectByName(String projectName) throws AbortException {
-        for (Project40 project : projects) {
+        if (getProjects().size() > 1) {
+            throw new AbortException("multiple projects found with name: " + projectName);
+        }
+
+        for (Project40 project : getProjects()) {
             if (project.getProject().equals(projectName)) {
                 return project;
             }
         }
-        
+
         throw new AbortException(String.format("Project by the name %s was not found on the hub", projectName));
     }
 
@@ -41,5 +42,12 @@ public class Projects40 implements Serializable {
 
     public void setProjects(List<Project40> projects) {
         this.projects = projects;
+    }
+
+    @Override
+    public String toString() {
+        return "SearchResults{" +
+                "projects=" + getProjects() +
+                '}';
     }
 }

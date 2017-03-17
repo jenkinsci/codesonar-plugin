@@ -1,16 +1,18 @@
 package org.jenkinsci.plugins.codesonar.services;
 
 import hudson.AbortException;
+import org.apache.http.client.utils.URIBuilder;
+import org.jenkinsci.plugins.codesonar.models.SearchResults;
+import org.jenkinsci.plugins.codesonar.models.analysis.Analysis;
+import org.jenkinsci.plugins.codesonar.models.projects.Project40;
+
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URLEncoder;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import org.apache.http.client.utils.URIBuilder;
-import org.jenkinsci.plugins.codesonar.models.analysis.Analysis;
-import org.jenkinsci.plugins.codesonar.models.projects.Project42;
-import org.jenkinsci.plugins.codesonar.models.projects.Projects42;
 
 /**
  *
@@ -63,11 +65,14 @@ public class AnalysisService42 implements IAnalysisService {
 
     @Override
     public String getLatestAnalysisUrlForAProject(URI baseHubUri, String projectName) throws IOException {
-        String xmlContent = httpService.getContentFromUrlAsString(baseHubUri.resolve("/index.xml"));
-        
-        Projects42 projects = xmlSerializationService.deserialize(xmlContent, Projects42.class);
-        Project42 project = projects.getProjectByName(projectName);
-        
+        String encode = URLEncoder.encode("\"" + projectName + "\"", "UTF-8");
+        URI uri = baseHubUri.resolve("/project_search.xml?query=" + encode + "&scope=all");
+
+        String xmlContent = httpService.getContentFromUrlAsString(uri);
+
+        SearchResults searchResults = xmlSerializationService.deserialize(xmlContent, SearchResults.class);
+        Project40 project = searchResults.getProjectByName(projectName);
+
         return baseHubUri.resolve(project.getUrl()).toString();
     }
 

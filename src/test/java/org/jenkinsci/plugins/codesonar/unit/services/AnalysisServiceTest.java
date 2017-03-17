@@ -1,27 +1,25 @@
 package org.jenkinsci.plugins.codesonar.unit.services;
 
 import hudson.AbortException;
-import java.io.IOException;
-import java.net.URISyntaxException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import org.jenkinsci.plugins.codesonar.models.SearchResults;
 import org.jenkinsci.plugins.codesonar.models.analysis.Analysis;
+import org.jenkinsci.plugins.codesonar.models.projects.Project40;
+import org.jenkinsci.plugins.codesonar.services.AnalysisService42;
 import org.jenkinsci.plugins.codesonar.services.HttpService;
+import org.jenkinsci.plugins.codesonar.services.IAnalysisService;
 import org.jenkinsci.plugins.codesonar.services.XmlSerializationService;
-import static org.junit.Assert.*;
 import org.junit.Before;
 import org.junit.Test;
-import static org.mockito.Mockito.*;
-import java.net.URI;
-import org.jenkinsci.plugins.codesonar.models.projects.Projects42;
-import org.jenkinsci.plugins.codesonar.services.AnalysisService42;
-import org.jenkinsci.plugins.codesonar.services.IAnalysisService;
 
-/**
- *
- * @author Andrius
- */
+import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.ArrayList;
+import java.util.List;
+
+import static org.junit.Assert.*;
+import static org.mockito.Mockito.*;
+
 public class AnalysisServiceTest {
 
     private XmlSerializationService mockedXmlSerializationService;
@@ -33,6 +31,31 @@ public class AnalysisServiceTest {
         mockedXmlSerializationService = mock(XmlSerializationService.class);
         mockedHttpService = mock(HttpService.class);
         analysisService = new AnalysisService42(mockedHttpService, mockedXmlSerializationService);
+    }
+
+    @Test
+    public void providedValidHubURIAndProjectExistsInAProjectTree_shouldReturnLatestAnalysisUrl() throws IOException, URISyntaxException {
+        final String VALID_HUB_ADDRESS = "http://10.10.1.131";
+        final String VALID_PROJECT_NAME = "pojectName";
+        final String RESPONSE_XML_CONTENT = "projects with trees xml";
+        final String PROJECT_URL = "validProjectURL";
+        final String EXPECTED_RESULT = new URI(VALID_HUB_ADDRESS).resolve(PROJECT_URL).toString();
+
+        Project40 proj = new Project40();
+        proj.setProject(VALID_PROJECT_NAME);
+        proj.setUrl(EXPECTED_RESULT);
+
+        SearchResults searchResults = new SearchResults();
+        searchResults.getProjects().add(proj);
+
+
+        when(mockedHttpService.getContentFromUrlAsString(notNull(URI.class))).thenReturn(RESPONSE_XML_CONTENT);
+        when(mockedHttpService.getContentFromUrlAsString(VALID_HUB_ADDRESS)).thenReturn(RESPONSE_XML_CONTENT);
+        when(mockedXmlSerializationService.deserialize(RESPONSE_XML_CONTENT, SearchResults.class)).thenReturn(searchResults);
+
+        String latestAnalysisUrl = analysisService.getLatestAnalysisUrlForAProject(new URI(VALID_HUB_ADDRESS), VALID_PROJECT_NAME);
+
+        assertEquals(EXPECTED_RESULT, latestAnalysisUrl);
     }
 
     @Test
@@ -50,7 +73,7 @@ public class AnalysisServiceTest {
     }
 
     @Test
-    public void providedLogFileWithNoAnalysisUrlPresent_shouldReturNull() {
+    public void providedLogFileWithNoAnalysisUrlPresent_shouldReturnNull() {
         final List<String> LOG_FILE_WITHOUT_URL = new ArrayList<>();
         LOG_FILE_WITHOUT_URL.add("codesonar: Files parsed successfully.  Logs are visible at:");
         LOG_FILE_WITHOUT_URL.add("Use 'codesonar analyze' to start the analysis");
@@ -78,12 +101,11 @@ public class AnalysisServiceTest {
 
         final String RESPONSE_XML_CONTENT = "valid xml";
 
-        Projects42 projects = new Projects42();
-        projects.setProjects(Collections.EMPTY_LIST);
+        SearchResults searchResults = new SearchResults();
 
         when(mockedHttpService.getContentFromUrlAsString(notNull(URI.class))).thenCallRealMethod();
         when(mockedHttpService.getContentFromUrlAsString(notNull(String.class))).thenReturn(RESPONSE_XML_CONTENT);
-        when(mockedXmlSerializationService.deserialize(notNull(String.class), isA(Class.class))).thenReturn(projects);
+        when(mockedXmlSerializationService.deserialize(notNull(String.class), isA(Class.class))).thenReturn(searchResults);
 
         analysisService.getLatestAnalysisUrlForAProject(new URI(VALID_HUB_ADDRESS), VALID_PROJECT_NAME);
     }

@@ -1,17 +1,11 @@
-package org.jenkinsci.plugins.codesonar.models.projects;
+package org.jenkinsci.plugins.codesonar.models;
 
-import org.jenkinsci.plugins.codesonar.models.Metric;
+import javax.xml.bind.annotation.*;
 import java.io.Serializable;
-import java.util.Objects;
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlAttribute;
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlRootElement;
 
-@XmlRootElement(name = "project")
+@XmlRootElement(name = "projecttree")
 @XmlAccessorType(XmlAccessType.FIELD)
-public class Project42 implements Serializable {
+public class ProjectTree implements Serializable {
 
     @XmlAttribute
     private String url;
@@ -21,14 +15,6 @@ public class Project42 implements Serializable {
     @XmlElement
     private Metric metric;
     private String type;
-
-    public String getType() {
-        return type;
-    }
-
-    public void setType(String type) {
-        this.type = type;
-    }
 
     public String getUrl() {
         return url;
@@ -70,33 +56,35 @@ public class Project42 implements Serializable {
         this.metric = metric;
     }
 
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
+    }
+
     @Override
-    public boolean equals(Object obj) {
-        if (obj == null) {
-            return false;
-        }
-        if (!(obj instanceof Project42)) {
-            return false;
-        }
-        Project42 other = (Project42) obj;
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
 
-        if (!this.name.equals(other.getName())) {
-            return false;
-        }
+        ProjectTree that = (ProjectTree) o;
 
-        return true;
+        if (!url.equals(that.url)) return false;
+        return name.equals(that.name);
     }
 
     @Override
     public int hashCode() {
-        int hash = 7;
-        hash = 47 * hash + Objects.hashCode(this.name);
-        return hash;
+        int result = url.hashCode();
+        result = 31 * result + name.hashCode();
+        return result;
     }
 
     @Override
     public String toString() {
-        return "Project42{" +
+        return "ProjectTree{" +
                 "url='" + url + '\'' +
                 ", name='" + name + '\'' +
                 ", state='" + state + '\'' +
