@@ -211,14 +211,6 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep  {
         }
     }
 
-    @Override              
-    public Collection<? extends Action> getProjectActions(AbstractProject<?, ?> project) {
-        return Arrays.asList(
-                new CodeSonarProjectAction(project),
-                new CodeSonarLatestAnalysisProjectAction(project)
-        );
-    }
-
     @Override
     public BuildStepMonitor getRequiredMonitorService() {
         return BuildStepMonitor.NONE;
