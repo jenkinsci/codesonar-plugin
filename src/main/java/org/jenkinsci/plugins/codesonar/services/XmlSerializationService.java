@@ -1,11 +1,12 @@
 package org.jenkinsci.plugins.codesonar.services;
 
 import hudson.AbortException;
-import java.io.Serializable;
-import java.io.StringReader;
+
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
+import java.io.Serializable;
+import java.io.StringReader;
 
 /**
  *

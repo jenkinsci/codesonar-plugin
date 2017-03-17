@@ -28,7 +28,7 @@ public class CodeSonarLatestAnalysisProjectAction implements Action {
         if (!isBuildActionPresent()) {
             return null;
         }
-        return "Latest CodeSonar Analysis";
+        return "Latest Codesonar Analysis";
     }
 
     @Override

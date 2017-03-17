@@ -25,19 +25,15 @@ public class HttpService {
         executor = Executor.newInstance().use(httpCookieStore);
     }
 
-    private static final Logger logger = Logger.getLogger(HttpService.class.getName());
-
     public String getContentFromUrlAsString(URI uri) throws AbortException {
         return getContentFromUrlAsString(uri.toString());
     }
 
     public String getContentFromUrlAsString(String url) throws AbortException {
-        logger.fine(String.format("Request sent to %s", url));
         String output;
         try {
             output = executor.execute(Request.Get(url)).returnContent().asString();
         } catch (Exception e) {
-            logger.log(Level.SEVERE, String.format("[CodeSonar] Error on url: %s", url), e);
             throw new AbortException(String.format("[CodeSonar] Error on url: %s%n[CodeSonar] Message is: %s", url, e.getMessage()));
         }
 
