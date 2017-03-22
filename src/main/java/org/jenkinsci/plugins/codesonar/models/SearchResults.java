@@ -2,8 +2,6 @@ package org.jenkinsci.plugins.codesonar.models;
 
 import hudson.AbortException;
 import org.jenkinsci.plugins.codesonar.models.projects.Project40;
-import org.jenkinsci.plugins.codesonar.models.projects.Project42;
-
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
@@ -19,17 +17,19 @@ public class SearchResults implements Serializable {
     private List<Project40> projects;
 
     public Project40 getProjectByName(String projectName) throws AbortException {
-        if (getProjects().size() > 1) {
-            throw new AbortException("multiple projects found with name: " + projectName);
-        }
-
+        List<Project40> duplicates = new ArrayList<>();
         for (Project40 project : getProjects()) {
             if (project.getProject().equals(projectName)) {
-                return project;
+                duplicates.add(project);
             }
         }
+        if (duplicates.size() > 1) {
+            throw new AbortException("Multiple projects found with name: " + projectName + "\nMake sure projects do not share the same name.");
+        } else if (duplicates.size() == 0) {
+            throw new AbortException(String.format("Project by the name %s was not found on the hub", projectName));
+        }
 
-        throw new AbortException(String.format("Project by the name %s was not found on the hub", projectName));
+        return duplicates.get(0);
     }
 
     public List<Project40> getProjects() {

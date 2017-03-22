@@ -2,18 +2,14 @@ package org.jenkinsci.plugins.codesonar.models.projects;
 
 import hudson.AbortException;
 import org.jenkinsci.plugins.codesonar.models.ProjectTree;
-import org.jenkinsci.plugins.codesonar.services.HttpService;
-import org.jenkinsci.plugins.codesonar.services.XmlSerializationService;
 
-import java.io.Serializable;
-import java.net.URI;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  *

@@ -2,20 +2,18 @@ package org.jenkinsci.plugins.codesonar.conditions;
 
 import hudson.Extension;
 import hudson.Launcher;
+import hudson.model.Result;
 import hudson.model.Run;
 import hudson.model.TaskListener;
-import hudson.model.Result;
 import hudson.util.FormValidation;
+import org.apache.commons.lang.StringUtils;
+import org.jenkinsci.Symbol;
 import org.jenkinsci.plugins.codesonar.CodeSonarBuildAction;
 import org.jenkinsci.plugins.codesonar.models.CodeSonarBuildActionDTO;
 import org.jenkinsci.plugins.codesonar.models.analysis.Analysis;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
-import org.jenkinsci.Symbol;
-import org.apache.commons.lang.StringUtils;
 import org.kohsuke.stapler.QueryParameter;
-
-import javax.annotation.CheckForNull;
 
 public class NewWarningsIncreasedByPercentageCondition extends Condition {
 

@@ -3,22 +3,20 @@ package org.jenkinsci.plugins.codesonar.conditions;
 import hudson.AbortException;
 import hudson.Extension;
 import hudson.Launcher;
-import hudson.model.AbstractBuild;
-import hudson.model.TaskListener;
 import hudson.model.Result;
-import java.util.List;
-
+import hudson.model.Run;
+import hudson.model.TaskListener;
 import hudson.util.FormValidation;
-import org.apache.commons.lang.StringUtils;
+import org.jenkinsci.Symbol;
 import org.jenkinsci.plugins.codesonar.CodeSonarBuildAction;
 import org.jenkinsci.plugins.codesonar.models.CodeSonarBuildActionDTO;
 import org.jenkinsci.plugins.codesonar.models.Metric;
 import org.jenkinsci.plugins.codesonar.models.procedures.ProcedureRow;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
-import hudson.model.Run;
-import org.jenkinsci.Symbol;
 import org.kohsuke.stapler.QueryParameter;
+
+import java.util.List;
 
 /**
  *

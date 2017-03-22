@@ -1,15 +1,14 @@
 package org.jenkinsci.plugins.codesonar.services;
 
 import hudson.AbortException;
-import java.io.IOException;
-import java.net.URI;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import org.apache.http.client.CookieStore;
 import org.apache.http.client.fluent.Executor;
 import org.apache.http.client.fluent.Request;
 import org.apache.http.client.fluent.Response;
 import org.apache.http.impl.client.BasicCookieStore;
+
+import java.io.IOException;
+import java.net.URI;
 
 /**
  *
