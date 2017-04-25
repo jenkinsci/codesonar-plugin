@@ -216,7 +216,13 @@ job(ANALYSIS_JOB_NAME) {
 }
 
 job(PAC_JOB_NAME) {
-
+    configure { 
+		it / 'buildWrappers' / 'EnvInjectPasswordWrapper' {
+          injectGlobalPasswords('true')
+          maskPasswordParameters('true')
+		}
+    }
+	
     logRotator {
         numToKeep(NUM_OF_BUILDS_TO_KEEP)
     }
@@ -251,9 +257,6 @@ job(PAC_JOB_NAME) {
 
     wrappers {
         buildName('${BUILD_NUMBER}#${GIT_REVISION,length=8}(${GIT_BRANCH})')
-		injectPasswords {
-			injectGlobalPasswords(true)
-		}
     }
 
 
