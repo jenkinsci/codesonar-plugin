@@ -246,7 +246,7 @@ job(PAC_JOB_NAME) {
     }
 
     steps {
-        shell ("docker run --rm -v $(pwd):/data praqma/pac:snapshot from-latest-tag "*" --settings=/pac/pac_settings.yml -c ReleasePraqma $secret_password_pac jira")
+        shell("docker run --rm -v \$(pwd):/data praqma/pac:snapshot from-latest-tag "*" --settings=/pac/pac_settings.yml -c ReleasePraqma $secret_password_pac jira")
     }
 
     wrappers {
