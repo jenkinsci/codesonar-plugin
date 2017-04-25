@@ -1,0 +1,18 @@
+:general:
+  :strict: false
+ 
+:templates:
+  - { location: /pac/templates/github.html, pdf: true, output: default-generated.html }
+
+:task_systems:
+  -
+    :name: jira
+    :query_string: "https://api.github.com/repos/Praqma/codesonar-plugin/issues/#{task_id}"
+    :usr:
+    :pw: 
+    :regex:
+    - { pattern: '/#(\d+)/i', label: github }      
+  
+:vcs:
+  :type: git
+  :repo_location: '.'

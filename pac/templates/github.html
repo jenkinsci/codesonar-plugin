@@ -1,0 +1,46 @@
+<html>
+	<head>
+		<style>
+			* {
+				background-color: black;
+				color:white;
+				font-family: 'Courier new';
+			}
+
+			h1 {
+				font-family: verdana;
+			}
+
+			h3, h4, h5 {
+				color: #ff9900;
+			}
+
+			ul {
+				list-style: none;
+			}
+
+			a {
+				text-decoration: none;
+			}
+		</style>
+		<title>PAC Changelog</title>
+	</head>
+	<body>
+		<h1>PAC Changelog</h1>
+		<h3>Referenced tasks</h3>
+		{% for task in tasks.referenced %}
+			<h5><a href="{{task.attributes.data.html_url}}">{{task.task_id}}</a> ({{task.attributes.data.state}})</h5>
+			<ul>
+			{% for commit in task.commits %}
+				<li> {{commit.shortsha}}:{{commit.header}}</li>
+			{% endfor %}				
+			</ul>
+		{% endfor %}
+		<h3>Unreferenced commits</h3>
+		<ul>
+			{% for commit in tasks.unreferenced %}
+			<li>{{commit.shortsha}}:{{commit.header}}</li>
+			{% endfor %}			
+		</ul>
+	</body>
+</html>
