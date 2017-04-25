@@ -251,9 +251,9 @@ job(PAC_JOB_NAME) {
 
     wrappers {
         buildName('${BUILD_NUMBER}#${GIT_REVISION,length=8}(${GIT_BRANCH})')
-		/*injectPasswords {
+		injectPasswords {
 			injectGlobalPasswords(true)
-		}*/
+		}
     }
 
 
