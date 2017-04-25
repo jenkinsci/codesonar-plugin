@@ -10,9 +10,10 @@ JENKINSUBUNTU_LABEL = 'jenkinsubuntu'
 UNIT_TESTS_JOB_NAME = '1_unit-tests_codesonar'
 INTEGRATION_TESTS_JOB_NAME = '2_integration-tests_codesonar'
 ANALYSIS_JOB_NAME = '3_analysis_codesonar'
-PUSH_TO_JENKINSCI_JOB_NAME = '4_push_to_jenkinsci_codesonar'
-RELEASE_JOB_NAME = '5_release_codesonar'
-SYNC_JOB_NAME = '6_sync_jenkinsci_codesonar'
+PAC_JOB_NAME = '4_pac_codesonar'
+PUSH_TO_JENKINSCI_JOB_NAME = '5_push_to_jenkinsci_codesonar'
+RELEASE_JOB_NAME = '6_release_codesonar'
+SYNC_JOB_NAME = '7_sync_jenkinsci_codesonar'
 
 job(UNIT_TESTS_JOB_NAME) {
 
@@ -166,6 +167,7 @@ job(ANALYSIS_JOB_NAME) {
     wrappers {
         buildName('${BUILD_NUMBER}#${GIT_REVISION,length=8}(${GIT_BRANCH})')
     }
+	
     publishers {
         archiveArtifacts('target/codesonar.*')
 
@@ -244,9 +246,7 @@ job(PAC_JOB_NAME) {
     }
 
     steps {
-        sh {
-            "docker run --rm -v $(pwd):/data praqma/pac:snapshot from-latest-tag "*" --settings=/pac/pac_settings.yml -c ReleasePraqma $secret_password_pac jira"
-        }
+        shell ("docker run --rm -v $(pwd):/data praqma/pac:snapshot from-latest-tag "*" --settings=/pac/pac_settings.yml -c ReleasePraqma $secret_password_pac jira")
     }
 
     wrappers {
