@@ -261,7 +261,7 @@ job(PAC_JOB_NAME) {
 
 
     publishers {
-        archiveJunit('default-generated.*')
+        archiveArtifacts('default-generated.*')
 		
 		publishHtml{ 
 			report('.') {
