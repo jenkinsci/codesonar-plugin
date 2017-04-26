@@ -2,7 +2,7 @@
   :strict: false
  
 :templates:
-  - { location: /pac/templates/github.html, pdf: true, output: default-generated.html }
+  - { location: /data/pac/templates/github.html, pdf: true, output: default-generated.html }
 
 :task_systems:
   -
