@@ -243,7 +243,9 @@ job(PAC_JOB_NAME) {
                 url(REPOSITORY_URL)
             }
             branch(MAIN_BRANCH)
-            extensions {}
+            extensions {
+				wipeOutWorkspace()
+			}
         }
     }
 	
