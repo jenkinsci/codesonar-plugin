@@ -34,6 +34,8 @@ public abstract class ConditionIntegrationTestBase {
     protected ProceduresService mockedProceduresService;
     protected AuthenticationService mockedAuthenticationService;
     
+    protected HttpService mockedHttpService;
+    
     protected AnalysisServiceFactory mockedAnalysisServiceFactory;
     
     protected final URI VALID_HUB_ADDRESS = URI.create("10.10.10.10");
@@ -45,6 +47,8 @@ public abstract class ConditionIntegrationTestBase {
         mockedProceduresService = mock(ProceduresService.class);
         mockedAuthenticationService = mock(AuthenticationService.class);
         mockedAnalysisServiceFactory = mock(AnalysisServiceFactory.class);
+        mockedHttpService = mock(HttpService.class);
+        
         
         final URI VALID_ANALYSIS_URL = URI.create("http://10.10.1.102/VALID_ANALYSIS_URL");
         final Analysis VALID_ANALYSIS_ACTIVE_WARNINGS = new Analysis();
@@ -100,5 +104,8 @@ public abstract class ConditionIntegrationTestBase {
 
         when(mockedAnalysisService.getAnalysisFromUrlWithNewWarnings(VALID_ANALYSIS_URL.toString()))
                 .thenReturn(VALID_ANALYSIS_NEW_WARNINGS);
+        
+        when(mockedHttpService.getContentFromUrlAsString(any(URI.class)))
+                .thenReturn("Version: 4.2");
     }
 }

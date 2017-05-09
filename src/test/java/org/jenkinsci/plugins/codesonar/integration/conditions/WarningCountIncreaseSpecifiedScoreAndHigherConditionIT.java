@@ -45,6 +45,7 @@ public class WarningCountIncreaseSpecifiedScoreAndHigherConditionIT extends Cond
         codeSonarPublisher.setAnalysisService(mockedAnalysisService);
         codeSonarPublisher.setMetricsService(mockedMetricsService);
         codeSonarPublisher.setProceduresService(mockedProceduresService);
+        codeSonarPublisher.setHttpService(mockedHttpService);
 
         FreeStyleProject project = jenkinsRule.createFreeStyleProject();
         project.getPublishersList().add(codeSonarPublisher);
@@ -79,6 +80,7 @@ public class WarningCountIncreaseSpecifiedScoreAndHigherConditionIT extends Cond
         codeSonarPublisher.setProceduresService(mockedProceduresService);
         codeSonarPublisher.setAuthenticationService(mockedAuthenticationService);
         codeSonarPublisher.setAnalysisServiceFactory(mockedAnalysisServiceFactory);
+        codeSonarPublisher.setHttpService(mockedHttpService);
         
         FreeStyleProject project = jenkinsRule.createFreeStyleProject();
         project.getPublishersList().add(codeSonarPublisher);
