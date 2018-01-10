@@ -8,6 +8,7 @@ import org.apache.http.client.fluent.Response;
 import org.apache.http.impl.client.BasicCookieStore;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 
 /**
@@ -27,7 +28,7 @@ public class HttpService {
     public String getContentFromUrlAsString(URI uri) throws AbortException {
         return getContentFromUrlAsString(uri.toString());
     }
-
+    
     public String getContentFromUrlAsString(String url) throws AbortException {
         String output;
         try {
@@ -38,7 +39,21 @@ public class HttpService {
 
         return output;
     }
-        
+    
+    public InputStream getContentFromUrlAsInputStream(URI uri) throws AbortException{
+        return getContentFromUrlAsInputStream(uri.toString());
+    }
+    
+    public InputStream getContentFromUrlAsInputStream(String url) throws AbortException{
+        InputStream is;
+        try {
+            is = executor.execute(Request.Get(url)).returnContent().asStream();
+        } catch (Exception e) {
+            throw new AbortException(String.format("[CodeSonar] Error on url: %s%n[CodeSonar] Message is: %s", url, e.getMessage()));
+        }
+        return is;
+    }
+    
     public Response execute(Request request) throws IOException {
         return executor.execute(request);
     }

@@ -1,7 +1,7 @@
 package org.jenkinsci.plugins.codesonar.unit.services;
 
-import hudson.AbortException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 import org.jenkinsci.plugins.codesonar.models.procedures.Procedures;
 import org.jenkinsci.plugins.codesonar.services.HttpService;
@@ -50,7 +50,7 @@ public class ProceduresServiceTest {
         final Procedures EXPECTED_RESULT = new Procedures();
 
         when(mockedHttpService.getContentFromUrlAsString(VALID_METRICS_URI)).thenReturn(RESPONSE_XML_CONTENT);
-        when(mockedXmlSerializationService.deserialize(any(String.class), isA(Class.class))).thenReturn(EXPECTED_RESULT);
+        when(mockedXmlSerializationService.deserialize(any(InputStream.class), isA(Class.class))).thenReturn(EXPECTED_RESULT);
 
         Procedures result = proceduresService.getProceduresFromUri(VALID_METRICS_URI);
 

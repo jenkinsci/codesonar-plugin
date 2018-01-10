@@ -1,6 +1,7 @@
 package org.jenkinsci.plugins.codesonar.services;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 import org.jenkinsci.plugins.codesonar.models.procedures.Procedures;
 
@@ -22,7 +23,7 @@ public class ProceduresService {
     }
     
     public Procedures getProceduresFromUri(URI proceduresUri) throws IOException {
-        String xmlContent = httpService.getContentFromUrlAsString(proceduresUri);
+        InputStream xmlContent = httpService.getContentFromUrlAsInputStream(proceduresUri);
 
         Procedures procedures = xmlSerializationService.deserialize(xmlContent, Procedures.class);
 

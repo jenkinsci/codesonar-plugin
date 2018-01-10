@@ -1,6 +1,7 @@
 package org.jenkinsci.plugins.codesonar.unit.services;
 
 import hudson.AbortException;
+import java.io.ByteArrayInputStream;
 import org.jenkinsci.plugins.codesonar.models.SearchResults;
 import org.jenkinsci.plugins.codesonar.models.analysis.Analysis;
 import org.jenkinsci.plugins.codesonar.models.projects.Project40;
@@ -12,6 +13,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
@@ -37,7 +39,8 @@ public class AnalysisServiceTest {
     public void providedValidHubURIAndProjectExistsInAProjectTree_shouldReturnLatestAnalysisUrl() throws IOException, URISyntaxException {
         final String VALID_HUB_ADDRESS = "http://10.10.1.131";
         final String VALID_PROJECT_NAME = "pojectName";
-        final String RESPONSE_XML_CONTENT = "projects with trees xml";
+        // "projects with trees xml"
+        final InputStream RESPONSE_XML_CONTENT = new ByteArrayInputStream(("\"projects with trees xml\"").getBytes());
         final String PROJECT_URL = "validProjectURL";
         final String EXPECTED_RESULT = new URI(VALID_HUB_ADDRESS).resolve(PROJECT_URL).toString();
 
@@ -49,8 +52,8 @@ public class AnalysisServiceTest {
         searchResults.getProjects().add(proj);
 
 
-        when(mockedHttpService.getContentFromUrlAsString(notNull(URI.class))).thenReturn(RESPONSE_XML_CONTENT);
-        when(mockedHttpService.getContentFromUrlAsString(VALID_HUB_ADDRESS)).thenReturn(RESPONSE_XML_CONTENT);
+        when(mockedHttpService.getContentFromUrlAsInputStream(notNull(URI.class))).thenReturn(RESPONSE_XML_CONTENT);
+        when(mockedHttpService.getContentFromUrlAsInputStream(VALID_HUB_ADDRESS)).thenReturn(RESPONSE_XML_CONTENT);
         when(mockedXmlSerializationService.deserialize(RESPONSE_XML_CONTENT, SearchResults.class)).thenReturn(searchResults);
 
         String latestAnalysisUrl = analysisService.getLatestAnalysisUrlForAProject(new URI(VALID_HUB_ADDRESS), VALID_PROJECT_NAME);
@@ -105,7 +108,7 @@ public class AnalysisServiceTest {
 
         when(mockedHttpService.getContentFromUrlAsString(notNull(URI.class))).thenCallRealMethod();
         when(mockedHttpService.getContentFromUrlAsString(notNull(String.class))).thenReturn(RESPONSE_XML_CONTENT);
-        when(mockedXmlSerializationService.deserialize(notNull(String.class), isA(Class.class))).thenReturn(searchResults);
+        when(mockedXmlSerializationService.deserialize(notNull(InputStream.class), isA(Class.class))).thenReturn(searchResults);
 
         analysisService.getLatestAnalysisUrlForAProject(new URI(VALID_HUB_ADDRESS), VALID_PROJECT_NAME);
     }
@@ -126,7 +129,7 @@ public class AnalysisServiceTest {
         final Analysis ANALYSIS = new Analysis();
 
         when(mockedHttpService.getContentFromUrlAsString(any(String.class))).thenReturn(RESPONSE_XML_CONTENT);
-        when(mockedXmlSerializationService.deserialize(any(String.class), isA(Class.class))).thenReturn(ANALYSIS);
+        when(mockedXmlSerializationService.deserialize(any(InputStream.class), isA(Class.class))).thenReturn(ANALYSIS);
 
         Analysis analysis = analysisService.getAnalysisFromUrl(VALID_ANALYSIS_URL);
 
@@ -140,7 +143,7 @@ public class AnalysisServiceTest {
         final Analysis ANALYSIS = new Analysis();
 
         when(mockedHttpService.getContentFromUrlAsString(any(String.class))).thenReturn(RESPONSE_XML_CONTENT);
-        when(mockedXmlSerializationService.deserialize(any(String.class), isA(Class.class))).thenReturn(ANALYSIS);
+        when(mockedXmlSerializationService.deserialize(any(InputStream.class), isA(Class.class))).thenReturn(ANALYSIS);
 
         Analysis analysis = analysisService.getAnalysisFromUrlWithNewWarnings(VALID_ANALYSIS_URL);
 

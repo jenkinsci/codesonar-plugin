@@ -7,6 +7,7 @@ import org.jenkinsci.plugins.codesonar.models.analysis.Analysis;
 import org.jenkinsci.plugins.codesonar.models.projects.Project40;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URLEncoder;
@@ -68,7 +69,7 @@ public class AnalysisService42 implements IAnalysisService {
         String encode = URLEncoder.encode("\"" + projectName + "\"", "UTF-8");
         URI uri = baseHubUri.resolve("/project_search.xml?query=" + encode + "&scope=all");
 
-        String xmlContent = httpService.getContentFromUrlAsString(uri);
+        InputStream xmlContent = httpService.getContentFromUrlAsInputStream(uri);
 
         SearchResults searchResults = xmlSerializationService.deserialize(xmlContent, SearchResults.class);
         Project40 project = searchResults.getProjectByName(projectName);
@@ -78,7 +79,7 @@ public class AnalysisService42 implements IAnalysisService {
 
     @Override
     public Analysis getAnalysisFromUrl(String analysisUrl) throws IOException {
-        String xmlContent = httpService.getContentFromUrlAsString(analysisUrl);
+        InputStream xmlContent = httpService.getContentFromUrlAsInputStream(analysisUrl);
 
         return xmlSerializationService.deserialize(xmlContent, Analysis.class);
     }
