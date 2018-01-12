@@ -1,6 +1,7 @@
 package org.jenkinsci.plugins.codesonar.services;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 import org.jenkinsci.plugins.codesonar.models.metrics.Metrics;
 
@@ -22,7 +23,7 @@ public class MetricsService {
     }
     
     public Metrics getMetricsFromUri(URI metricsUri) throws IOException {
-        String xmlContent = httpService.getContentFromUrlAsString(metricsUri);
+        InputStream xmlContent = httpService.getContentFromUrlAsInputStream(metricsUri);
 
         Metrics metrics = xmlSerializationService.deserialize(xmlContent, Metrics.class);
 

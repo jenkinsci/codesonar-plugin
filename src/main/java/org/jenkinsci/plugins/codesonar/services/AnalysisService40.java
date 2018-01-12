@@ -2,6 +2,7 @@ package org.jenkinsci.plugins.codesonar.services;
 
 import hudson.AbortException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
@@ -63,7 +64,7 @@ public class AnalysisService40 implements IAnalysisService {
 
     @Override
     public String getLatestAnalysisUrlForAProject(URI baseHubUri, String projectName) throws IOException {
-        String xmlContent = httpService.getContentFromUrlAsString(baseHubUri.resolve("/index.xml"));
+        InputStream xmlContent = httpService.getContentFromUrlAsInputStream(baseHubUri.resolve("/index.xml"));
         
         Projects40 projects = xmlSerializationService.deserialize(xmlContent, Projects40.class);
         Project40 project = projects.getProjectByName(projectName);
@@ -73,7 +74,7 @@ public class AnalysisService40 implements IAnalysisService {
 
     @Override
     public Analysis getAnalysisFromUrl(String analysisUrl) throws IOException {
-        String xmlContent = httpService.getContentFromUrlAsString(analysisUrl);
+        InputStream xmlContent = httpService.getContentFromUrlAsInputStream(analysisUrl);
 
         return xmlSerializationService.deserialize(xmlContent, Analysis.class);
     }
