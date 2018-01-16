@@ -6,6 +6,7 @@ import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlTransient;
 
 /**
  *
@@ -16,21 +17,26 @@ import javax.xml.bind.annotation.XmlRootElement;
 public class Warning implements Serializable {
 
     @XmlAttribute
-    private String url;
     private String id;
     @XmlElement(name = "class")
     private String clazz;
     
     private int rank;
     private int score;
-    
+    @XmlTransient
+    private String url;
     private String file;
     @XmlElement(name = "line_number")
     private String lineNumber;
+    @XmlTransient
     private String procedure;
+    @XmlTransient
     private String priority;
+    @XmlTransient
     private String state;
+    @XmlTransient
     private String finding;
+    @XmlTransient
     private String owner;
 
     public String getUrl() {

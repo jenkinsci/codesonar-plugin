@@ -21,8 +21,8 @@ import java.util.regex.Pattern;
  */
 public class AnalysisService42 implements IAnalysisService {
 
-    private HttpService httpService;
-    private XmlSerializationService xmlSerializationService;
+    final private HttpService httpService;
+    final private XmlSerializationService xmlSerializationService;
 
     private enum UrlFilters {
 
