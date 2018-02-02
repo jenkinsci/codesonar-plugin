@@ -91,8 +91,9 @@ public class AnalysisServiceTest {
         final String INVALID_HUB_ADDRESS = "99.99.99.99";
         final String PROJECT_NAME = "pojectName";
 
-        when(mockedHttpService.getContentFromUrlAsString(notNull(URI.class))).thenCallRealMethod();
-        when(mockedHttpService.getContentFromUrlAsString(any(String.class))).thenCallRealMethod();
+        when(mockedHttpService.getContentFromUrlAsInputStream(notNull(URI.class))).thenCallRealMethod();
+        when(mockedHttpService.getContentFromUrlAsInputStream(any(String.class))).thenCallRealMethod();
+
 
         analysisService.getLatestAnalysisUrlForAProject(new URI(INVALID_HUB_ADDRESS), PROJECT_NAME);
     }
@@ -105,9 +106,10 @@ public class AnalysisServiceTest {
         final String RESPONSE_XML_CONTENT = "valid xml";
 
         SearchResults searchResults = new SearchResults();
-
         when(mockedHttpService.getContentFromUrlAsString(notNull(URI.class))).thenCallRealMethod();
         when(mockedHttpService.getContentFromUrlAsString(notNull(String.class))).thenReturn(RESPONSE_XML_CONTENT);
+        when(mockedHttpService.getContentFromUrlAsInputStream(notNull(URI.class))).thenCallRealMethod();
+        when(mockedHttpService.getContentFromUrlAsInputStream(notNull(String.class))).thenReturn(new ByteArrayInputStream(RESPONSE_XML_CONTENT.getBytes()));
         when(mockedXmlSerializationService.deserialize(notNull(InputStream.class), isA(Class.class))).thenReturn(searchResults);
 
         analysisService.getLatestAnalysisUrlForAProject(new URI(VALID_HUB_ADDRESS), VALID_PROJECT_NAME);
@@ -116,9 +118,7 @@ public class AnalysisServiceTest {
     @Test(expected = AbortException.class)
     public void providedInvalidAnalysisUrl_shouldThrowAnAbortException() throws IOException {
         final String INVALID_ANALYSIS_URL = "10.10.10.10";
-
-        when(mockedHttpService.getContentFromUrlAsString(any(String.class))).thenCallRealMethod();
-
+        when(mockedHttpService.getContentFromUrlAsInputStream(any(String.class))).thenCallRealMethod();
         analysisService.getAnalysisFromUrl(INVALID_ANALYSIS_URL);
     }
 
