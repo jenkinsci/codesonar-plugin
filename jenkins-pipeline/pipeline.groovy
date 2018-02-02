@@ -42,7 +42,7 @@ job(UNIT_TESTS_JOB_NAME) {
     }
 
     triggers {
-        githubPush()
+        scm("* * * * *")
     }
 
     authorization {
