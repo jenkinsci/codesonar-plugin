@@ -27,7 +27,7 @@ public class XmlSerializationServiceTest {
     @Test
     public void providedValidXML_deserializesTheXml() throws Exception {
         final InputStream VALID_XML_CONTENT = new ByteArrayInputStream((
-                "<project url=\"/analysis/8.xml?filter=2&prj_filter=10\">\n"
+                "<project url=\"/analysis/8.xml?filter=2&amp;prj_filter=10\">\n"
                 + "<name>coverity</name>\n"
                 + "<state>Finished</state>\n"
                 + "<started>Fri Feb 13 17:33:18 2015</started>\n"
