@@ -10,8 +10,8 @@ import org.jenkinsci.plugins.codesonar.models.procedures.Procedures;
  * @author Andrius
  */
 public class ProceduresService {
-    private HttpService httpService;
-    private XmlSerializationService xmlSerializationService;
+    final private HttpService httpService;
+    final private XmlSerializationService xmlSerializationService;
 
     public ProceduresService(HttpService httpService, XmlSerializationService xmlSerializationService) {
         this.httpService = httpService;
