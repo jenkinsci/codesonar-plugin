@@ -106,12 +106,24 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep  {
         analysisServiceFactory = getAnalysisServiceFactory();
         analysisServiceFactory.setVersion(hubVersion);
         analysisService = analysisServiceFactory.getAnalysisService(httpService, xmlSerializationService);
-        List<String> logFile = IOUtils.readLines(run.getLogReader());
-        String analysisUrl = analysisService.getAnalysisUrlFromLogFile(logFile);
 
-        if (analysisUrl == null) {
+        String analysisUrl = null;
+
+        //For 4.4 and above we do not want to attempt to parse the log. In order to not break old behaviour we will
+        //keep the old logic in place since we have no way to determine how the hub behaves in versions prior to 4.4
+        //See https://github.com/Praqma/codesonar-plugin/issues/28
+        if (hubVersion < 4.4f) {
+            List<String> logFile = IOUtils.readLines(run.getLogReader());
+            analysisUrl = analysisService.getAnalysisUrlFromLogFile(logFile);
+        }
+        if(analysisUrl == null) {
             analysisUrl = analysisService.getLatestAnalysisUrlForAProject(baseHubUri, expandedProjectName);
         }
+        if(analysisUrl == null) {
+            throw new AbortException(String.format("Unable to determine the latest analysis on hub '%s' for project '%s",
+                    baseHubUri, expandedProjectName));
+        }
+
         Analysis analysisActiveWarnings = analysisService.getAnalysisFromUrlWithActiveWarnings(analysisUrl);
         URI metricsUri = metricsService.getMetricsUriFromAnAnalysisId(baseHubUri, analysisActiveWarnings.getAnalysisId());
         Metrics metrics = metricsService.getMetricsFromUri(metricsUri);
