@@ -51,7 +51,7 @@ job(UNIT_TESTS_JOB_NAME) {
 
     steps {
         maven {
-            goals('clean compile test-compile cobertura:cobertura')
+            goals('clean compile test')
             mavenInstallation('Latest')
         }
     }
@@ -61,20 +61,9 @@ job(UNIT_TESTS_JOB_NAME) {
     }
 
     publishers {
-        cobertura('**/target/site/cobertura/coverage.xml') {
-            failNoReports(true)
-            sourceEncoding('ASCII')
-
-            // the following targets are added by default to check the method, line and conditional level coverage
-            methodTarget(80, 0, 0)
-            lineTarget(80, 0, 0)
-            conditionalTarget(70, 0, 0)
-        }
-
         archiveJunit('target/surefire-reports/*.xml')
-
         downstream(INTEGRATION_TESTS_JOB_NAME, 'SUCCESS')
-        mailer('and@praqma.net', false, false)
+        mailer('man@praqma.net', false, false)
     }
 }
 
@@ -120,10 +109,9 @@ job(INTEGRATION_TESTS_JOB_NAME) {
     }
 
     publishers {
-        archiveJunit('target/failsafe-reports/*.xml')
-
+        archiveJunit('target/surefire-reports/*.xml')
         downstream(ANALYSIS_JOB_NAME, 'SUCCESS')
-        mailer('and@praqma.net', false, false)
+        mailer('man@praqma.net', false, false)
     }
 }
 
@@ -159,7 +147,7 @@ job(ANALYSIS_JOB_NAME) {
 
     steps {
         maven {
-            goals('clean package findbugs:findbugs pmd:pmd')
+            goals('clean package findbugs:check')
             mavenInstallation('Latest')
         }
     }
@@ -188,26 +176,8 @@ job(ANALYSIS_JOB_NAME) {
             )
         }
 
-        pmd('target/pmd.xml') {
-            healthLimits(3, 20)
-            thresholdLimit('high')
-            defaultEncoding('UTF-8')
-            canRunOnFailed(true)
-            useStableBuildAsReference(true)
-            useDeltaValues(true)
-            computeNew(true)
-            shouldDetectModules(true)
-            thresholds(
-                    unstableTotal: [all: 1, high: 2, normal: 3, low: 4],
-                    failedTotal: [all: 5, high: 6, normal: 7, low: 8],
-                    unstableNew: [all: 9, high: 10, normal: 11, low: 12],
-                    failedNew: [all: 13, high: 14, normal: 15, low: 16]
-            )
-        }
-
         analysisCollector {
             findbugs()
-            pmd()
         }
 
         downstream(PAC_JOB_NAME, 'SUCCESS')
@@ -231,8 +201,7 @@ job(PAC_JOB_NAME) {
 
     properties {
         ownership {
-            primaryOwnerId('and')
-            coOwnerIds('man')
+            primaryOwnerId('man')
         }
     }
 
@@ -273,7 +242,7 @@ job(PAC_JOB_NAME) {
 		}
 			
         downstream(PUSH_TO_JENKINSCI_JOB_NAME, 'SUCCESS')
-        mailer('and@praqma.net', false, false)
+        mailer('man@praqma.net', false, false)
     }
 }
 
@@ -287,8 +256,7 @@ job(PUSH_TO_JENKINSCI_JOB_NAME) {
 
     properties {
         ownership {
-            primaryOwnerId('and')
-            coOwnerIds('man')
+            primaryOwnerId('man')
         }
     }
 
@@ -329,7 +297,7 @@ job(PUSH_TO_JENKINSCI_JOB_NAME) {
                 gitRevision()
             }
         }
-        mailer('and@praqma.net', false, false)
+        mailer('man@praqma.net', false, false)
     }
 }
 
@@ -343,8 +311,7 @@ job(RELEASE_JOB_NAME) {
 
     properties {
         ownership {
-            primaryOwnerId('and')
-            coOwnerIds('man')
+            primaryOwnerId('man')
         }
     }
 
@@ -379,7 +346,7 @@ job(RELEASE_JOB_NAME) {
 
     publishers {
         downstream(SYNC_JOB_NAME, 'SUCCESS')
-        mailer('and@praqma.net', false, false)
+        mailer('man@praqma.net', false, false)
     }
 }
 
@@ -393,8 +360,7 @@ job(SYNC_JOB_NAME) {
 
     properties {
         ownership {
-            primaryOwnerId('and')
-            coOwnerIds('man')
+            primaryOwnerId('man')
         }
     }
 
@@ -428,6 +394,6 @@ job(SYNC_JOB_NAME) {
     }
 
     publishers {
-        mailer('and@praqma.net', false, false)
+        mailer('man@praqma.net', false, false)
     }
 }
