@@ -1,4 +1,4 @@
-multibranchPipelineJob("Codesonar Jenkins Plugin2") {
+multibranchPipelineJob("Codesonar Jenkins Plugin") {
     branchSources {
         git {
             credentialsId("github")
