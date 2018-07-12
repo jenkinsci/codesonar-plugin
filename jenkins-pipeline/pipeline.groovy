@@ -1,4 +1,9 @@
 multibranchPipelineJob("Codesonar Jenkins Plugin") {
+    factory {
+        workflowBranchProjectFactory {
+            scriptPath('jenkins-pipeline/Jenkinsfile')
+        }
+    }
     branchSources {
         git {
             credentialsId("github")
