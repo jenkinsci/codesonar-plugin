@@ -1,0 +1,21 @@
+
+# Windows
+Thumbs.db
+desktop.ini
+
+# OS X
+.DS_Store
+.Spotlight-V100
+.Trashes
+._*
+
+# Local key to access the EC2
+codesonar.pem
+
+# Generate log over created resources
+create-aws-environment-resources.log*
+
+# These are downloaded from our test resource folder on GoogleDrive - can never be public
+codesonar*.tar.gz
+codesonar-IAM-user.credentials
+codesonar-license.txt
