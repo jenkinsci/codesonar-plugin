@@ -1,7 +1,7 @@
 job("build_and_analyze_linux_kernel_gitsha") {
   parameters {
     stringParam("HUB", "127.0.0.1:7340", "CodeSonar Hub <IP>:<PORT>, no http/https")
-    stringParam("PROJNAME", "${JOB_NAME}","The project name in CodeSonar Hub. Defaults to name of Jenkins job")
+    stringParam("PROJNAME", '${JOB_NAME}',"The project name in CodeSonar Hub. Defaults to name of Jenkins job")
   }
 
   // Using the same git SHA every time to get same results
@@ -30,7 +30,7 @@ codesonar analyze $PROJNAME -foreground $HUB make -j$(nproc --all)''')
 job("build_and_analyze_codesonar_plugin_branch-master") {
 parameters {
   stringParam("HUB", "127.0.0.1:7340", "CodeSonar Hub <IP>:<PORT>, no http/https")
-  stringParam("PROJNAME", "${JOB_NAME}","The project name in CodeSonar Hub. Defaults to name of Jenkins job")
+  stringParam("PROJNAME", '${JOB_NAME}',"The project name in CodeSonar Hub. Defaults to name of Jenkins job")
   }
   scm {
     git("https://github.com/Praqma/codesonar-plugin","master")
@@ -53,7 +53,7 @@ codesonar analyze $PROJNAME -foreground $HUB cs-java-scan target/classes/org/jen
 job("wgen_generate_warnings") {
   parameters {
     stringParam("HUB", "127.0.0.1:7340", "CodeSonar Hub <IP>:<PORT>, no http/https")
-    stringParam("PROJNAME", "${JOB_NAME}","The project name in CodeSonar Hub. Defaults to name of Jenkins job")
+    stringParam("PROJNAME", '${JOB_NAME}',"The project name in CodeSonar Hub. Defaults to name of Jenkins job")
     stringParam("WARNPRLINES", "2","Number of warnings to generate pr. line of code in fibonacci.c using the wgen.py generator plugin for CodeSonar")
   }
 
