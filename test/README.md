@@ -94,13 +94,15 @@ With Jenkins up and running and a CodeSonar Hub you can start running the the te
 * You can see if Codesonar Hub uses many works automatically on the Analysis Cloud page in CodeSonar Hub: http://$PublicIp:7340/manage_launchd.html?filter=3&prj_filter=11
 * The projects are automatically created on CodeSonar hub - you don't have to do anything there.
 
-### Analysis job of the CodeSonar Plugin
+### Job: build_and_analyze_codesonar_plugin_branch-master
 
 **Analysis of the CodeSonar Plugin** should be successful and and finish first build in about 6-7 minutes (Maven downloads the world to start with ...) and less than 2 minutes in second run.
 
 *Purpose of the job is to have a simple analysis to run that hows the setup and plugin works.*
 
-### Analysis of the Linux kernel
+### Job: build_and_analyze_linux_kernel_gitsha
+
+Analysis of the Linux kernel job.
 
 *Purpose of the job is to stress the Jenkins and the plugin in respect to memory usage, as an analysis of the Linux kernel generate many thousand warnings and consist of millions of line of code. The plugin save many data from warnings, and earlier had problems handling such big projects*.
 
@@ -110,13 +112,15 @@ The Linux kernel job is using a specific git sha of the kernel, so we get the sa
 
 If you haven't done Linux kernel building before, you can read here:  https://www.makeuseof.com/tag/compile-linux-kernel/
 
-### wgen.py project
+### Job: wgen_generate_warnings
 
-*Purpose is to autogenerate a large amount of warnings, to stress test the plugin and setup. We usge wgen.py a script supplied by Grammatech that can generate a number of warnings pr line of code*.
+*Purpose is to auto generate a (large) amount of warnings, to stress test the plugin and setup. We use wgen.py, a script supplied by Grammatech that can generate a number of warnings pr line of code*.
 
 The warnings will contain much lesser data than real life data, as the messages are simpler and generated, but we can generate more warnings than a real project would if we like.
 
-**wgen.py project** - todo, need to be created
+Number of warnings is input to the script, used as a plugin in CodeSonar.
+
+
 
 # Java monitoring
 
