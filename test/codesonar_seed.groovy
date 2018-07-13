@@ -62,7 +62,7 @@ job("wgen_generate_warnings") {
     git("https://github.com/Praqma/codesonar-plugin","master")
   }
 
-  # notice \ are escaped to become \\
+  // notice \ are escaped to become \\
   steps {
     shell('''export PATH=$PATH:/home/ubuntu/data/codesonar-4.4p0/codesonar/bin
 cp -vf test/wgen-codesonar-template.conf test/wgen.py test/fibonacci.c .
