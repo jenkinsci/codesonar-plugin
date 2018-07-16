@@ -2,6 +2,7 @@
 
 
 FILES="
+config
 install_dependencies.sh
 0-create-credentials.groovy
 1-create-seedjob.groovy
