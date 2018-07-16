@@ -13,7 +13,7 @@ job("build_and_analyze_linux_kernel_gitsha") {
     shell('''export PATH=$PATH:/home/ubuntu/data/codesonar-4.4p0/codesonar/bin
 make clean
 echo "using configuration file config for this build"
-cp -vf test/config .config
+cp $HOME/config .config
 codesonar analyze $PROJNAME -foreground $HUB make -j$(nproc --all)''')
   }
 
