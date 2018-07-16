@@ -112,6 +112,23 @@ The Linux kernel job is using a specific git sha of the kernel, so we get the sa
 
 If you haven't done Linux kernel building before, you can read here:  https://www.makeuseof.com/tag/compile-linux-kernel/
 
+### Job: build_and_analyze_linux_kernel_gitsha_preset-misra_inc
+
+Analysis of the Linux kernel job, but with preset configuration for analysis checking for MISRA compliance.
+
+The Linux kernel job is using a specific git sha of the kernel, so we get the same result each time, and it build based on the `config`-file we have in this repository so we also knows it builds the same things each time.
+
+*Purpose of the job is to see what the limits are and if it can succeed at all.*.
+
+**Analysis of the Linux kernel using preset MISRA INC**
+
+* FAILED - **Job stopped, used 2 TB disk space**. We didn't want to take it further. CodeSonar generated 2 TB project data during the analysis, while Jenkins took about 16 GB for the console log of the job.
+* Jeg analysis was running for 23 hours, and the status in CodeSonar was `Collecting Constants`, showing expected time as 1 day and 22 hours (and was still increasing at this time).
+
+* CodeSonar plugin - at no point the Jenkins java process (monitored with Visualvm) used more a few GBs of memory, since the plugin never really got to do anything because basic analysis wasn't done yet. Post-build action wasn't reached.
+
+
+
 ### Job: wgen_generate_warnings
 
 *Purpose is to auto generate a (large) amount of warnings, to stress test the plugin and setup. We use wgen.py, a script supplied by Grammatech that can generate a number of warnings pr line of code*.
@@ -149,6 +166,10 @@ Install VisualVM on your local machine (Ubuntu users `sudo apt install visualvm`
 * To the remove (right click) add jmx connection, and use port `1098` as configured in our installation and configuration scripts.
 
 # Tips and tricks
+
+## Running out of space?
+
+Extend the disk, see [extend disk howto](extend-disk-howto.md)
 
 ## Debugging
 
