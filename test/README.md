@@ -96,7 +96,7 @@ With Jenkins up and running and a CodeSonar Hub you can start running the the te
 
 ### Job: build_and_analyze_codesonar_plugin_branch-master
 
-**Analysis of the CodeSonar Plugin** should be successful and and finish first build in about 6-7 minutes (Maven downloads the world to start with ...) and less than 2 minutes in second run.
+**Expected result:** Should be successful and and finish first build in about 6-7 minutes (Maven downloads the world to start with ...) and less than 2 minutes in second run.
 
 *Purpose of the job is to have a simple analysis to run that hows the setup and plugin works.*
 
@@ -106,11 +106,22 @@ Analysis of the Linux kernel job.
 
 *Purpose of the job is to stress the Jenkins and the plugin in respect to memory usage, as an analysis of the Linux kernel generate many thousand warnings and consist of millions of line of code. The plugin save many data from warnings, and earlier had problems handling such big projects*.
 
-**Analysis of the Linux kernel** todo - in progress. expected result?
-
 The Linux kernel job is using a specific git sha of the kernel, so we get the same result each time, and it build based on the `config`-file we have in this repository so we also knows it builds the same things each time.
 
 If you haven't done Linux kernel building before, you can read here:  https://www.makeuseof.com/tag/compile-linux-kernel/
+
+
+**Expected result:**
+
+* successful
+* runs about 3 hours
+* when building the linux kernel, all cpus in the instance is utilized nicely, also when doing the analysis in CodeSonar
+* Lines With Code: 1,987,177
+* About 13K warnings
+
+![Result from CodeSonar Plugin and the CodeSonar analysis of the linux kernel build](build_and_analyze_linux_kernel_gitsha.png)
+In the image the failing jobs were configuration error that are not fixed with recent job dsl.
+
 
 ### Job: build_and_analyze_linux_kernel_gitsha_preset-misra_inc
 
@@ -120,7 +131,7 @@ The Linux kernel job is using a specific git sha of the kernel, so we get the sa
 
 *Purpose of the job is to see what the limits are and if it can succeed at all.*.
 
-**Analysis of the Linux kernel using preset MISRA INC**
+**Expected results:**
 
 * FAILED - **Job stopped, used 2 TB disk space**. We didn't want to take it further. CodeSonar generated 2 TB project data during the analysis, while Jenkins took about 16 GB for the console log of the job.
 * Jeg analysis was running for 23 hours, and the status in CodeSonar was `Collecting Constants`, showing expected time as 1 day and 22 hours (and was still increasing at this time).
@@ -133,10 +144,41 @@ The Linux kernel job is using a specific git sha of the kernel, so we get the sa
 
 *Purpose is to auto generate a (large) amount of warnings, to stress test the plugin and setup. We use wgen.py, a script supplied by Grammatech that can generate a number of warnings pr line of code*.
 
+The fibonacci.c program have 26 lines of code.
+
 The warnings will contain much lesser data than real life data, as the messages are simpler and generated, but we can generate more warnings than a real project would if we like.
 
 Number of warnings is input to the script, used as a plugin in CodeSonar.
 
+Our earlier execution used the following inputs:
+
+* build 1: 1 warning per line (26 lines)
+* build 2: 2 warnings per line
+* build 3: 10 warnings per line
+* build 4: 100 warnings per line
+* build 5: 1000 warnings per line
+* build 6: 4000 warnings per line
+* build 7: 10K warnings per line
+* build 8: 30K warnings per line
+* build 9: 50K warnings per line
+
+**Expected result:**
+
+* The above should all run successfully
+* Execution times should not differ much.
+  * build 9:	8 hr 53 min
+  * build 8:	4 hr 44 min
+  * build 7:	1 hr 48 min
+  * build 6:	37 min
+  * build 5:	8 min 51 sec
+  * build 4:	1 min 8 sec
+  * build 3:	29 sec
+  * build 2:	25 sec
+  * build 1:	34 sec
+
+![wgen generate warnings job for the 9 above builds showing CodeSonar Plugin graphs](wgen_generate_warnings.png)
+
+![wgen generate warnigns build time trends for the 9 above builds](wgen_generate_warnings Build time trend.png)
 
 
 # Java monitoring
@@ -293,3 +335,4 @@ Remember to then start Jenkins and CodeSonar again.
 * Use packer
 * Use Terraform
 * Configure all common variable like Jenkins home, data dir, etc. in one common place across script, configuration etc.
+* Make a java monitoring setup the trends all relevant data over the complete build time
