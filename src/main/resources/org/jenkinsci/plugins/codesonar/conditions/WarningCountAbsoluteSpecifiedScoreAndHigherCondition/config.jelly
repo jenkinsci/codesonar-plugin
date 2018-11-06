@@ -1,0 +1,12 @@
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
+    <f:entry field="rankOfWarnings" title="Score of warnings">
+        <f:textbox default="56" />
+    </f:entry>
+    <f:entry field="warningCountThreshold" title="Maximum number of warnings">
+        <f:textbox default="20" />
+    </f:entry>
+    <f:entry field="warrantedResult" title="Mark build as">
+        <f:select />
+    </f:entry>
+</j:jelly>
