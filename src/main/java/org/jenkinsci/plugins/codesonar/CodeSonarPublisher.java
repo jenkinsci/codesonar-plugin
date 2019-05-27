@@ -45,7 +45,7 @@ import java.util.regex.Pattern;
  * @author andrius
  */
 public class CodeSonarPublisher extends Recorder implements SimpleBuildStep  {
-    private static final Logger LOGGER = Logger.getLogger("totalWarningGraph");
+    private static final Logger LOGGER = Logger.getLogger(CodeSonarPublisher.class.getName());
     private String hubAddress;
     private String projectName;
     private String protocol = "http";
@@ -97,7 +97,8 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep  {
         }
 
         URI baseHubUri = URI.create(String.format("%s://%s", getProtocol(), expandedHubAddress));
-        
+        listener.getLogger().println("[Codesonar] Using hub URI: "+baseHubUri);
+
         float hubVersion = getHubVersion(baseHubUri);
         LOGGER.log(Level.FINE, "hub version: {0}", hubVersion);
         
@@ -156,6 +157,8 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep  {
         if (matcher.find()) {
             return Float.valueOf(matcher.group(1));
         }
+
+        LOGGER.log(Level.WARNING, "Version info could not be determined by data:\n"+info); // No version could be found
 
         throw new AbortException("Hub version could not be determined");
     }
@@ -356,6 +359,11 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep  {
             if (!StringUtils.isBlank(hubAddress)) {
                 return FormValidation.ok();
             }
+
+            if(hubAddress.startsWith("http://") || hubAddress.startsWith("https://")) {
+                return FormValidation.error("Protocol should not be part of the hub address, protocol is selected in seperate field");
+            }
+
             return FormValidation.error("Hub address cannot be empty.");
         }
 
