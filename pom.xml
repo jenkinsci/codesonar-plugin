@@ -3,7 +3,7 @@
     <parent>
         <groupId>org.jenkins-ci.plugins</groupId>
         <artifactId>plugin</artifactId>
-        <version>3.8</version>
+        <version>3.43</version>
         <relativePath />
     </parent>
 
@@ -14,7 +14,7 @@
     <packaging>hpi</packaging>
 
     <properties>
-        <jenkins.version>2.7.3</jenkins.version>
+        <jenkins.version>2.164</jenkins.version>
         <java.level>8</java.level>
     </properties>
 
@@ -87,6 +87,11 @@
             <groupId>org.javatuples</groupId>
             <artifactId>javatuples</artifactId>
             <version>1.2</version>
+        </dependency>
+        <dependency>
+            <groupId>io.jenkins.plugins</groupId>
+            <artifactId>jaxb</artifactId>
+            <version>2.3.0</version>
         </dependency>
     </dependencies>
 
