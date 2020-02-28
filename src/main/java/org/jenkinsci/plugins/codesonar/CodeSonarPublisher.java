@@ -346,13 +346,7 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep  {
 
         public List<ConditionDescriptor<?>> getAllConditions() {
             DescriptorExtensionList<Condition, ConditionDescriptor<Condition>> all = Condition.getAll();
-
-            List<ConditionDescriptor<?>> list = new ArrayList<ConditionDescriptor<?>>();
-            for (ConditionDescriptor<?> d : all) {
-                list.add(d);
-            }
-
-            return list;
+            return new ArrayList<>(all);
         }
 
         public FormValidation doCheckHubAddress(@QueryParameter("hubAddress") String hubAddress) {
