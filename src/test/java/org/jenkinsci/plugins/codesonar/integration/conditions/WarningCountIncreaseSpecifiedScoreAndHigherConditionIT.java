@@ -38,7 +38,7 @@ public class WarningCountIncreaseSpecifiedScoreAndHigherConditionIT extends Cond
                 = new WarningCountIncreaseSpecifiedScoreAndHigherCondition(RANK_OF_WARNINGS, Float.toString(WARNING_PERCENTAGE));
         condition.setWarrantedResult(WARRANTED_RESULT);
 
-        List<Condition> conditions = new ArrayList<Condition>();
+        List<Condition> conditions = new ArrayList<>();
         conditions.add(condition);
 
         CodeSonarPublisher codeSonarPublisher = new CodeSonarPublisher(conditions, "http", VALID_HUB_ADDRESS.toString(), VALID_PROJECT_NAME, "");
@@ -71,7 +71,7 @@ public class WarningCountIncreaseSpecifiedScoreAndHigherConditionIT extends Cond
                 = new WarningCountIncreaseSpecifiedScoreAndHigherCondition(RANK_OF_WARNINGS, Float.toString(WARNING_PERCENTAGE));
         condition.setWarrantedResult(WARRANTED_RESULT);
 
-        List<Condition> conditions = new ArrayList<Condition>();
+        List<Condition> conditions = new ArrayList<>();
         conditions.add(condition);
 
         CodeSonarPublisher codeSonarPublisher = new CodeSonarPublisher(conditions, "http", VALID_HUB_ADDRESS.toString(), VALID_PROJECT_NAME, "");

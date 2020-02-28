@@ -120,7 +120,7 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep  {
         Procedures procedures = proceduresService.getProceduresFromUri(proceduresUri);
 
         Analysis analysisNewWarnings = analysisService.getAnalysisFromUrlWithNewWarnings(analysisUrl);
-        List<Pair<String, String>> conditionNamesAndResults = new ArrayList<Pair<String, String>>();
+        List<Pair<String, String>> conditionNamesAndResults = new ArrayList<>();
 
         CodeSonarBuildActionDTO buildActionDTO = new CodeSonarBuildActionDTO(analysisActiveWarnings,
                 analysisNewWarnings, metrics, procedures, baseHubUri);

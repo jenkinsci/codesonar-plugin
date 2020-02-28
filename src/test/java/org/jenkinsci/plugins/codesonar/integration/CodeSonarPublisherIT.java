@@ -53,7 +53,7 @@ public class CodeSonarPublisherIT {
 
         FreeStyleProject project = jenkinsRule.createFreeStyleProject();
         
-        List<Condition> conditions = new ArrayList<Condition>();
+        List<Condition> conditions = new ArrayList<>();
         CodeSonarPublisher codeSonarPublisher = new CodeSonarPublisher(conditions, "http", EMPTY_HUB_ADDRESS, VALID_PROJECT_NAME, "");
         project.getPublishersList().add(codeSonarPublisher);
         
@@ -80,7 +80,7 @@ public class CodeSonarPublisherIT {
 
         FreeStyleProject project = jenkinsRule.createFreeStyleProject();
         
-        List<Condition> conditions = new ArrayList<Condition>();
+        List<Condition> conditions = new ArrayList<>();
         project.getPublishersList().add(new CodeSonarPublisher(conditions, "http", VALID_HUB_ADDRESS, EMPTY_PROJECT_NAME,""));
         
         // act

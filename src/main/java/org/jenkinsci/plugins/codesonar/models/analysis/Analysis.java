@@ -155,7 +155,7 @@ public class Analysis implements Serializable {
     }
 
     public List<Alert> getRedAlerts() {
-        List<Alert> redAlerts = new ArrayList<Alert>();
+        List<Alert> redAlerts = new ArrayList<>();
         
         if (alerts == null)
             return redAlerts;
@@ -204,7 +204,7 @@ public class Analysis implements Serializable {
     }
 
     public List<Alert> getYellowAlerts() {
-        List<Alert> yellowAlerts = new ArrayList<Alert>();
+        List<Alert> yellowAlerts = new ArrayList<>();
 
         if (alerts == null)
         	return yellowAlerts;

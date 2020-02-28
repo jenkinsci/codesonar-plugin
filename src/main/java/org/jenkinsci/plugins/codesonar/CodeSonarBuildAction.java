@@ -64,7 +64,7 @@ public class CodeSonarBuildAction implements Action, SimpleBuildStep.LastBuildAc
 
         CodeSonarGraph graph = new CodeSonarGraph();
 
-        DataSetBuilder<String, ChartUtil.NumberOnlyBuildLabel> dsb = new DataSetBuilder<String, ChartUtil.NumberOnlyBuildLabel>();
+        DataSetBuilder<String, ChartUtil.NumberOnlyBuildLabel> dsb = new DataSetBuilder<>();
 
         ChartUtil.NumberOnlyBuildLabel label = null;
 

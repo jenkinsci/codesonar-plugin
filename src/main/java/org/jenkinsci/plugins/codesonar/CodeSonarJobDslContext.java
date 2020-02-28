@@ -15,7 +15,7 @@ import org.jenkinsci.plugins.codesonar.conditions.WarningCountAbsoluteSpecifiedS
 
 class CodeSonarJobDslContext implements Context {
 
-    List<Condition> conditions = new ArrayList<Condition>();
+    List<Condition> conditions = new ArrayList<>();
 
     public void cyclomaticComplexity(int max, boolean fail) {
         ProcedureCyclomaticComplexityExceededCondition condition = new ProcedureCyclomaticComplexityExceededCondition(max);

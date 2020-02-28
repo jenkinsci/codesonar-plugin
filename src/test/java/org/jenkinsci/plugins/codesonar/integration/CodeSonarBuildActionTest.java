@@ -34,7 +34,7 @@ public class CodeSonarBuildActionTest {
          List<Metric> mmms = Arrays.asList(m);
          Metrics ms = new Metrics();
          Procedures p = new Procedures();
-         Pair pp = new Pair("hello","there");
+         Pair<String, String> pp = new Pair<>("hello","there");
 
          CodeSonarBuildActionDTO dto = new CodeSonarBuildActionDTO(a, a2, ms, p, URI.create("http://localhost"));
          dto.setConditionNamesAndResults(Arrays.asList(pp));

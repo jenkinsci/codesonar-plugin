@@ -33,7 +33,7 @@ public class NewWarningsIncreasedByPercentageConditionIT extends ConditionIntegr
                 = new NewWarningsIncreasedByPercentageCondition(Float.toString(PERCENTAGE));
         condition.setWarrantedResult(WARRANTED_RESULT);
 
-        List<Condition> conditions = new ArrayList<Condition>();
+        List<Condition> conditions = new ArrayList<>();
         conditions.add(condition);
 
         CodeSonarPublisher codeSonarPublisher = new CodeSonarPublisher(conditions, "http", VALID_HUB_ADDRESS.toString(), VALID_PROJECT_NAME, "");
@@ -65,7 +65,7 @@ public class NewWarningsIncreasedByPercentageConditionIT extends ConditionIntegr
                 = new NewWarningsIncreasedByPercentageCondition(Float.toString(PERCENTAGE));
         condition.setWarrantedResult(WARRANTED_RESULT);
 
-        List<Condition> conditions = new ArrayList<Condition>();
+        List<Condition> conditions = new ArrayList<>();
         conditions.add(condition);
 
         CodeSonarPublisher codeSonarPublisher = new CodeSonarPublisher(conditions, "http", VALID_HUB_ADDRESS.toString(), VALID_PROJECT_NAME, "");
