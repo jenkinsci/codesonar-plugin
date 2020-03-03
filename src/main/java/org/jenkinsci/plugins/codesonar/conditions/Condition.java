@@ -21,7 +21,7 @@ public abstract class Condition implements Describable<Condition>, ExtensionPoin
     
     @Override
     public Descriptor<Condition> getDescriptor() {
-        Jenkins instance = Jenkins.getInstance();
+        Jenkins instance = Jenkins.getInstanceOrNull();
 
         if (instance != null) {
             return (ConditionDescriptor<?>) instance.getDescriptorOrDie(getClass());
@@ -31,7 +31,7 @@ public abstract class Condition implements Describable<Condition>, ExtensionPoin
     }
     
     public static DescriptorExtensionList<Condition, ConditionDescriptor<Condition>> getAll() {
-        Jenkins instance = Jenkins.getInstance();
+        Jenkins instance = Jenkins.getInstanceOrNull();
 
         if (instance != null) {
             return instance.<Condition, ConditionDescriptor<Condition>>getDescriptorList(Condition.class);
