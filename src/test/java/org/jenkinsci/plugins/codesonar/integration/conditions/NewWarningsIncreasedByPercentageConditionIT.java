@@ -11,15 +11,9 @@ import org.jenkinsci.plugins.codesonar.CodeSonarPublisher;
 import org.jenkinsci.plugins.codesonar.conditions.Condition;
 import org.jenkinsci.plugins.codesonar.conditions.NewWarningsIncreasedByPercentageCondition;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 
 public class NewWarningsIncreasedByPercentageConditionIT extends ConditionIntegrationTestBase {
-
-    @Before
-    public void setUp() throws Exception {
-        super.setUp();
-    }
 
     @Test
     public void percentageOfBrandNewWarningsIsAbovetheThreshold_BuildIsSetToWarrantedResult() throws Exception {
