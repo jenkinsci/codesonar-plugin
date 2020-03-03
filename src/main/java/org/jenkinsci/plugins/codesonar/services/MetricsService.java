@@ -25,9 +25,7 @@ public class MetricsService {
     public Metrics getMetricsFromUri(URI metricsUri) throws IOException {
         InputStream xmlContent = httpService.getContentFromUrlAsInputStream(metricsUri);
 
-        Metrics metrics = xmlSerializationService.deserialize(xmlContent, Metrics.class);
-
-        return metrics;
+        return  xmlSerializationService.deserialize(xmlContent, Metrics.class);
     }
 
 }
