@@ -3,6 +3,8 @@ package org.jenkinsci.plugins.codesonar.unit.services;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
+
+import org.apache.commons.io.IOUtils;
 import org.jenkinsci.plugins.codesonar.models.metrics.Metrics;
 import org.jenkinsci.plugins.codesonar.services.HttpService;
 import org.jenkinsci.plugins.codesonar.services.MetricsService;
@@ -36,11 +38,8 @@ public class MetricsServiceTest {
     public void providedHubAddressAndAnalysisId_shouldReturnAMetricsUrl() {
         final String HUB_ADDRESS = "http://10.10.10.10";
         final String ANALYSIS_ID = "10";
-
         final String EXPECTED_RESULT = String.format("%s/metrics/%s.xml", HUB_ADDRESS, ANALYSIS_ID);
-        
         URI result = metricsService.getMetricsUriFromAnAnalysisId(URI.create(HUB_ADDRESS), ANALYSIS_ID);
-
         Assert.assertEquals(EXPECTED_RESULT, result.toString());
     }
 
@@ -49,12 +48,11 @@ public class MetricsServiceTest {
         final URI VALID_METRICS_URI = URI.create("http://10.10.10.10/validUrl");
         final String RESPONSE_XML_CONTENT = "valid xml content";
         final Metrics EXPECTED_RESULT = new Metrics();
-
+        final InputStream RESPONSE_IS = IOUtils.toInputStream(RESPONSE_XML_CONTENT, "UTF-8");
         when(mockedHttpService.getContentFromUrlAsString(VALID_METRICS_URI)).thenReturn(RESPONSE_XML_CONTENT);
+        when(mockedHttpService.getContentFromUrlAsInputStream(VALID_METRICS_URI)).thenReturn(RESPONSE_IS);
         when(mockedXmlSerializationService.deserialize(any(InputStream.class), isA(Class.class))).thenReturn(EXPECTED_RESULT);
-
         Metrics result = metricsService.getMetricsFromUri(VALID_METRICS_URI);
-
         Assert.assertEquals(EXPECTED_RESULT, result);
     }
 }

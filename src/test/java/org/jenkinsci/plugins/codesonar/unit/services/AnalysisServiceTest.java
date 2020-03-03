@@ -2,6 +2,8 @@ package org.jenkinsci.plugins.codesonar.unit.services;
 
 import hudson.AbortException;
 import java.io.ByteArrayInputStream;
+
+import org.apache.commons.io.IOUtils;
 import org.jenkinsci.plugins.codesonar.models.SearchResults;
 import org.jenkinsci.plugins.codesonar.models.analysis.Analysis;
 import org.jenkinsci.plugins.codesonar.models.projects.Project40;
@@ -126,13 +128,12 @@ public class AnalysisServiceTest {
     public void providedValidAnalysisUrl_shouldReturnAnAnalysis() throws Exception {
         final String VALID_ANALYSIS_URL = "10.10.10.10";
         final String RESPONSE_XML_CONTENT = "valid xml content";
+        final InputStream RESPONSE_IS = IOUtils.toInputStream(RESPONSE_XML_CONTENT, "UTF-8");
         final Analysis ANALYSIS = new Analysis();
-
         when(mockedHttpService.getContentFromUrlAsString(any(String.class))).thenReturn(RESPONSE_XML_CONTENT);
+        when(mockedHttpService.getContentFromUrlAsInputStream(any(String.class))).thenReturn(RESPONSE_IS);               
         when(mockedXmlSerializationService.deserialize(any(InputStream.class), isA(Class.class))).thenReturn(ANALYSIS);
-
         Analysis analysis = analysisService.getAnalysisFromUrl(VALID_ANALYSIS_URL);
-
         assertNotNull(analysis);
     }
     
@@ -140,9 +141,11 @@ public class AnalysisServiceTest {
     public void providedValidAnalysisUrlAndUrlFilterNEW_shouldReturnAnAnalysisUrlForNewWarnings() throws IOException {
         final String VALID_ANALYSIS_URL = "10.10.10.10";
         final String RESPONSE_XML_CONTENT = "valid xml content";
+        final InputStream RESPONSE_IS = IOUtils.toInputStream(RESPONSE_XML_CONTENT, "UTF-8");
         final Analysis ANALYSIS = new Analysis();
 
         when(mockedHttpService.getContentFromUrlAsString(any(String.class))).thenReturn(RESPONSE_XML_CONTENT);
+        when(mockedHttpService.getContentFromUrlAsInputStream(any(String.class))).thenReturn(RESPONSE_IS);
         when(mockedXmlSerializationService.deserialize(any(InputStream.class), isA(Class.class))).thenReturn(ANALYSIS);
 
         Analysis analysis = analysisService.getAnalysisFromUrlWithNewWarnings(VALID_ANALYSIS_URL);

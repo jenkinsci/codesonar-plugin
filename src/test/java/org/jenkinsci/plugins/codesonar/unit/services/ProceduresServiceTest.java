@@ -3,6 +3,8 @@ package org.jenkinsci.plugins.codesonar.unit.services;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
+
+import org.apache.commons.io.IOUtils;
 import org.jenkinsci.plugins.codesonar.models.procedures.Procedures;
 import org.jenkinsci.plugins.codesonar.services.HttpService;
 import org.jenkinsci.plugins.codesonar.services.ProceduresService;
@@ -10,6 +12,8 @@ import org.jenkinsci.plugins.codesonar.services.XmlSerializationService;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.isA;
 import static org.mockito.Mockito.mock;
@@ -48,8 +52,10 @@ public class ProceduresServiceTest {
         final URI VALID_METRICS_URI = URI.create("http://10.10.10.10/valid");
         final String RESPONSE_XML_CONTENT = "valid xml content";
         final Procedures EXPECTED_RESULT = new Procedures();
+        final InputStream RESPONSE_IS = IOUtils.toInputStream(RESPONSE_XML_CONTENT, "UTF-8");
 
         when(mockedHttpService.getContentFromUrlAsString(VALID_METRICS_URI)).thenReturn(RESPONSE_XML_CONTENT);
+        when(mockedHttpService.getContentFromUrlAsInputStream(VALID_METRICS_URI)).thenReturn(RESPONSE_IS);
         when(mockedXmlSerializationService.deserialize(any(InputStream.class), isA(Class.class))).thenReturn(EXPECTED_RESULT);
 
         Procedures result = proceduresService.getProceduresFromUri(VALID_METRICS_URI);
