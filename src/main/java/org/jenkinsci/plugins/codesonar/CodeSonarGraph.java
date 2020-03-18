@@ -1,9 +1,7 @@
 package org.jenkinsci.plugins.codesonar;
 
-import hudson.util.ChartUtil;
-import hudson.util.ColorPalette;
-import hudson.util.DataSetBuilder;
-import hudson.util.ShiftedCategoryAxis;
+import hudson.util.*;
+
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.io.IOException;
@@ -38,13 +36,14 @@ public class CodeSonarGraph {
         this.title = title;
     }
 
-    public void drawGraph(StaplerRequest req, StaplerResponse rsp, DataSetBuilder<String, ChartUtil.NumberOnlyBuildLabel> dsb, String title) throws IOException {
+    public void drawGraph(StaplerRequest req, StaplerResponse rsp, DataSetBuilder<String, ChartUtil.NumberOnlyBuildLabel> dsb, String title)
+            throws IOException {
         try {
-            int width = 400;
-            int height = 300;
-            
-            JFreeChart chart = createChart(dsb.build(), title, null);
-            ChartUtil.generateGraph(req, rsp, chart, width, height);
+            new Graph(-1L, 400, 300) {
+                protected JFreeChart createGraph() {
+                    return createChart(dsb.build(), title, null);
+                }
+            }.doPng(req, rsp);
         } catch (RuntimeException ex) {
             throw ex;
         }

@@ -1,5 +1,6 @@
 package org.jenkinsci.plugins.codesonar;
 
+import com.google.common.collect.Iterators;
 import hudson.AbortException;
 import hudson.model.Job;
 import hudson.model.Action;
@@ -42,7 +43,7 @@ public class CodeSonarProjectAction implements Action {
     }
 
     public boolean isDrawGraphs() {
-        return project.getBuilds().size() >= 2;
+        return Iterators.size(project.getBuilds().iterator()) >= 2;
     }
 
     public void doReportGraphs(StaplerRequest req, StaplerResponse rsp) throws AbortException {
