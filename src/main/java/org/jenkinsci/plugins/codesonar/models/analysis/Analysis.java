@@ -169,11 +169,7 @@ public class Analysis implements Serializable {
                 isRed = true;
             } else if (message.contains("Bad Configuration File Setting")) {
                 isRed = true;
-            } else if (message.contains("Bad Configuration File Settings")) {
-                isRed = true;
             } else if (message.contains("Bad Extension Construct")) {
-                isRed = true;
-            } else if (message.contains("Bad Extension Constructs")) {
                 isRed = true;
             } else if (message.contains("Visualization Feature Failure")) {
                 isRed = true;
@@ -181,17 +177,13 @@ public class Analysis implements Serializable {
                 isRed = true;
             } else if (message.contains("Miscellaneous Error")) {
                 isRed = true;
-            } else if (message.contains("Miscellaneous Errors")) {
-                isRed = true;
             } else if (message.contains("Missing Debug Information")) {
                 isRed = true;
             } else if (message.contains("Missing Source File")) {
                 isRed = true;
-            } else if (message.contains("Missing Source Files")) {
-                isRed = true;
             } else if (message.contains("Native Build Failed")) {
                 isRed = true;
-            } else if (message.contains("Binary Analysis Configuration Errors")) {
+            } else if (message.contains("Binary Analysis Configuration Error")) {
                 isRed = true;
             }
             
@@ -216,13 +208,11 @@ public class Analysis implements Serializable {
 
             if (message.contains("Parse Error")) {
                 isYellow = true;
-            } else if (message.contains("Parse Errors")) {
-                isYellow = true;
             } else if (message.contains("Undefined Function")) {
                 isYellow = true;
-            } else if (message.contains("Undefined Functions")) {
-                isYellow = true;
             } else if (message.contains("Incremental Parent Analysis Absent")) {
+                isYellow = true;
+            } else if (message.contains("Unexpected Reachability Conditions")){
                 isYellow = true;
             }
             
