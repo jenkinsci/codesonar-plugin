@@ -16,6 +16,7 @@ import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 
+import javax.annotation.Nonnull;
 import java.util.List;
 
 /**
@@ -52,8 +53,7 @@ public class ProcedureCyclomaticComplexityExceededCondition extends Condition {
 
             String value = cyclomaticComplexityMetric.getValue();
             if (Integer.parseInt(value) > maxCyclomaticComplexity) {
-                Result result = Result.fromString(warrantedResult);
-                return result;
+                return Result.fromString(warrantedResult);
             }
         }
 
@@ -87,7 +87,7 @@ public class ProcedureCyclomaticComplexityExceededCondition extends Condition {
         }
 
         @Override
-        public String getDisplayName() {
+        public @Nonnull String getDisplayName() {
             return NAME;
         }
 

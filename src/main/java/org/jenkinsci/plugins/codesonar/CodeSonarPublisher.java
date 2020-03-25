@@ -30,6 +30,7 @@ import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 
+import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
@@ -78,7 +79,9 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep  {
     }
 
     @Override
-    public void perform(Run<?, ?> run, FilePath workspace, Launcher launcher, TaskListener listener) throws InterruptedException, IOException {
+    public void perform(Run<?, ?> run, @Nonnull FilePath workspace, @Nonnull Launcher launcher, @Nonnull TaskListener listener)
+            throws InterruptedException, IOException
+    {
         xmlSerializationService = getXmlSerializationService();
         httpService = getHttpService();
         authenticationService = getAuthenticationService();
@@ -340,7 +343,7 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep  {
         }
 
         @Override
-        public String getDisplayName() {
+        public @Nonnull String getDisplayName() {
             return "Codesonar";
         }
 

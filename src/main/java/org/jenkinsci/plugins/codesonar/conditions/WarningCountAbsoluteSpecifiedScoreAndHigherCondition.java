@@ -18,6 +18,8 @@ import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 
+import javax.annotation.Nonnull;
+
 /**
  * @author oehc
  */
@@ -98,7 +100,7 @@ public class WarningCountAbsoluteSpecifiedScoreAndHigherCondition extends Condit
         }
 
         @Override
-        public String getDisplayName() {
+        public @Nonnull String getDisplayName() {
             return NAME;
         }
 

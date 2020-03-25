@@ -15,6 +15,8 @@ import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 
+import javax.annotation.Nonnull;
+
 public class WarningCountIncreaseOverallCondition extends Condition {
 
     private static final String NAME = "Warning count increase: overall";
@@ -57,8 +59,7 @@ public class WarningCountIncreaseOverallCondition extends Condition {
         float diff = currentCount - previousCount;
 
         if ((diff / previousCount) * 100 > Float.parseFloat(percentage)) {
-            Result result = Result.fromString(warrantedResult);
-            return result;
+            return Result.fromString(warrantedResult);
         }
 
         return Result.SUCCESS;
@@ -97,7 +98,7 @@ public class WarningCountIncreaseOverallCondition extends Condition {
         }
 
         @Override
-        public String getDisplayName() {
+        public @Nonnull String getDisplayName() {
             return NAME;
         }
 

@@ -25,8 +25,6 @@ public class ProceduresService {
     public Procedures getProceduresFromUri(URI proceduresUri) throws IOException {
         InputStream xmlContent = httpService.getContentFromUrlAsInputStream(proceduresUri);
 
-        Procedures procedures = xmlSerializationService.deserialize(xmlContent, Procedures.class);
-
-        return procedures;
+        return xmlSerializationService.deserialize(xmlContent, Procedures.class);
     }
 }

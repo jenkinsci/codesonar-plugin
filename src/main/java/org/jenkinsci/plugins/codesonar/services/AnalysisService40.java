@@ -28,7 +28,7 @@ public class AnalysisService40 implements IAnalysisService {
 
         private final String value;
 
-        private UrlFilters(String value) {
+        UrlFilters(String value) {
             this.value = value;
         }
 

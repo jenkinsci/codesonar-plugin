@@ -11,6 +11,8 @@ import hudson.util.ListBoxModel;
 import net.sf.json.JSONObject;
 import org.kohsuke.stapler.StaplerRequest;
 
+import javax.annotation.Nonnull;
+
 /**
  *
  * @author andrius
@@ -26,7 +28,7 @@ public abstract class ConditionDescriptor<T extends Condition> extends Descripto
     }
 
     @Override
-    public Condition newInstance(StaplerRequest req, JSONObject formData) throws FormException {
+    public Condition newInstance(StaplerRequest req, @Nonnull JSONObject formData) throws FormException {
         return super.newInstance(req, formData);
     }
 

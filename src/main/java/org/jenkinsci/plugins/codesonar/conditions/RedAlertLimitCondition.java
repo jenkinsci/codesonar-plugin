@@ -16,6 +16,8 @@ import org.kohsuke.stapler.DataBoundSetter;
 import hudson.model.Run;
 import org.kohsuke.stapler.QueryParameter;
 
+import javax.annotation.Nonnull;
+
 /**
  *
  * @author Andrius
@@ -46,8 +48,7 @@ public class RedAlertLimitCondition extends Condition {
 
         List<Alert> redAlerts = buildActionDTO.getAnalysisActiveWarnings().getRedAlerts();
         if (redAlerts.size() > alertLimit) {
-            Result result = Result.fromString(warrantedResult);
-            return result;
+            return Result.fromString(warrantedResult);
         }
 
         return Result.SUCCESS;
@@ -80,7 +81,7 @@ public class RedAlertLimitCondition extends Condition {
         }
 
         @Override
-        public String getDisplayName() {
+        public @Nonnull String getDisplayName() {
             return NAME;
         }
 

@@ -16,6 +16,8 @@ import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 
+import javax.annotation.Nonnull;
+
 /**
  *
  * @author Andrius
@@ -45,8 +47,7 @@ public class YellowAlertLimitCondition extends Condition {
         
         List<Alert> yellowAlerts = buildActionDTO.getAnalysisActiveWarnings().getYellowAlerts();
         if (yellowAlerts.size() > alertLimit) {
-            Result result = Result.fromString(warrantedResult);
-            return result;
+            return Result.fromString(warrantedResult);
         }
 
         return Result.SUCCESS;
@@ -79,7 +80,7 @@ public class YellowAlertLimitCondition extends Condition {
         }
 
         @Override
-        public String getDisplayName() {
+        public @Nonnull String getDisplayName() {
             return NAME;
         }
 
