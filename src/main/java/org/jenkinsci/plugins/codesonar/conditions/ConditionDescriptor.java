@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package org.jenkinsci.plugins.codesonar.conditions;
 
 import hudson.model.Descriptor;
@@ -23,7 +18,7 @@ public abstract class ConditionDescriptor<T extends Condition> extends Descripto
     public ListBoxModel doFillWarrantedResultItems() {
         ListBoxModel output = new ListBoxModel();
         output.add(new ListBoxModel.Option("Unstable", Result.UNSTABLE.toString()));
-        output.add(new ListBoxModel.Option("Failed", Result.FAILURE.toString()));        
+        output.add(new ListBoxModel.Option("Failed", Result.FAILURE.toString()));
         return output;
     }
 
