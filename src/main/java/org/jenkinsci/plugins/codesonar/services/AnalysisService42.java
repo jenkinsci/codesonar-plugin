@@ -23,26 +23,12 @@ public class AnalysisService42 implements IAnalysisService {
 
     final private HttpService httpService;
     final private XmlSerializationService xmlSerializationService;
+    private String visibilityFilter;
 
-    private enum UrlFilters {
-
-        NEW("5"), ACTIVE("2");
-
-        private final String value;
-
-        private UrlFilters(String value) {
-            this.value = value;
-        }
-
-        public String getValue() {
-            return value;
-        }
-
-    }
-    
-    public AnalysisService42(HttpService httpService, XmlSerializationService xmlSerializationService) {
+    public AnalysisService42(HttpService httpService, XmlSerializationService xmlSerializationService, String visibilityFilter) {
         this.httpService = httpService;
         this.xmlSerializationService = xmlSerializationService;
+        this.visibilityFilter = visibilityFilter;
     }
 
     @Override
@@ -83,30 +69,40 @@ public class AnalysisService42 implements IAnalysisService {
 
         return xmlSerializationService.deserialize(xmlContent, Analysis.class);
     }
-    
+
     @Override
     public Analysis getAnalysisFromUrlWithNewWarnings(String analysisUrl) throws IOException {
         URIBuilder uriBuilder;
         try {
             uriBuilder = new URIBuilder(analysisUrl);
-            uriBuilder.addParameter("filter", UrlFilters.NEW.getValue());
+            uriBuilder.addParameter("filter", "5");
         } catch (URISyntaxException ex) {
             throw new AbortException(ex.getMessage());
         }
-        
+
         return getAnalysisFromUrl(uriBuilder.toString());
     }
-    
+
     @Override
-    public Analysis getAnalysisFromUrlWithActiveWarnings(String analysisUrl) throws IOException {
+    public Analysis getAnalysisFromUrlWarningsByFilter(String analysisUrl) throws IOException {
         URIBuilder uriBuilder;
         try {
             uriBuilder = new URIBuilder(analysisUrl);
-            uriBuilder.addParameter("filter", UrlFilters.ACTIVE.getValue());
+            uriBuilder.addParameter("filter", this.visibilityFilter);
         } catch (URISyntaxException ex) {
             throw new AbortException(ex.getMessage());
         }
-        
+
         return getAnalysisFromUrl(uriBuilder.toString());
+    }
+
+    @Override
+    public void setVisibilityFilter(String visibilityFilter) {
+        this.visibilityFilter = visibilityFilter;
+    }
+
+    @Override
+    public String getVisibilityFilter() {
+        return this.visibilityFilter;
     }
 }

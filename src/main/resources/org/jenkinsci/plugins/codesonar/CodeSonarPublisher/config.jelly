@@ -14,10 +14,14 @@
         <f:textbox default="$${JOB_NAME}" />
     </f:entry>
 
+    <f:entry field="visibilityFilter" title="Use this visibility filter for the conditions (not for new!)">
+        <f:select/>
+    </f:entry>
+
     <f:entry title="Credentials" field="credentialId">
         <c:select/>
     </f:entry>
-    
+
     <f:section title="Configure build status conditions"> 
         <f:block>
             <f:hetero-list descriptors="${descriptor.getAllConditions()}" items="${instance.conditions}" name="conditions" addCaption="Add Codesonar condition"/>

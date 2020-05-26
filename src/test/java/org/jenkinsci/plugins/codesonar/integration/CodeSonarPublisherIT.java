@@ -31,26 +31,28 @@ import org.jvnet.hudson.test.JenkinsRule;
 public class CodeSonarPublisherIT {
     @Rule
     public JenkinsRule jenkinsRule = new JenkinsRule();
-    
+
+    private final String VISIBILITY_FILTER = "2"; // active warnings
+
     @Test
     public void providedHubAddressIsEmpty_BuildFails() throws Exception {
         // arrange
         final Result EXPECTED_RESULT = Result.FAILURE;
-        
+
         final int RANK_OF_WARNINGS = 30;
         final float WARNING_PERCENTAGE = 50.0f;
         WarningCountIncreaseSpecifiedScoreAndHigherCondition condition = 
                 new WarningCountIncreaseSpecifiedScoreAndHigherCondition(RANK_OF_WARNINGS, Float.toString(WARNING_PERCENTAGE));
-        
+
         final String EMPTY_HUB_ADDRESS = "";
         final String VALID_PROJECT_NAME = "projectName";
 
         FreeStyleProject project = jenkinsRule.createFreeStyleProject();
-        
+
         List<Condition> conditions = new ArrayList<>();
-        CodeSonarPublisher codeSonarPublisher = new CodeSonarPublisher(conditions, "http", EMPTY_HUB_ADDRESS, VALID_PROJECT_NAME, "");
+        CodeSonarPublisher codeSonarPublisher = new CodeSonarPublisher(conditions, "http", EMPTY_HUB_ADDRESS, VALID_PROJECT_NAME, "", "2");
         project.getPublishersList().add(codeSonarPublisher);
-        
+
         // act
         QueueTaskFuture<FreeStyleBuild> queueTaskFuture = project.scheduleBuild2(0, new Cause.UserIdCause());
         FreeStyleBuild build = queueTaskFuture.get();
@@ -75,7 +77,7 @@ public class CodeSonarPublisherIT {
         FreeStyleProject project = jenkinsRule.createFreeStyleProject();
         
         List<Condition> conditions = new ArrayList<>();
-        project.getPublishersList().add(new CodeSonarPublisher(conditions, "http", VALID_HUB_ADDRESS, EMPTY_PROJECT_NAME,""));
+        project.getPublishersList().add(new CodeSonarPublisher(conditions, "http", VALID_HUB_ADDRESS, EMPTY_PROJECT_NAME,"", "2"));
         
         // act
         QueueTaskFuture<FreeStyleBuild> queueTaskFuture = project.scheduleBuild2(0, new Cause.UserIdCause());
@@ -88,10 +90,15 @@ public class CodeSonarPublisherIT {
     @Test
     public void pipelineIntegration_validation() throws Exception {
         WorkflowJob foo = jenkinsRule.jenkins.createProject(WorkflowJob.class, "foo");
+        // TODO JobDSL nicely
         CpsFlowDefinition flowDef = new CpsFlowDefinition(StringUtils.join(Arrays.asList(
                 "node {",
-                "  codesonar conditions: [cyclomaticComplexity(maxCyclomaticComplexity: 30), redAlerts(alertLimit: 1), warningCountIncreaseNewOnly(percentage: '5.0'), warningCountIncreaseOverall('5.0'), warningCountIncreaseSpecifiedScoreAndHigher(rankOfWarnings: 30, warningPercentage: '5.0'), yellowAlerts(alertLimit: 1)], credentialId: '', hubAddress: '10', projectName: '${JOB_NAME}', protocol: 'http'",
-
+                "  codesonar conditions: [cyclomaticComplexity(maxCyclomaticComplexity: 30), " +
+                        "redAlerts(alertLimit: 1), warningCountIncreaseNewOnly(percentage: '5.0'), " +
+                        "warningCountIncreaseOverall('5.0'), " +
+                        "warningCountIncreaseSpecifiedScoreAndHigher(rankOfWarnings: 30, warningPercentage: '5.0'), " +
+                        "yellowAlerts(alertLimit: 1)], credentialId: '', " +
+                        "hubAddress: '10', projectName: '${JOB_NAME}', protocol: 'http', visibilityFilter: '2'",
                 "}"), "\n"), true);
         foo.setDefinition(flowDef);
 

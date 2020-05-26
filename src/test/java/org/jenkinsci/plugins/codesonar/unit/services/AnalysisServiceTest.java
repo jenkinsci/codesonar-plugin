@@ -29,12 +29,13 @@ public class AnalysisServiceTest {
     private XmlSerializationService mockedXmlSerializationService;
     private HttpService mockedHttpService;
     private IAnalysisService analysisService;
+    private final String ACTIVE_WARNING_FILTER = "2";
 
     @Before
     public void setUp() {
         mockedXmlSerializationService = mock(XmlSerializationService.class);
         mockedHttpService = mock(HttpService.class);
-        analysisService = new AnalysisService42(mockedHttpService, mockedXmlSerializationService);
+        analysisService = new AnalysisService42(mockedHttpService, mockedXmlSerializationService, this.ACTIVE_WARNING_FILTER);
     }
 
     @Test
@@ -52,7 +53,6 @@ public class AnalysisServiceTest {
 
         SearchResults searchResults = new SearchResults();
         searchResults.getProjects().add(proj);
-
 
         when(mockedHttpService.getContentFromUrlAsInputStream(notNull(URI.class))).thenReturn(RESPONSE_XML_CONTENT);
         when(mockedHttpService.getContentFromUrlAsInputStream(VALID_HUB_ADDRESS)).thenReturn(RESPONSE_XML_CONTENT);

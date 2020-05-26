@@ -20,10 +20,10 @@ public class AnalysisServiceFactory {
         }
         
         if (version >= 4.2f) {
-            return new AnalysisService42(httpService, xmlSerializationService);
+            return new AnalysisService42(httpService, xmlSerializationService,"0");
         }
         else {
-            return new AnalysisService40(httpService, xmlSerializationService);
+            return new AnalysisService40(httpService, xmlSerializationService, "0");
         }
     }
 

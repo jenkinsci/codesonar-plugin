@@ -15,8 +15,10 @@ import org.junit.Test;
 
 public class NewWarningsIncreasedByPercentageConditionIT extends ConditionIntegrationTestBase {
 
+    private final String VISIBILITY_FILTER = "2";
+
     @Test
-    public void percentageOfBrandNewWarningsIsAbovetheThreshold_BuildIsSetToWarrantedResult() throws Exception {
+    public void percentageOfBrandNewWarningsIsAboveTheThreshold_BuildIsSetToWarrantedResult() throws Exception {
         // arrange
         final String WARRANTED_RESULT = Result.FAILURE.toString();
         final Result EXPECTED_RESULT = Result.fromString(WARRANTED_RESULT);
@@ -30,7 +32,7 @@ public class NewWarningsIncreasedByPercentageConditionIT extends ConditionIntegr
         List<Condition> conditions = new ArrayList<>();
         conditions.add(condition);
 
-        CodeSonarPublisher codeSonarPublisher = new CodeSonarPublisher(conditions, "http", VALID_HUB_ADDRESS.toString(), VALID_PROJECT_NAME, "");
+        CodeSonarPublisher codeSonarPublisher = new CodeSonarPublisher(conditions, "http", VALID_HUB_ADDRESS.toString(), VALID_PROJECT_NAME, "", "2");
         codeSonarPublisher.setAnalysisService(mockedAnalysisService);
         codeSonarPublisher.setMetricsService(mockedMetricsService);
         codeSonarPublisher.setProceduresService(mockedProceduresService);
@@ -62,7 +64,10 @@ public class NewWarningsIncreasedByPercentageConditionIT extends ConditionIntegr
         List<Condition> conditions = new ArrayList<>();
         conditions.add(condition);
 
-        CodeSonarPublisher codeSonarPublisher = new CodeSonarPublisher(conditions, "http", VALID_HUB_ADDRESS.toString(), VALID_PROJECT_NAME, "");
+        CodeSonarPublisher codeSonarPublisher = new CodeSonarPublisher(
+                conditions, "http", VALID_HUB_ADDRESS.toString(), VALID_PROJECT_NAME, "",
+                this.VISIBILITY_FILTER
+        );
         codeSonarPublisher.setAnalysisService(mockedAnalysisService);
         codeSonarPublisher.setMetricsService(mockedMetricsService);
         codeSonarPublisher.setProceduresService(mockedProceduresService);

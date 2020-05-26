@@ -49,7 +49,6 @@ public abstract class ConditionIntegrationTestBase {
         mockedAnalysisServiceFactory = mock(AnalysisServiceFactory.class);
         mockedHttpService = mock(HttpService.class);
         
-        
         final URI VALID_ANALYSIS_URL = URI.create("http://10.10.1.102/VALID_ANALYSIS_URL");
         final Analysis VALID_ANALYSIS_ACTIVE_WARNINGS = new Analysis();
         VALID_ANALYSIS_ACTIVE_WARNINGS.setAnalysisId("10");
@@ -83,11 +82,9 @@ public abstract class ConditionIntegrationTestBase {
         NEW_WARNINGS.add(warning);
         NEW_WARNINGS.add(warning);
         VALID_ANALYSIS_NEW_WARNINGS.setWarnings(NEW_WARNINGS);
-        
-        
         when(mockedAnalysisService.getAnalysisUrlFromLogFile(any(List.class)))
                 .thenReturn(VALID_ANALYSIS_URL.toString());
-        when(mockedAnalysisService.getAnalysisFromUrlWithActiveWarnings(VALID_ANALYSIS_URL.toString()))
+        when(mockedAnalysisService.getAnalysisFromUrlWarningsByFilter(VALID_ANALYSIS_URL.toString()))
                 .thenReturn(VALID_ANALYSIS_ACTIVE_WARNINGS);
         when(mockedAnalysisService.getLatestAnalysisUrlForAProject(VALID_HUB_ADDRESS, VALID_PROJECT_NAME))
                 .thenReturn(VALID_ANALYSIS_URL.toString());

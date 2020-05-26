@@ -18,7 +18,7 @@ import jenkins.model.Jenkins;
 public abstract class Condition implements Describable<Condition>, ExtensionPoint {
 
     public abstract Result validate(Run<?, ?> run, Launcher launcher, TaskListener listener) throws AbortException;
-    
+
     @Override
     public Descriptor<Condition> getDescriptor() {
         Jenkins instance = Jenkins.getInstanceOrNull();
@@ -26,17 +26,17 @@ public abstract class Condition implements Describable<Condition>, ExtensionPoin
         if (instance != null) {
             return (ConditionDescriptor<?>) instance.getDescriptorOrDie(getClass());
         }
-            
+
         throw new NullPointerException("Jenkins is not started or is stopped");
     }
-    
+
     public static DescriptorExtensionList<Condition, ConditionDescriptor<Condition>> getAll() {
         Jenkins instance = Jenkins.getInstanceOrNull();
 
         if (instance != null) {
             return instance.<Condition, ConditionDescriptor<Condition>>getDescriptorList(Condition.class);
         }
-        
+
         throw new NullPointerException("Jenkins is not started or is stopped");
     }
 }

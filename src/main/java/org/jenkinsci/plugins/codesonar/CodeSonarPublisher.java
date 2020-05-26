@@ -28,6 +28,7 @@ import org.jenkinsci.plugins.codesonar.models.procedures.Procedures;
 import org.jenkinsci.plugins.codesonar.services.*;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 
 import javax.annotation.Nonnull;
@@ -47,6 +48,7 @@ import java.util.regex.Pattern;
  */
 public class CodeSonarPublisher extends Recorder implements SimpleBuildStep  {
     private static final Logger LOGGER = Logger.getLogger(CodeSonarPublisher.class.getName());
+    private String visibilityFilter = "2"; // active warnings
     private String hubAddress;
     private String projectName;
     private String protocol = "http";
@@ -65,7 +67,10 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep  {
     private String credentialId;
 
     @DataBoundConstructor
-    public CodeSonarPublisher(List<Condition> conditions, String protocol, String hubAddress, String projectName, String credentialId) {
+    public CodeSonarPublisher(
+            List<Condition> conditions, String protocol, String hubAddress, String projectName, String credentialId,
+            String visibilityFilter
+    ) {
         this.hubAddress = hubAddress;
         this.projectName = projectName;
         this.protocol = protocol;
@@ -76,10 +81,26 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep  {
         this.conditions = conditions;
 
         this.credentialId = credentialId;
+        this.visibilityFilter = visibilityFilter;
+    }
+
+    @DataBoundSetter
+    public void setVisibilityFilter(String visibilityFilter){
+        this.visibilityFilter = visibilityFilter;
+    }
+
+    public String getVisibilityFilter() {
+        // Backwards compatibility!
+        // Not pressed save after upgrade!
+        if(StringUtils.isBlank(this.visibilityFilter)){
+            return "2"; // Active warnings!
+        }
+        return this.visibilityFilter;
     }
 
     @Override
-    public void perform(Run<?, ?> run, @Nonnull FilePath workspace, @Nonnull Launcher launcher, @Nonnull TaskListener listener)
+    public void perform(@Nonnull Run<?, ?> run, @Nonnull FilePath workspace, @Nonnull Launcher launcher,
+            @Nonnull TaskListener listener)
             throws InterruptedException, IOException
     {
         xmlSerializationService = getXmlSerializationService();
@@ -88,7 +109,7 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep  {
         metricsService = getMetricsService();
         proceduresService = getProceduresService();
         analysisServiceFactory = getAnalysisServiceFactory();
-        
+
         String expandedHubAddress = run.getEnvironment(listener).expand(Util.fixNull(hubAddress));
         String expandedProjectName = run.getEnvironment(listener).expand(Util.fixNull(projectName));
 
@@ -110,22 +131,24 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep  {
         analysisServiceFactory = getAnalysisServiceFactory();
         analysisServiceFactory.setVersion(hubVersion);
         analysisService = analysisServiceFactory.getAnalysisService(httpService, xmlSerializationService);
+        analysisService.setVisibilityFilter(getVisibilityFilter());
         List<String> logFile = IOUtils.readLines(run.getLogReader());
         String analysisUrl = analysisService.getAnalysisUrlFromLogFile(logFile);
 
         if (analysisUrl == null) {
             analysisUrl = analysisService.getLatestAnalysisUrlForAProject(baseHubUri, expandedProjectName);
         }
-        Analysis analysisActiveWarnings = analysisService.getAnalysisFromUrlWithActiveWarnings(analysisUrl);
-        URI metricsUri = metricsService.getMetricsUriFromAnAnalysisId(baseHubUri, analysisActiveWarnings.getAnalysisId());
+        // here we also need to change something
+        Analysis analysisWarnings = analysisService.getAnalysisFromUrlWarningsByFilter(analysisUrl);
+        URI metricsUri = metricsService.getMetricsUriFromAnAnalysisId(baseHubUri, analysisWarnings.getAnalysisId());
         Metrics metrics = metricsService.getMetricsFromUri(metricsUri);
-        URI proceduresUri = proceduresService.getProceduresUriFromAnAnalysisId(baseHubUri, analysisActiveWarnings.getAnalysisId());
+        URI proceduresUri = proceduresService.getProceduresUriFromAnAnalysisId(baseHubUri, analysisWarnings.getAnalysisId());
         Procedures procedures = proceduresService.getProceduresFromUri(proceduresUri);
 
         Analysis analysisNewWarnings = analysisService.getAnalysisFromUrlWithNewWarnings(analysisUrl);
         List<Pair<String, String>> conditionNamesAndResults = new ArrayList<>();
 
-        CodeSonarBuildActionDTO buildActionDTO = new CodeSonarBuildActionDTO(analysisActiveWarnings,
+        CodeSonarBuildActionDTO buildActionDTO = new CodeSonarBuildActionDTO(analysisWarnings,
                 analysisNewWarnings, metrics, procedures, baseHubUri);
 
         run.addAction(new CodeSonarBuildAction(buildActionDTO, run));
@@ -369,6 +392,16 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep  {
                 return FormValidation.ok();
             }
             return FormValidation.error("Project name cannot be empty.");
+        }
+
+        public ListBoxModel doFillVisibilityFilterItems(){
+            ListBoxModel output = new ListBoxModel();
+            output.add(new ListBoxModel.Option("Active", "2"));
+            output.add(new ListBoxModel.Option("Active, not clustered", "3"));
+            output.add(new ListBoxModel.Option("Active and new", "6"));
+            output.add(new ListBoxModel.Option("All", "1"));
+            output.add(new ListBoxModel.Option("Not suppressed", "4"));
+            return output;
         }
 
         public ListBoxModel doFillCredentialIdItems(final @AncestorInPath ItemGroup<?> context) {

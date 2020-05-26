@@ -20,10 +20,11 @@ import org.junit.Test;
 public class WarningCountIncreaseSpecifiedScoreAndHigherConditionIT extends ConditionIntegrationTestBase {
 
     @Test
-    public void percentageOfWariningsBellowTheDesignatedScoreIsAboveTheThreshold_BuildIsSetToWarrantedResult() throws Exception {
+    public void percentageOfWarningsBellowTheDesignatedScoreIsAboveTheThreshold_BuildIsSetToWarrantedResult() throws Exception {
         // arrange
         final Result EXPECTED_RESULT = Result.FAILURE;
         final String WARRANTED_RESULT = Result.FAILURE.toString();
+        final String VISIBILITY_FILTER = "2"; // active warnings
 
         final int RANK_OF_WARNINGS = 30;
         final float WARNING_PERCENTAGE = 50.0f;
@@ -35,7 +36,7 @@ public class WarningCountIncreaseSpecifiedScoreAndHigherConditionIT extends Cond
         List<Condition> conditions = new ArrayList<>();
         conditions.add(condition);
 
-        CodeSonarPublisher codeSonarPublisher = new CodeSonarPublisher(conditions, "http", VALID_HUB_ADDRESS.toString(), VALID_PROJECT_NAME, "");
+        CodeSonarPublisher codeSonarPublisher = new CodeSonarPublisher(conditions, "http", VALID_HUB_ADDRESS.toString(), VALID_PROJECT_NAME, "", "2");
         codeSonarPublisher.setAnalysisService(mockedAnalysisService);
         codeSonarPublisher.setMetricsService(mockedMetricsService);
         codeSonarPublisher.setProceduresService(mockedProceduresService);
@@ -53,7 +54,7 @@ public class WarningCountIncreaseSpecifiedScoreAndHigherConditionIT extends Cond
     }
 
     @Test
-    public void percentageOfWariningsBellowTheDesignatedRankIsBellowTheThreshold_BuildIsSuccessful() throws Exception {
+    public void percentageOfWarningsBelowTheDesignatedRankIsBellowTheThreshold_BuildIsSuccessful() throws Exception {
         // arrange
         final Result EXPECTED_RESULT = Result.SUCCESS;
         final String WARRANTED_RESULT = Result.FAILURE.toString();
@@ -68,7 +69,7 @@ public class WarningCountIncreaseSpecifiedScoreAndHigherConditionIT extends Cond
         List<Condition> conditions = new ArrayList<>();
         conditions.add(condition);
 
-        CodeSonarPublisher codeSonarPublisher = new CodeSonarPublisher(conditions, "http", VALID_HUB_ADDRESS.toString(), VALID_PROJECT_NAME, "");
+        CodeSonarPublisher codeSonarPublisher = new CodeSonarPublisher(conditions, "http", VALID_HUB_ADDRESS.toString(), VALID_PROJECT_NAME, "", "2");
         codeSonarPublisher.setAnalysisService(mockedAnalysisService);
         codeSonarPublisher.setMetricsService(mockedMetricsService);
         codeSonarPublisher.setProceduresService(mockedProceduresService);

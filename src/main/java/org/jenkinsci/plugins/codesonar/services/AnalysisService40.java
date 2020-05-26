@@ -15,32 +15,18 @@ import org.jenkinsci.plugins.codesonar.models.projects.Projects40;
 
 /**
  *
- * @author Andrius
+ * @author Eficode Praqma
  */
 public class AnalysisService40 implements IAnalysisService {
 
     final private HttpService httpService;
     final private XmlSerializationService xmlSerializationService;
+    private String visibilityFilter;
 
-    private enum UrlFilters {
-
-        NEW("4"), ACTIVE("2");
-
-        private final String value;
-
-        UrlFilters(String value) {
-            this.value = value;
-        }
-
-        public String getValue() {
-            return value;
-        }
-
-    }
-    
-    public AnalysisService40(HttpService httpService, XmlSerializationService xmlSerializationService) {
+    public AnalysisService40(HttpService httpService, XmlSerializationService xmlSerializationService, String visibilityFilter ) {
         this.httpService = httpService;
         this.xmlSerializationService = xmlSerializationService;
+        this.visibilityFilter = visibilityFilter;
     }
 
     @Override
@@ -84,24 +70,34 @@ public class AnalysisService40 implements IAnalysisService {
         URIBuilder uriBuilder;
         try {
             uriBuilder = new URIBuilder(analysisUrl);
-            uriBuilder.addParameter("filter", UrlFilters.NEW.getValue());
+            uriBuilder.addParameter("filter", "4");
         } catch (URISyntaxException ex) {
             throw new AbortException(ex.getMessage());
         }
         
         return getAnalysisFromUrl(uriBuilder.toString());
     }
-    
+
     @Override
-    public Analysis getAnalysisFromUrlWithActiveWarnings(String analysisUrl) throws IOException {
+    public Analysis getAnalysisFromUrlWarningsByFilter(String analysisUrl) throws IOException {
         URIBuilder uriBuilder;
         try {
             uriBuilder = new URIBuilder(analysisUrl);
-            uriBuilder.addParameter("filter", UrlFilters.ACTIVE.getValue());
+            uriBuilder.addParameter("filter", this.visibilityFilter);
         } catch (URISyntaxException ex) {
             throw new AbortException(ex.getMessage());
         }
-        
+
         return getAnalysisFromUrl(uriBuilder.toString());
+    }
+
+    @Override
+    public void setVisibilityFilter(String visibilityFilter) {
+        this.visibilityFilter = visibilityFilter;
+    }
+
+    @Override
+    public String getVisibilityFilter() {
+        return this.visibilityFilter;
     }
 }

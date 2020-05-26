@@ -62,6 +62,13 @@
                         <goals>
                             <goal>check</goal>
                         </goals>
+                        <configuration>
+                            <rules>
+                                <rule>
+                                    <element>PACKAGE</element>
+                                </rule>
+                            </rules>
+                        </configuration>
                     </execution>
                     <execution>
                         <id>jacoco-report</id>
