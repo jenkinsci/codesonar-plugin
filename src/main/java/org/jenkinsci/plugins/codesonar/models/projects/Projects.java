@@ -17,16 +17,16 @@ import java.util.List;
  */
 @XmlRootElement(name = "projects")
 @XmlAccessorType(XmlAccessType.FIELD)
-public class Projects42 implements Serializable {
+public class Projects implements Serializable {
 
     @XmlElement(name = "projecttree")
     private List<ProjectTree> projectTrees;
 
     @XmlElement(name = "project")
-    private List<Project42> projects;
+    private List<Project> projects;
 
-    public Project42 getProjectByName(String projectName) throws AbortException {
-        for (Project42 project : getProjects()) {
+    public Project getProjectByName(String projectName) throws AbortException {
+        for (Project project : getProjects()) {
             if (project.getName().equals(projectName)) {
                 return project;
             }
@@ -47,7 +47,7 @@ public class Projects42 implements Serializable {
         this.projectTrees = projectTrees;
     }
 
-    public List<Project42> getProjects() {
+    public List<Project> getProjects() {
         if (projects == null) {
             projects = new ArrayList<>();
         }
@@ -55,13 +55,13 @@ public class Projects42 implements Serializable {
         return projects;
     }
 
-    public void setProjects(List<Project42> projects) {
+    public void setProjects(List<Project> projects) {
         this.projects = projects;
     }
 
     @Override
     public String toString() {
-        return "Projects42{" +
+        return "Projects{" +
                 "projectTrees=" + getProjectTrees() +
                 ", projects=" + getProjects() +
                 '}';

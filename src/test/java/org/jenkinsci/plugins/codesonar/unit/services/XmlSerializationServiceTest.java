@@ -4,7 +4,7 @@ import hudson.AbortException;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import org.jenkinsci.plugins.codesonar.models.Metric;
-import org.jenkinsci.plugins.codesonar.models.projects.Project42;
+import org.jenkinsci.plugins.codesonar.models.projects.Project;
 import org.jenkinsci.plugins.codesonar.services.XmlSerializationService;
 import org.junit.Before;
 import org.junit.Test;
@@ -34,14 +34,14 @@ public class XmlSerializationServiceTest {
                 + "<metric name=\"Lines with Code\">0</metric>\n"
                 + "</project>").getBytes());
         
-        Project42 EXPECTED_RESULT = new Project42();
+        Project EXPECTED_RESULT = new Project();
         EXPECTED_RESULT.setUrl("/analysis/8.xml?filter=2&prj_filter=10");
         EXPECTED_RESULT.setName("coverity");
         EXPECTED_RESULT.setState("Finished");
         EXPECTED_RESULT.setStarted("Fri Feb 13 17:33:18 2015");
         EXPECTED_RESULT.setMetric(new Metric("Lines with Code", "0"));
 
-        Project42 result = xmlSerializationService.deserialize(VALID_XML_CONTENT, Project42.class);
+        Project result = xmlSerializationService.deserialize(VALID_XML_CONTENT, Project.class);
 
         assertEquals(EXPECTED_RESULT, result);
     }
@@ -56,6 +56,6 @@ public class XmlSerializationServiceTest {
                 + "<metric name=\"Lines with Code\">0</metric>\n"
                 + "</project>").getBytes());
 
-        xmlSerializationService.deserialize(INVALID_XML_CONTENT, Project42.class);
+        xmlSerializationService.deserialize(INVALID_XML_CONTENT, Project.class);
     }
 }

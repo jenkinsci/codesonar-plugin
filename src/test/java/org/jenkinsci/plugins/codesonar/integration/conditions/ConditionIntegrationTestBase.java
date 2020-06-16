@@ -8,7 +8,7 @@ import org.jenkinsci.plugins.codesonar.models.analysis.Analysis;
 import org.jenkinsci.plugins.codesonar.models.analysis.Warning;
 import org.jenkinsci.plugins.codesonar.models.metrics.Metrics;
 import org.jenkinsci.plugins.codesonar.models.procedures.Procedures;
-import org.jenkinsci.plugins.codesonar.services.AnalysisService42;
+import org.jenkinsci.plugins.codesonar.services.AnalysisService;
 import org.jenkinsci.plugins.codesonar.services.AuthenticationService;
 import org.jenkinsci.plugins.codesonar.services.HttpService;
 import org.jenkinsci.plugins.codesonar.services.IAnalysisService;
@@ -42,7 +42,7 @@ public abstract class ConditionIntegrationTestBase {
     protected final String VALID_PROJECT_NAME = "projectName";
 
     public void setUp() throws Exception {
-        mockedAnalysisService = mock(AnalysisService42.class);
+        mockedAnalysisService = mock(AnalysisService.class);
         mockedMetricsService = mock(MetricsService.class);
         mockedProceduresService = mock(ProceduresService.class);
         mockedAuthenticationService = mock(AuthenticationService.class);

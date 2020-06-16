@@ -6,8 +6,8 @@ import java.io.ByteArrayInputStream;
 import org.apache.commons.io.IOUtils;
 import org.jenkinsci.plugins.codesonar.models.SearchResults;
 import org.jenkinsci.plugins.codesonar.models.analysis.Analysis;
-import org.jenkinsci.plugins.codesonar.models.projects.Project40;
-import org.jenkinsci.plugins.codesonar.services.AnalysisService42;
+import org.jenkinsci.plugins.codesonar.models.projects.Project;
+import org.jenkinsci.plugins.codesonar.services.AnalysisService;
 import org.jenkinsci.plugins.codesonar.services.HttpService;
 import org.jenkinsci.plugins.codesonar.services.IAnalysisService;
 import org.jenkinsci.plugins.codesonar.services.XmlSerializationService;
@@ -35,7 +35,7 @@ public class AnalysisServiceTest {
     public void setUp() {
         mockedXmlSerializationService = mock(XmlSerializationService.class);
         mockedHttpService = mock(HttpService.class);
-        analysisService = new AnalysisService42(mockedHttpService, mockedXmlSerializationService, this.ACTIVE_WARNING_FILTER);
+        analysisService = new AnalysisService(mockedHttpService, mockedXmlSerializationService, this.ACTIVE_WARNING_FILTER);
     }
 
     @Test
@@ -47,8 +47,8 @@ public class AnalysisServiceTest {
         final String PROJECT_URL = "validProjectURL";
         final String EXPECTED_RESULT = new URI(VALID_HUB_ADDRESS).resolve(PROJECT_URL).toString();
 
-        Project40 proj = new Project40();
-        proj.setProject(VALID_PROJECT_NAME);
+        Project proj = new Project();
+        proj.setName(VALID_PROJECT_NAME);
         proj.setUrl(EXPECTED_RESULT);
 
         SearchResults searchResults = new SearchResults();

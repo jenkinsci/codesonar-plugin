@@ -1,7 +1,8 @@
 package org.jenkinsci.plugins.codesonar.models;
 
 import hudson.AbortException;
-import org.jenkinsci.plugins.codesonar.models.projects.Project40;
+import org.jenkinsci.plugins.codesonar.models.projects.Project;
+
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
@@ -14,12 +15,12 @@ import java.util.List;
 @XmlAccessorType(XmlAccessType.FIELD)
 public class SearchResults implements Serializable {
     @XmlElement(name = "project")
-    private List<Project40> projects;
+    private List<Project> projects;
 
-    public Project40 getProjectByName(String projectName) throws AbortException {
-        List<Project40> duplicates = new ArrayList<>();
-        for (Project40 project : getProjects()) {
-            if (project.getProject().equals(projectName)) {
+    public Project getProjectByName(String projectName) throws AbortException {
+        List<Project> duplicates = new ArrayList<>();
+        for (Project project : getProjects()) {
+            if (project.getName().equals(projectName)) {
                 duplicates.add(project);
             }
         }
@@ -32,7 +33,7 @@ public class SearchResults implements Serializable {
         return duplicates.get(0);
     }
 
-    public List<Project40> getProjects() {
+    public List<Project> getProjects() {
         if (projects == null) {
             projects = new ArrayList<>();
         }
@@ -40,7 +41,7 @@ public class SearchResults implements Serializable {
         return projects;
     }
 
-    public void setProjects(List<Project40> projects) {
+    public void setProjects(List<Project> projects) {
         this.projects = projects;
     }
 

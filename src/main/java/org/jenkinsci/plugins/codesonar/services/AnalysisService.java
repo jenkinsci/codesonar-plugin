@@ -1,29 +1,31 @@
 package org.jenkinsci.plugins.codesonar.services;
 
 import hudson.AbortException;
+import org.apache.http.client.utils.URIBuilder;
+import org.jenkinsci.plugins.codesonar.models.SearchResults;
+import org.jenkinsci.plugins.codesonar.models.analysis.Analysis;
+import org.jenkinsci.plugins.codesonar.models.projects.Project;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URLEncoder;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import org.apache.http.client.utils.URIBuilder;
-import org.jenkinsci.plugins.codesonar.models.analysis.Analysis;
-import org.jenkinsci.plugins.codesonar.models.projects.Project40;
-import org.jenkinsci.plugins.codesonar.models.projects.Projects40;
 
 /**
  *
- * @author Eficode Praqma
+ * @author Andrius
  */
-public class AnalysisService40 implements IAnalysisService {
+public class AnalysisService implements IAnalysisService {
 
     final private HttpService httpService;
     final private XmlSerializationService xmlSerializationService;
     private String visibilityFilter;
 
-    public AnalysisService40(HttpService httpService, XmlSerializationService xmlSerializationService, String visibilityFilter ) {
+    public AnalysisService(HttpService httpService, XmlSerializationService xmlSerializationService, String visibilityFilter) {
         this.httpService = httpService;
         this.xmlSerializationService = xmlSerializationService;
         this.visibilityFilter = visibilityFilter;
@@ -50,11 +52,14 @@ public class AnalysisService40 implements IAnalysisService {
 
     @Override
     public String getLatestAnalysisUrlForAProject(URI baseHubUri, String projectName) throws IOException {
-        InputStream xmlContent = httpService.getContentFromUrlAsInputStream(baseHubUri.resolve("/index.xml"));
-        
-        Projects40 projects = xmlSerializationService.deserialize(xmlContent, Projects40.class);
-        Project40 project = projects.getProjectByName(projectName);
-        
+        String encode = URLEncoder.encode("\"" + projectName + "\"", "UTF-8");
+        URI uri = baseHubUri.resolve("/project_search.xml?query=" + encode + "&scope=all");
+
+        InputStream xmlContent = httpService.getContentFromUrlAsInputStream(uri);
+
+        SearchResults searchResults = xmlSerializationService.deserialize(xmlContent, SearchResults.class);
+        Project project = searchResults.getProjectByName(projectName);
+
         return baseHubUri.resolve(project.getUrl()).toString();
     }
 
@@ -64,17 +69,17 @@ public class AnalysisService40 implements IAnalysisService {
 
         return xmlSerializationService.deserialize(xmlContent, Analysis.class);
     }
-    
+
     @Override
     public Analysis getAnalysisFromUrlWithNewWarnings(String analysisUrl) throws IOException {
         URIBuilder uriBuilder;
         try {
             uriBuilder = new URIBuilder(analysisUrl);
-            uriBuilder.addParameter("filter", "4");
+            uriBuilder.addParameter("filter", "5");
         } catch (URISyntaxException ex) {
             throw new AbortException(ex.getMessage());
         }
-        
+
         return getAnalysisFromUrl(uriBuilder.toString());
     }
 

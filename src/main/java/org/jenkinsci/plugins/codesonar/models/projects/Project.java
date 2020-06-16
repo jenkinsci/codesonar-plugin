@@ -11,7 +11,7 @@ import javax.xml.bind.annotation.XmlRootElement;
 
 @XmlRootElement(name = "project")
 @XmlAccessorType(XmlAccessType.FIELD)
-public class Project42 implements Serializable {
+public class Project implements Serializable {
 
     @XmlAttribute
     private String url;
@@ -75,10 +75,10 @@ public class Project42 implements Serializable {
         if (obj == null) {
             return false;
         }
-        if (!(obj instanceof Project42)) {
+        if (!(obj instanceof Project)) {
             return false;
         }
-        Project42 other = (Project42) obj;
+        Project other = (Project) obj;
 
         if (!this.name.equals(other.getName())) {
             return false;
@@ -96,7 +96,7 @@ public class Project42 implements Serializable {
 
     @Override
     public String toString() {
-        return "Project42{" +
+        return "Project{" +
                 "url='" + url + '\'' +
                 ", name='" + name + '\'' +
                 ", state='" + state + '\'' +
