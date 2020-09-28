@@ -40,7 +40,7 @@ pipeline {
 
 The credential id can be found in Manage Jenkins -> Credentials. It's a UUID-ish string.
 
-## The job is marked as successful, although CodeSonar has warnings that match my conditions.
+## Jenkins marks the job as successful, although CodeSonar has warnings that match my conditions.
 
 We currently use the active visibility filter. You may need to update your job (or pipeline) to
 use a different visibility filter. The visibilty filter number can be found from the URL of

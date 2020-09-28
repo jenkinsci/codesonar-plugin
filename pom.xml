@@ -7,7 +7,7 @@
         <relativePath />
     </parent>
 
-    <url>https://wiki.jenkins-ci.org/display/JENKINS/CodeSonar+Plugin</url>
+    <url>https://github.com/Praqma/codesonar-plugin</url>
     <name>CodeSonar Plugin</name>
     <artifactId>codesonar</artifactId>
     <version>2.0.10-SNAPSHOT</version>
