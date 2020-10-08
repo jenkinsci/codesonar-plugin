@@ -397,12 +397,23 @@ The number of warnings in the specified score range issued by the CodeSonar anal
 
 The number of yellow alerts from the CodeSonar analysis exceeds the specified limit. Please note that this has 
 nothing to do with the color in the margin of the margin. Instead, you can see the specification in the manual
-for when CodeSonar marks a warning as yellow. None of the warnings from this analysis are classified as either yellow, 
-nor red.
-
-![](docs/img/codesonar-red-yellow-score.png "stuff")
+for when CodeSonar marks a warning as yellow. 
 
 **MANUAL**: Using CodeSonar > GUI Reference > Alerts
+
+### Note on red and yellow warnings
+
+The red and yellow warnings in CodeSonar do not correlate to the warning score coloring.
+
+![score-coloring](docs/img/codesonar-red-yellow-score.png "Warning score coloring")
+
+Instead, you can see how many red and yellow warnings that CodeSonar found under an analysis in the
+upper right corner. Yellow warnings are typically related to parse errors, while red warnings are a bit severe.
+Please see the list when an alert will be marked as either red or yellow in the manual pages:
+
+**MANUAL**: Using CodeSonar > GUI Reference > Alerts
+
+![red-yellow-warnings](docs/img/hub_alerts.png "Red and yellow")
 
 ## Pipeline DSL
 
