@@ -394,14 +394,17 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep  {
             return FormValidation.error("Project name cannot be empty.");
         }
 
-        public ListBoxModel doFillVisibilityFilterItems(){
-            ListBoxModel output = new ListBoxModel();
-            output.add(new ListBoxModel.Option("Active", "2"));
-            output.add(new ListBoxModel.Option("Active, not clustered", "3"));
-            output.add(new ListBoxModel.Option("Active and new", "6"));
-            output.add(new ListBoxModel.Option("All", "1"));
-            output.add(new ListBoxModel.Option("Not suppressed", "4"));
-            return output;
+        public FormValidation doCheckVisibilityFilter(@QueryParameter("visibilityFilter") String visibilityFilter){
+            if (!StringUtils.isBlank(visibilityFilter)) {
+                return FormValidation.ok();
+            }
+            if(!StringUtils.isNumeric(visibilityFilter) && Integer.parseInt(visibilityFilter) < 0){
+                return FormValidation.error("The visibility filter must be a positive integer");
+            }
+            // It's a bit tricky to check if the visibility filter number is actually defined,
+            // as there's no URL to check this. The URLs contain the entire query string, which
+            // we can't retrieve. So assume that
+            return FormValidation.ok();
         }
 
         public ListBoxModel doFillCredentialIdItems(final @AncestorInPath ItemGroup<?> context) {

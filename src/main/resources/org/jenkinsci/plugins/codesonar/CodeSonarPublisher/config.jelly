@@ -15,7 +15,7 @@
     </f:entry>
 
     <f:entry field="visibilityFilter" title="Use this visibility filter for the conditions (not for new!)">
-        <f:select/>
+        <f:textbox/>
     </f:entry>
 
     <f:entry title="Credentials" field="credentialId">

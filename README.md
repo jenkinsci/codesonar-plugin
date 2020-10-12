@@ -467,10 +467,27 @@ pipeline {
 
 The credential id can be found in **Manage Jenkins** -> **Credentials**. It's a UUID-ish string.
 
-The visibility filter parameter `filter` can be found under `<hub url>/savedsearches.html?ssdomain=0`.
-You may need to right-click to trigger the `id` column.
+The visibility filter parameter `filter` can be found under `<hub url>/savedsearches.html?ssdomain=0`. By default, 
+we use the `active` warning filter.
+
+## Note on visibility filters
 
 ![CodeSonar visibility filters](docs/img/codesonar-visibility-filters.png "CodeSonar visibility filters")
+
+When you configure the job where you need to change the default visibility filter, you need to use the ID 
+of the visibility filter in the form. Please note that the visibility filters are based on access control,
+so the user you configure in the credentials needs to be able to use the filter defined.
+
+**Manual**: Using CodeSonar -> GUI reference -> GUI reference (see under **Visibility Filter selector**).
+
+* `NAMEDSEARCH_READ` for the following built-in warning searches: _active_, _new_, _active and new_.
+* `NAMEDSEARCH_EXISTS` to see the filters.
+
+## Configuration Example
+
+With this configuration, the plugin will mark the build as "Unstable" if the CodeSonar analysis produces one oxr two red alerts, but "Failed" if there are three or more. 
+
+![Jenkins actions](docs/img/jenkins_params.png "Jenkins post-build conditions")
 
 ## Jenkins Job DSL
 

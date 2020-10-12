@@ -1,5 +1,9 @@
 == Changelog ==
 
+=== Version 2.1.0 (October 2020) ===
+
+* Option to set the visibility filter for the analysis
+
 === Version 2.0.9 (April 2020) === 
 
 * Java 11 compatibility
