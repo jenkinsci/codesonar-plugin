@@ -79,12 +79,12 @@ If you are performing a clean build every time, set `INCREMENTAL_BUILD=No`.
 MANUAL: How CodeSonar Works > Build and Analysis > cslaunchd: The CodeSonar Launch Daemon
 
 If the analysis machine is running Windows, check to see whether there is a `cslaunchd` service on the
-analysis machine, with the same owner as the Jenkins process. If not, set one up.  
+analysis machine, with the same owner as the Jenkins process. If not, set one up.
 
-**MANUAL**: _Using CodeSonar_ > _Building and Analyzing Projects_ > _Continuous Integration_ > _Using CodeSonar With Continuous Integration Tools_ 
+**MANUAL**: _Using CodeSonar_ > _Building and Analyzing Projects_ > _Continuous Integration_ > _Using CodeSonar With Continuous Integration Tools_
 
 Note that if Jenkins is running as a service, its owner will usually be
-`SYSTEM`.  Otherwise, arrange to start the launch daemon at system startup.  
+`SYSTEM`.  Otherwise, arrange to start the launch daemon at system startup.
 Go on to Incorporate the CodeSonar build/analysis in your Jenkins job.
 
 ### Incorporate the CodeSonar build/analysis in your Jenkins job
@@ -101,7 +101,7 @@ extending the current contents of the Build section as described in the followin
         * Name: `HUB`
         * Default Value: the location (host:port) of your CodeSonar hub. For example, `alexhubmachine:7340`.
         * Description: you may want to enter a short description to remind yourself why you have this variable.
-4. Use the same process to define a `PROJNAME` parameter whose value matches your established CodeSonar project name (proj-name).
+4. Use the same process to define a `PROJ_NAME` parameter whose value matches your established CodeSonar project name (proj-name).
 ![Jenkins configuration parameters](docs/img/jenkins_params.png "Jenkins configuration parameters")
 
 5. Edit the Build section to integrate the CodeSonar build/analysis.
@@ -140,7 +140,7 @@ extending the current contents of the Build section as described in the followin
 
 ### Apply the CodeSonar plugin to your Jenkins job
 
-Once your Jenkins job is correctly invoking the CodeSonar analysis, you can apply the CodeSonar plugin to collect 
+Once your Jenkins job is correctly invoking the CodeSonar analysis, you can apply the CodeSonar plugin to collect
 analysis information from the hub.
 
 1. Go back to Job Configurations page for the Jenkins job that is building your software.
@@ -149,7 +149,7 @@ analysis information from the hub.
 1. Jenkins will display fields for you to configure this application of the plugin.
     1. Select the protocol used by your hub from the Protocol menu: either http or https.
     1. Enter `${HUB}` in the hub address field.
-    1. Enter `${PROJNAME}` in the Project name field.
+    1. Enter `${PROJ_NAME}` in the Project name field.
     1. Click the **Add** button next to the **Credentials** field, then fill in **Add Credentials** form that opens and click Add.
 1. Set Kind to "Username with password" or "Certificate".
 1. Set Scope to Global.
@@ -171,7 +171,7 @@ analysis information from the hub.
 These examples all assume the following:
 
 * Build parameter `${HUB}` has been established and set to the hub location.
-* Build parameter `${PROJNAME}` has been established and set to the CodeSonar project name.
+* Build parameter `${PROJ_NAME}` has been established and set to the CodeSonar project name.
 * The project directory is `/myfiles/csonar_projects/projX`
 
 #### Example 1: C/C++ project; Jenkins build steps include one command that involves C/C++ compilation.
@@ -185,7 +185,7 @@ cd /myfiles/src/projX && make normal
 Then replace the build step text with:
 
 ```bash
-cd /myfiles/src/projX && codesonar analyze /myfiles/csonar_projects/projX/${PROJNAME} -foreground ${HUB} make normal
+cd /myfiles/src/projX && codesonar analyze /myfiles/csonar_projects/projX/${PROJ_NAME} -foreground ${HUB} make normal
 ```
 
 #### Example 2: C/C++ project; Jenkins build steps include multiple commands that involve C/C++ compilation.
@@ -301,7 +301,7 @@ codesonar analyze /myfiles/csonar_projects/projX/${PROJNAME} -foreground ${HUB}
 The CodeSonar plugin for Jenkins has two required configuration settings and a number of optional ones.
 
 * Protocol, Hub address, Project name are always required.
-* The Credentials setting is required if special user Anonymous does not have sufficient permissions to interact with 
+* The Credentials setting is required if special user Anonymous does not have sufficient permissions to interact with
   the CodeSonar analysis information on the hub.
 * Users can also specify zero or more CodeSonar conditions.
 
@@ -349,14 +349,14 @@ In addition, these permissions are needed for the project.
 * `NAMEDSEARCH_READ` for the following built-in warning searches: _active_, _new_, _active and new_.
 
 You do not need to configure credentials if special user _Anonymous_ has sufficient permissions to obtain analysis information from the hub: in this case, the plugin will interact with the hub in an anonymous session (Anonymous does not need `G_SIGN_IN_CERTIFICATE` or `G_SIGN_IN_PASSWORD`).
-Note that these credentials are not used to authenticate CodeSonar build/analysis commands issued by your Jenkins job. 
-If you want to specify authentication credentials for those commands, use the appropriate command line 
+Note that these credentials are not used to authenticate CodeSonar build/analysis commands issued by your Jenkins job.
+If you want to specify authentication credentials for those commands, use the appropriate command line
 authentication options.
 
 ## CodeSonar conditions
 
-Users can specify zero or more CodeSonar conditions. Each condition specifies a bound on some particular 
-property of the CodeSonar analysis results, along with the build result setting to be applied if the property's 
+Users can specify zero or more CodeSonar conditions. Each condition specifies a bound on some particular
+property of the CodeSonar analysis results, along with the build result setting to be applied if the property's
 value lies outside the specified bound.
 
 There are six different condition types.
@@ -369,8 +369,8 @@ One or more procedures has cyclomatic complexity (as determined by CodeSonar) th
 
 * **Red alerts**
 
-The number of red alerts from CodeSonar analysis exceeds the specified limit. Please note that this has nothing to 
-do with the color in the margin of the margin. Instead, you can see the specification in the manual
+The number of red alerts from CodeSonar analysis exceeds the specified limit. Please note that this has nothing to
+do with the color in the margin of the warning page. Instead, you can see the specification in the manual
 for when CodeSonar marks a warning as red. Please see the image under **Yellow alerts**.
 
 **MANUAL**: Using CodeSonar > GUI Reference > Alerts
@@ -395,15 +395,16 @@ The number of warnings in the specified score range issued by the CodeSonar anal
 
 * **Yellow alerts**
 
-The number of yellow alerts from the CodeSonar analysis exceeds the specified limit. Please note that this has 
-nothing to do with the color in the margin of the margin. Instead, you can see the specification in the manual
-for when CodeSonar marks a warning as yellow. 
+The number of yellow alerts from the CodeSonar analysis exceeds the specified limit. Please note that this has
+nothing to do with the color in the margin of the warning page. Instead, you can see the specification in the manual
+for when CodeSonar marks a warning as yellow.
 
 **MANUAL**: Using CodeSonar > GUI Reference > Alerts
 
-### Note on red and yellow warnings
+### Note on yellow and red alerts
 
-The red and yellow warnings in CodeSonar do not correlate to the warning score coloring.
+The red and yellow alerts in CodeSonar do not correlate to the red and yellow warning score coloring,
+as shown in the following image.
 
 ![score-coloring](docs/img/codesonar-red-yellow-score.png "Warning score coloring")
 
@@ -414,6 +415,17 @@ Please see the list when an alert will be marked as either red or yellow in the 
 **MANUAL**: Using CodeSonar > GUI Reference > Alerts
 
 ![red-yellow-warnings](docs/img/hub_alerts.png "Red and yellow")
+
+## Configuration Example
+
+With this configuration, the plugin will mark the build as "Failed" if the CodeSonar analysis produces one or more
+red alerts or 2 or more warnings with a score of at least 56.
+
+![Jenkins actions](docs/img/jenkins_post_build.png "Jenkins post-build conditions")
+
+The visibility filter parameter `filter` can be found under `<hub url>/savedsearches.html?ssdomain=0`.
+You may need to right-click to trigger the `id` column. The visibility filter that's used by default is
+`active` (the filter with the id number `2`).
 
 ## Pipeline DSL
 
@@ -456,14 +468,9 @@ pipeline {
 The credential id can be found in **Manage Jenkins** -> **Credentials**. It's a UUID-ish string.
 
 The visibility filter parameter `filter` can be found under `<hub url>/savedsearches.html?ssdomain=0`.
+You may need to right-click to trigger the `id` column.
 
 ![CodeSonar visibility filters](docs/img/codesonar-visibility-filters.png "CodeSonar visibility filters")
-
-## Configuration Example
-
-With this configuration, the plugin will mark the build as "Unstable" if the CodeSonar analysis produces one oxr two red alerts, but "Failed" if there are three or more. 
-
-![Jenkins actions](docs/img/jenkins_params.png "Jenkins post-build conditions")
 
 ## Jenkins Job DSL
 
