@@ -166,6 +166,10 @@ analysis information from the hub.
         * If necessary, click Configure and adjust your edits, and make any other changes necessary to get your job running correctly.
 1. Notice that the dashboard now contains charts of "Total number of warnings" and "Lines of Code" (if it doesn't, reload the page). These charts represent CodeSonar analysis history for this project.
 
+**Warning**: When configuring a project, please make sure that the project names in CodeSonar are unique if you build the same 
+project in two different Jenkins jobs. One possibility is to add a suffix or prefix to the project names. Otherwise, you may end
+with unexpected results in the jobs!
+
 ### Build Step Examples
 
 These examples all assume the following:
