@@ -1,5 +1,10 @@
 == Changelog ==
 
+=== Master ===
+
+* Use the aid.txt file to get the analysis id, instead of using the search API in CodeSonar.
+  You can now use the plugin to run parallel builds, without risk of race conditions.
+
 === Version 2.1.0 (October 2020) ===
 
 * Option to set the visibility filter for the analysis
