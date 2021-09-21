@@ -98,25 +98,24 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep  {
         return this.visibilityFilter;
     }
 
-    // projectName may be a
     private String getAid(@Nonnull Run<?,?> run, @Nonnull FilePath workspace, @Nonnull String projectName) throws java.io.IOException {
         /**
          * The analysis ID from the aid.txt file
          */
-        String aid = workspace.asCallableWith(new hudson.FilePath.FileCallable<String>() {
+        String aid = workspace.asCallableWith(new hudson.FilePath.FileCallable<String>()
+        {
+            private static final long serialVersionUID = 1L;
+
             @Override
             public void checkRoles(org.jenkinsci.remoting.RoleChecker roleChecker) throws SecurityException {
-
             }
 
             @Override
             public String invoke(java.io.File file, hudson.remoting.VirtualChannel virtualChannel) throws java.io.IOException {
-                Logger logger = Logger.getLogger("jenkins.codesonar.plugin");
-                String aid = new String(
+                return new String(
                         java.nio.file.Files.readAllBytes(java.nio.file.Paths.get(file.toString(), projectName + ".prj_files/aid.txt")),
                         java.nio.charset.StandardCharsets.UTF_8
                 );
-                return aid;
             }
         }).call();
 
