@@ -2,12 +2,14 @@ package org.jenkinsci.plugins.codesonar;
 
 import hudson.model.Job;
 import hudson.model.Action;
+import java.util.Collection;
+import jenkins.tasks.SimpleBuildStep;
 
 /**
  *
  * @author andrius
  */
-public class CodeSonarLatestAnalysisProjectAction implements Action {
+public class CodeSonarLatestAnalysisProjectAction implements SimpleBuildStep.LastBuildAction {
 
     private final Job<?, ?> job;
 
@@ -44,5 +46,10 @@ public class CodeSonarLatestAnalysisProjectAction implements Action {
 
     public boolean isBuildActionPresent() {
         return Utils.getLatestCodeSonarBuildActionFromProject(job) != null;
+    }
+
+    @Override
+    public Collection<? extends Action> getProjectActions() {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 }

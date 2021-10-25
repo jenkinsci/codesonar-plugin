@@ -5,7 +5,9 @@ import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.common.*;
 import com.cloudbees.plugins.credentials.domains.DomainRequirement;
 import hudson.*;
+import hudson.FilePath.FileCallable;
 import hudson.model.*;
+import hudson.remoting.VirtualChannel;
 import hudson.security.ACL;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.BuildStepMonitor;
@@ -13,9 +15,9 @@ import hudson.tasks.Publisher;
 import hudson.tasks.Recorder;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
+import java.io.File;
 import jenkins.tasks.SimpleBuildStep;
 import org.apache.commons.collections.ListUtils;
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.javatuples.Pair;
 import org.jenkinsci.Symbol;
@@ -41,6 +43,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.jenkinsci.remoting.RoleChecker;
 
 /**
  *
@@ -52,6 +55,7 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep  {
     private String hubAddress;
     private String projectName;
     private String protocol = "http";
+    private String aid;
 
     private XmlSerializationService xmlSerializationService = null;
     private HttpService httpService = null;
@@ -88,7 +92,16 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep  {
     public void setVisibilityFilter(String visibilityFilter){
         this.visibilityFilter = visibilityFilter;
     }
+    
+    @DataBoundSetter 
+    public void setAid(String aid) {
+        this.aid = aid;
+    }
 
+    public String getAid() {
+        return aid;
+    }
+    
     public String getVisibilityFilter() {
         // Backwards compatibility!
         // Not pressed save after upgrade!
@@ -97,31 +110,30 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep  {
         }
         return this.visibilityFilter;
     }
+    
+    private static final class DetermineAid implements FileCallable<String> {
+        @Override
+        @Nonnull
+        public String invoke(File file, VirtualChannel vc) throws IOException, InterruptedException {
+            for(File f : file.listFiles()) {
+                if (f.isDirectory() && f.getName().endsWith(".prj_files")) {
+                    //String foundAid = new String(Files.readAllBytes(), StandardCharsets.UTF_8);
+                    File aidPath = new File(f, "aid.txt");
+                    FilePath fp = new FilePath(aidPath);
+                    LOGGER.log(Level.INFO, "Found project aid: "+aidPath);
+                    return fp.readToString();
+                }
+            } 
+            IOException ex = new IOException("Could not find a .prj files folder for project"); 
+            LOGGER.log(Level.SEVERE, "Could not find a .prj files folder for project", ex);
+            throw ex;
+        }
 
-    private String getAid(@Nonnull Run<?,?> run, @Nonnull FilePath workspace, @Nonnull String projectName) throws java.io.IOException {
-        /**
-         * The analysis ID from the aid.txt file
-         */
-        String aid = workspace.asCallableWith(new hudson.FilePath.FileCallable<String>()
-        {
-            private static final long serialVersionUID = 1L;
-
-            @Override
-            public void checkRoles(org.jenkinsci.remoting.RoleChecker roleChecker) throws SecurityException {
-            }
-
-            @Override
-            public String invoke(java.io.File file, hudson.remoting.VirtualChannel virtualChannel) throws java.io.IOException {
-                return new String(
-                        java.nio.file.Files.readAllBytes(java.nio.file.Paths.get(file.toString(), projectName + ".prj_files/aid.txt")),
-                        java.nio.charset.StandardCharsets.UTF_8
-                );
-            }
-        }).call();
-
-        return aid;
+        @Override
+        public void checkRoles(RoleChecker rc) throws SecurityException { }
+ 
     }
-
+       
     @Override
     public void perform(@Nonnull Run<?, ?> run, @Nonnull FilePath workspace, @Nonnull Launcher launcher,
             @Nonnull TaskListener listener)
@@ -156,14 +168,15 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep  {
         analysisServiceFactory.setVersion(hubVersion);
         analysisService = analysisServiceFactory.getAnalysisService(httpService, xmlSerializationService);
         analysisService.setVisibilityFilter(getVisibilityFilter());
-        List<String> logFile = IOUtils.readLines(run.getLogReader());
-        String analysisUrl = analysisService.getAnalysisUrlFromLogFile(logFile);
 
-        String aid = this.getAid(run, workspace, expandedProjectName);
-        if(aid == null){
-            // Can't get the analysis ID, so let's mark the build as aborted
-            run.setResult(hudson.model.Result.ABORTED);
+        if(StringUtils.isBlank(aid)) {
+            LOGGER.log(Level.INFO, "Determining analysis id...");
+            aid = workspace.act(new DetermineAid());
+        } else {
+            LOGGER.log(Level.INFO, "Using override analysis id: '" + aid + "'.");
         }
+        
+        String analysisUrl = baseHubUri.toString() + "/analysis/" + aid + ".xml";
 
         Analysis analysisWarnings = analysisService.getAnalysisFromUrlWarningsByFilter(analysisUrl);
         URI metricsUri = metricsService.getMetricsUriFromAnAnalysisId(baseHubUri, aid);
@@ -385,7 +398,7 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep  {
             super(CodeSonarPublisher.class);
             load();
         }
-
+                
         @Override
         public boolean isApplicable(Class<? extends AbstractProject> type) {
             return true;
@@ -400,7 +413,7 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep  {
             DescriptorExtensionList<Condition, ConditionDescriptor<Condition>> all = Condition.getAll();
             return new ArrayList<>(all);
         }
-
+        
         public FormValidation doCheckHubAddress(@QueryParameter("hubAddress") String hubAddress) {
             if (!StringUtils.isBlank(hubAddress)) {
                 return FormValidation.ok();
