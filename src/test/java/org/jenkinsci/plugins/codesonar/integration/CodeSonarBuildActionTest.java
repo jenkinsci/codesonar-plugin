@@ -39,7 +39,7 @@ public class CodeSonarBuildActionTest {
          CodeSonarBuildActionDTO dto = new CodeSonarBuildActionDTO(a, a2, ms, p, URI.create("http://localhost"));
          dto.setConditionNamesAndResults(Arrays.asList(pp));
 
-         r.addAction(new CodeSonarBuildAction(dto, r));
+         r.addAction(new CodeSonarBuildAction(dto, r, "dummy","dummy"));
          r.save();
     }
 }

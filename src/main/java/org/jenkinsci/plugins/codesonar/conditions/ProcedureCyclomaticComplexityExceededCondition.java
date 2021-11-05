@@ -35,31 +35,6 @@ public class ProcedureCyclomaticComplexityExceededCondition extends Condition {
         this.maxCyclomaticComplexity = maxCyclomaticComplexity;
     }
 
-    @Override
-    public Result validate(Run<?, ?> run, Launcher launcher, TaskListener listener) throws AbortException {
-        CodeSonarBuildAction buildAction = run.getAction(CodeSonarBuildAction.class);
-        if (buildAction == null) {
-            return Result.SUCCESS;
-        }
-
-        CodeSonarBuildActionDTO buildActionDTO = buildAction.getBuildActionDTO();
-        if (buildActionDTO == null) {
-            return Result.SUCCESS;
-        }
-
-        List<ProcedureRow> procedureRows = buildActionDTO.getProcedures().getProcedureRows();
-        for (ProcedureRow procedureRow : procedureRows) {
-            Metric cyclomaticComplexityMetric = procedureRow.getMetricByName("Cyclomatic Complexity");
-
-            String value = cyclomaticComplexityMetric.getValue();
-            if (Integer.parseInt(value) > maxCyclomaticComplexity) {
-                return Result.fromString(warrantedResult);
-            }
-        }
-
-        return Result.SUCCESS;
-    }
-
     public int getMaxCyclomaticComplexity() {
         return maxCyclomaticComplexity;
     }
@@ -76,6 +51,24 @@ public class ProcedureCyclomaticComplexityExceededCondition extends Condition {
     @DataBoundSetter
     public void setWarrantedResult(String warrantedResult) {
         this.warrantedResult = warrantedResult;
+    }
+
+    @Override
+    public Result validate(CodeSonarBuildActionDTO current, CodeSonarBuildActionDTO previous, Launcher launcher, TaskListener listener) {       
+        if (current == null) {
+            return Result.SUCCESS;
+        }
+
+        List<ProcedureRow> procedureRows = current.getProcedures().getProcedureRows();
+        for (ProcedureRow procedureRow : procedureRows) {
+            Metric cyclomaticComplexityMetric = procedureRow.getMetricByName("Cyclomatic Complexity");
+
+            String value = cyclomaticComplexityMetric.getValue();
+            if (Integer.parseInt(value) > maxCyclomaticComplexity) {
+                return Result.fromString(warrantedResult);
+            }
+        }
+        return Result.SUCCESS;
     }
     
     @Symbol("cyclomaticComplexity")

@@ -43,13 +43,14 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import org.jenkinsci.remoting.RoleChecker;
 
 /**
  *
  * @author andrius
  */
-public class CodeSonarPublisher extends Recorder implements SimpleBuildStep  {
+public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
     private static final Logger LOGGER = Logger.getLogger(CodeSonarPublisher.class.getName());
     private String visibilityFilter = "2"; // active warnings
     private String hubAddress;
@@ -101,7 +102,7 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep  {
     public String getAid() {
         return aid;
     }
-    
+
     public String getVisibilityFilter() {
         // Backwards compatibility!
         // Not pressed save after upgrade!
@@ -187,23 +188,27 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep  {
         Analysis analysisNewWarnings = analysisService.getAnalysisFromUrlWithNewWarnings(analysisUrl);
         List<Pair<String, String>> conditionNamesAndResults = new ArrayList<>();
 
-        CodeSonarBuildActionDTO buildActionDTO = new CodeSonarBuildActionDTO(analysisWarnings,
-                analysisNewWarnings, metrics, procedures, baseHubUri);
-
-        run.addAction(new CodeSonarBuildAction(buildActionDTO, run));
+        CodeSonarBuildActionDTO buildActionDTO = new CodeSonarBuildActionDTO(analysisWarnings, analysisNewWarnings, metrics, procedures, baseHubUri);
+        CodeSonarBuildAction csba = new CodeSonarBuildAction(buildActionDTO, run, expandedProjectName, analysisUrl);
+        
+        CodeSonarBuildActionDTO compareDTO = null;
+        Run<?,?> previosSuccess = run.getPreviousSuccessfulBuild();
+        if(previosSuccess != null) {
+            List<CodeSonarBuildAction> actions = previosSuccess.getActions(CodeSonarBuildAction.class).stream().filter(c -> c.getProjectName().equals(expandedProjectName)).collect(Collectors.toList());
+            if(!actions.isEmpty() && actions.size() < 2) {
+                compareDTO = actions.get(0).getBuildActionDTO();
+            }
+        }
+        
         for (Condition condition : conditions) {
-            Result validationResult = condition.validate(run, launcher, listener);
-
+            Result validationResult = condition.validate(buildActionDTO, compareDTO, launcher, listener);
             Pair<String, String> pair = Pair.with(condition.getDescriptor().getDisplayName(), validationResult.toString());
             conditionNamesAndResults.add(pair);
-
             run.setResult(validationResult);
             listener.getLogger().println(String.format("'%s' marked the build as %s", condition.getDescriptor().getDisplayName(), validationResult.toString()));
         }
-
-        run.getAction(CodeSonarBuildAction.class).getBuildActionDTO()
-                .setConditionNamesAndResults(conditionNamesAndResults);
-
+        csba.getBuildActionDTO().setConditionNamesAndResults(conditionNamesAndResults);
+        run.addAction(csba);
         authenticationService.signOut(baseHubUri);
     }
 

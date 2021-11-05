@@ -37,35 +37,6 @@ public class WarningCountAbsoluteSpecifiedScoreAndHigherCondition extends Condit
         this.warningCountThreshold = warningCountThreshold;
     }
 
-    @Override
-    public Result validate(Run<?, ?> run, Launcher launcher, TaskListener listener) {
-        CodeSonarBuildAction buildAction = run.getAction(CodeSonarBuildAction.class);
-        if (buildAction == null) {
-            return Result.SUCCESS;
-        }
-
-        CodeSonarBuildActionDTO buildActionDTO = buildAction.getBuildActionDTO();
-        if (buildActionDTO == null) {
-            return Result.SUCCESS;
-        }
-
-        Analysis analysis = buildActionDTO.getAnalysisActiveWarnings();
-
-        int severeWarnings = 0;
-        List<Warning> warnings = analysis.getWarnings();
-        for (Warning warning : warnings) {
-            if (warning.getScore() >= rankOfWarnings) {
-                severeWarnings++;
-            }
-        }
-
-        if (severeWarnings > warningCountThreshold) {
-            return Result.fromString(warrantedResult);
-        }
-
-        return Result.SUCCESS;
-    }
-
     public int getRankOfWarnings() {
         return rankOfWarnings;
     }
@@ -89,6 +60,30 @@ public class WarningCountAbsoluteSpecifiedScoreAndHigherCondition extends Condit
     @DataBoundSetter
     public void setWarrantedResult(String warrantedResult) {
         this.warrantedResult = warrantedResult;
+    }
+
+    @Override
+    public Result validate(CodeSonarBuildActionDTO current, CodeSonarBuildActionDTO previous, Launcher launcher, TaskListener listener) {
+        
+        if (current == null) {
+            return Result.SUCCESS;
+        }
+
+        Analysis analysis = current.getAnalysisActiveWarnings();
+
+        int severeWarnings = 0;
+        List<Warning> warnings = analysis.getWarnings();
+        for (Warning warning : warnings) {
+            if (warning.getScore() >= rankOfWarnings) {
+                severeWarnings++;
+            }
+        }
+
+        if (severeWarnings > warningCountThreshold) {
+            return Result.fromString(warrantedResult);
+        }
+
+        return Result.SUCCESS;
     }
 
     @Symbol("warningCountAbsoluteSpecifiedScoreAndHigher")

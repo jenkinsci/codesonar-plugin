@@ -5,6 +5,9 @@ import hudson.AbortException;
 import hudson.model.Job;
 import hudson.model.Action;
 import java.io.IOException;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.stream.Collectors;
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.StaplerResponse;
 
@@ -15,18 +18,22 @@ import org.kohsuke.stapler.StaplerResponse;
 public class CodeSonarProjectAction implements Action {
 
     private final Job<?, ?> project;
+    private final String projectName;
 
-    public CodeSonarProjectAction(Job<?, ?> project) {
+    public CodeSonarProjectAction(Job<?, ?> project, String projectName) {
         this.project = project;
+        this.projectName = projectName;
     }
 
     @Override
     public String getIconFileName() {
-        return null;
+       //return "/plugin/codesonar/icons/codesonar-logo.png";
+       return null;
     }
 
     @Override
     public String getDisplayName() {
+        //return "Latest analysis: "+projectName;
         return null;
     }
 
@@ -35,11 +42,14 @@ public class CodeSonarProjectAction implements Action {
         return "CodeSonar";
     }
 
-    public CodeSonarBuildAction getLatestActionInProject() {
+    public Collection<CodeSonarBuildAction> getLatestActionsInProject() {
         if (project.getLastSuccessfulBuild() != null) {
-            return project.getLastSuccessfulBuild().getAction(CodeSonarBuildAction.class);
+            
+            return project.getLastSuccessfulBuild().getActions(CodeSonarBuildAction.class)
+                    .stream().filter(a -> a.getProjectName().equals(projectName))
+                    .collect(Collectors.toList());
         }
-        return null;
+        return Collections.emptyList();
     }
 
     public boolean isDrawGraphs() {
@@ -47,10 +57,10 @@ public class CodeSonarProjectAction implements Action {
     }
 
     public void doReportGraphs(StaplerRequest req, StaplerResponse rsp) throws AbortException {
-        CodeSonarBuildAction action = getLatestActionInProject();
-        if (action != null) {
+        Collection<CodeSonarBuildAction> actions = getLatestActionsInProject();
+        for(CodeSonarBuildAction a : actions) {
             try {
-                action.doReportGraphs(req, rsp);
+                a.doReportGraphs(req, rsp);
             } catch (IOException e) {
                 throw new AbortException(e.getMessage());
             }

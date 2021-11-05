@@ -24,7 +24,7 @@ public class ProcedureRow implements Serializable {
     @XmlElement(name = "metric")
     private List<Metric> metrics;
 
-    public Metric getMetricByName(String metricName) throws AbortException {
+    public Metric getMetricByName(String metricName) {
         if (metrics == null) {
             metrics = Collections.EMPTY_LIST;
         }
@@ -34,8 +34,7 @@ public class ProcedureRow implements Serializable {
                 return metric;
             }
         }
-
-        throw new AbortException(String.format("Metric by the name %s was not found on the hub", metricName));
+        return null;
     }
 
     public String getFile() {

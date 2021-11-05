@@ -1,19 +1,13 @@
 <?jelly escape-by-default='true'?>
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout"
          xmlns:t="/lib/hudson" xmlns:f="/lib/form" xmlns:i="jelly:fmt" xmlns:local="local">
-    <j:set var="latestAction" value="${from.latestActionInProject}"/>
-    <j:if test="${latestAction != null}">
-        <j:choose>
-            <j:when test="${latestAction.previousAction != null}">
-                <img style="margin-left:20px;" src="CodeSonar/reportGraphs?name=totalWarnings"/>
-                <img style="margin-left:20px;" src="CodeSonar/reportGraphs?name=loc"/>
-            </j:when>
-            <j:otherwise>
-                <div id="marginme" style="margin-right:150px">
-                    <h3>${%Not enough data}</h3>
-                    <p>${%The project needs to have at least two builds with data to generate a graph with results.}</p>
-                </div>
-            </j:otherwise>
-        </j:choose>
+    <j:set var="latestActions" value="${from.latestActionsInProject}"/>
+    <j:if test="${!latestActions.isEmpty()}">
+    <j:forEach var="renderAction" items="${latestActions}">
+        <j:set var="graphPName" value="${renderAction.projectName}"/>
+        <img style="margin-left:20px;" src="CodeSonar/reportGraphs?name=totalWarnings"/>
+        <img style="margin-left:20px;" src="CodeSonar/reportGraphs?name=loc"/>
+    </j:forEach>
     </j:if>
+    
 </j:jelly>
