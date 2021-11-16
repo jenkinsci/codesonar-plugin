@@ -9,7 +9,7 @@
                 </div>
             </j:when>
             <j:otherwise>
-                <h2>Results for "${it.projectName}"</h2>
+                <h3>Codesonar project <a href="${it.getUrlName()}">${it.projectName}</a></h3>
                 <ul>
                     <j:forEach var="pair" items="${it.getConditionNamesAndResults()}">  
                         <li>"${pair.getValue0()}": <i>${pair.getValue1()}</i></li>

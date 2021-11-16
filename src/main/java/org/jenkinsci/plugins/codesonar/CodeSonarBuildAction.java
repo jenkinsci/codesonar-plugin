@@ -6,10 +6,7 @@ import hudson.util.ChartUtil;
 import hudson.util.DataSetBuilder;
 import java.io.IOException;
 import java.net.URI;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
-import jenkins.tasks.SimpleBuildStep;
 import org.javatuples.Pair;
 import org.jenkinsci.plugins.codesonar.models.CodeSonarBuildActionDTO;
 import org.jenkinsci.plugins.codesonar.models.metrics.Metric;
@@ -20,20 +17,26 @@ import org.kohsuke.stapler.StaplerResponse;
  *
  * @author andrius
  */
-public class CodeSonarBuildAction implements Action, SimpleBuildStep.LastBuildAction {
+public class CodeSonarBuildAction implements Action {
     
     private final CodeSonarBuildActionDTO buildActionDTO;
     private final Run<?, ?> run;
     private final String projectName;
+    private final String analysisUrl;
     
     public CodeSonarBuildAction(CodeSonarBuildActionDTO buildActionDTO, Run<?, ?> run, String projectName, String analysisUrl) {
         this.buildActionDTO = buildActionDTO;
         this.run = run;
+        this.analysisUrl = analysisUrl;
         this.projectName = projectName;
     }
     
     public String getProjectName() {
         return projectName;
+    }
+    
+    public String getAnalysisUrl() {
+        return analysisUrl;
     }
 
     @Override
@@ -43,7 +46,7 @@ public class CodeSonarBuildAction implements Action, SimpleBuildStep.LastBuildAc
 
     @Override
     public String getDisplayName() {
-        return "Codesonar analysis </br>  (" +projectName + ")";
+        return "Codesonar (" +projectName + ")";
     }
 
     @Override
@@ -117,10 +120,5 @@ public class CodeSonarBuildAction implements Action, SimpleBuildStep.LastBuildAc
                 return action;
             }
         }
-    }
-
-    @Override
-    public Collection<? extends Action> getProjectActions() {
-        return Collections.singleton(new CodeSonarProjectAction(run.getParent(), projectName));
     }
 }

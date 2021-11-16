@@ -191,6 +191,8 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
         CodeSonarBuildActionDTO buildActionDTO = new CodeSonarBuildActionDTO(analysisWarnings, analysisNewWarnings, metrics, procedures, baseHubUri);
         CodeSonarBuildAction csba = new CodeSonarBuildAction(buildActionDTO, run, expandedProjectName, analysisUrl);
         
+        listener.getLogger().println("[Codesonar] Finding previous builds for comparison");
+        
         CodeSonarBuildActionDTO compareDTO = null;
         Run<?,?> previosSuccess = run.getPreviousSuccessfulBuild();
         if(previosSuccess != null) {
@@ -200,6 +202,8 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
             }
         }
         
+        listener.getLogger().println("[Codesonar] Evaluating conditions");
+        
         for (Condition condition : conditions) {
             Result validationResult = condition.validate(buildActionDTO, compareDTO, launcher, listener);
             Pair<String, String> pair = Pair.with(condition.getDescriptor().getDisplayName(), validationResult.toString());
@@ -207,9 +211,14 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
             run.setResult(validationResult);
             listener.getLogger().println(String.format("'%s' marked the build as %s", condition.getDescriptor().getDisplayName(), validationResult.toString()));
         }
+        
+        listener.getLogger().println("[Codesonar] Done evaulating conditions");
+        
         csba.getBuildActionDTO().setConditionNamesAndResults(conditionNamesAndResults);
         run.addAction(csba);
         authenticationService.signOut(baseHubUri);
+            
+        listener.getLogger().println("[Codesonar] Done performing codesonar actions");
     }
 
     private float getHubVersion(URI baseHubUri) throws AbortException {
