@@ -114,17 +114,27 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
     
     private static final class DetermineAid implements FileCallable<String> {
         @Override
-        @Nonnull
         public String invoke(File file, VirtualChannel vc) throws IOException, InterruptedException {
-            for(File f : file.listFiles()) {
-                if (f.isDirectory() && f.getName().endsWith(".prj_files")) {
-                    //String foundAid = new String(Files.readAllBytes(), StandardCharsets.UTF_8);
-                    File aidPath = new File(f, "aid.txt");
-                    FilePath fp = new FilePath(aidPath);
-                    LOGGER.log(Level.INFO, "Found project aid: "+aidPath);
-                    return fp.readToString();
+            LOGGER.log(Level.INFO, "Finding aid....");
+            if(file != null ) {
+                File[] files = file.listFiles();
+                if(files != null) {
+                    LOGGER.log(Level.INFO, "Enumerating files to find aid....");
+                    for(File f : files) {
+                        if (f.isDirectory() && f.getName().endsWith(".prj_files")) {
+                            //String foundAid = new String(Files.readAllBytes(), StandardCharsets.UTF_8);
+                            File aidPath = new File(f, "aid.txt");
+                            FilePath fp = new FilePath(aidPath);
+                            LOGGER.log(Level.INFO, "Found project aid: "+aidPath);
+                            return fp.readToString();
+                        }
+                    }
+                } else {
+                    LOGGER.log(Level.SEVERE, "No files, this is not supposed to happen!");
                 }
-            } 
+            } else {
+                LOGGER.log(Level.WARNING, "No workspace!");
+            }
             IOException ex = new IOException("Could not find a .prj files folder for project"); 
             LOGGER.log(Level.SEVERE, "Could not find a .prj files folder for project", ex);
             throw ex;
