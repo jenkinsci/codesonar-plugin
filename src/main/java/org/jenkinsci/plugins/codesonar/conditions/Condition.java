@@ -10,14 +10,15 @@ import hudson.model.Descriptor;
 import hudson.model.Result;
 import hudson.model.TaskListener;
 import jenkins.model.Jenkins;
+import org.jenkinsci.plugins.codesonar.models.CodeSonarBuildActionDTO;
 
 /**
  *
  * @author andrius
  */
 public abstract class Condition implements Describable<Condition>, ExtensionPoint {
-
-    public abstract Result validate(Run<?, ?> run, Launcher launcher, TaskListener listener) throws AbortException;
+    
+    public abstract Result validate(CodeSonarBuildActionDTO current, CodeSonarBuildActionDTO previous, Launcher launcher, TaskListener listener);
 
     @Override
     public Descriptor<Condition> getDescriptor() {

@@ -22,6 +22,10 @@
         <c:select/>
     </f:entry>
 
+    <f:entry field="aid" title="Analysis ID Override">
+        <f:textbox/>
+    </f:entry>
+
     <f:section title="Configure build status conditions"> 
         <f:block>
             <f:hetero-list descriptors="${descriptor.getAllConditions()}" items="${instance.conditions}" name="conditions" addCaption="Add Codesonar condition"/>

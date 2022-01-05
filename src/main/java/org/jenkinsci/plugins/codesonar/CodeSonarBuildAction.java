@@ -6,31 +6,37 @@ import hudson.util.ChartUtil;
 import hudson.util.DataSetBuilder;
 import java.io.IOException;
 import java.net.URI;
-import java.util.Collection;
 import java.util.List;
 import org.javatuples.Pair;
 import org.jenkinsci.plugins.codesonar.models.CodeSonarBuildActionDTO;
 import org.jenkinsci.plugins.codesonar.models.metrics.Metric;
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.StaplerResponse;
-import jenkins.tasks.SimpleBuildStep;
-import java.util.Arrays;
         
 /**
  *
  * @author andrius
  */
-public class CodeSonarBuildAction implements Action, SimpleBuildStep.LastBuildAction {
-
-//    private static final Logger LOGGER = Logger.getLogger("totalWarningGraph");
+public class CodeSonarBuildAction implements Action {
     
     private final CodeSonarBuildActionDTO buildActionDTO;
-
     private final Run<?, ?> run;
-
-    public CodeSonarBuildAction(CodeSonarBuildActionDTO buildActionDTO, Run<?, ?> run) {
+    private final String projectName;
+    private final String analysisUrl;
+    
+    public CodeSonarBuildAction(CodeSonarBuildActionDTO buildActionDTO, Run<?, ?> run, String projectName, String analysisUrl) {
         this.buildActionDTO = buildActionDTO;
         this.run = run;
+        this.analysisUrl = analysisUrl;
+        this.projectName = projectName;
+    }
+    
+    public String getProjectName() {
+        return projectName;
+    }
+    
+    public String getAnalysisUrl() {
+        return analysisUrl;
     }
 
     @Override
@@ -40,14 +46,13 @@ public class CodeSonarBuildAction implements Action, SimpleBuildStep.LastBuildAc
 
     @Override
     public String getDisplayName() {
-        return "Codesonar analysis";
+        return "Codesonar (" +projectName + ")";
     }
 
     @Override
     public String getUrlName() {
         URI baseHubUri = buildActionDTO.getBaseHubUri();
         String analysisId = buildActionDTO.getAnalysisActiveWarnings().getAnalysisId();
-        
         return baseHubUri.resolve(String.format("/analysis/%s.html", analysisId)).toString();
     }
 
@@ -61,16 +66,11 @@ public class CodeSonarBuildAction implements Action, SimpleBuildStep.LastBuildAc
     
     public void doReportGraphs(StaplerRequest req, StaplerResponse rsp) throws IOException {
         String graphName = req.getParameter("name");
-
         CodeSonarGraph graph = new CodeSonarGraph();
-
         DataSetBuilder<String, ChartUtil.NumberOnlyBuildLabel> dsb = new DataSetBuilder<>();
-
         ChartUtil.NumberOnlyBuildLabel label = null;
 
         if (graphName.equals("totalWarnings")) {
-//            LOGGER.fine("generating total warnings graph");
-            
             String title = "Total number of warnings";
             for (CodeSonarBuildAction codeSonarBuildAction = this; codeSonarBuildAction != null; codeSonarBuildAction = codeSonarBuildAction.getPreviousAction()) {
                 CodeSonarBuildActionDTO prevBuildActionDTO = codeSonarBuildAction.getBuildActionDTO();
@@ -79,11 +79,7 @@ public class CodeSonarBuildAction implements Action, SimpleBuildStep.LastBuildAc
                 }
                  
                 int totalNubmerOfWarnings = prevBuildActionDTO.getAnalysisActiveWarnings().getWarnings().size();
-                
-//                LOGGER.log(Level.FINE, "total number of warnings {0}", totalNubmerOfWarnings );
-                
                 label = new ChartUtil.NumberOnlyBuildLabel((Run<?, ?>)codeSonarBuildAction.run);
-
                 dsb.add(totalNubmerOfWarnings, title, label);
             }
 
@@ -98,11 +94,8 @@ public class CodeSonarBuildAction implements Action, SimpleBuildStep.LastBuildAc
 
                 Metric metric = prevBuildActionDTO.getMetrics().getMetricByName("LCodeOnly");
                 int value = Integer.parseInt(metric.getValue());
-
                 label = new ChartUtil.NumberOnlyBuildLabel((Run<?, ?>)codeSonarBuildAction.run);
-
                 dsb.add(value, title, label);
-
             }
 
             graph.drawGraph(req, rsp, dsb, title);
@@ -128,13 +121,4 @@ public class CodeSonarBuildAction implements Action, SimpleBuildStep.LastBuildAc
             }
         }
     }
-
-    @Override
-    public Collection<? extends Action> getProjectActions() {
-             return Arrays.asList(
-                new CodeSonarProjectAction(run.getParent()),
-                new CodeSonarLatestAnalysisProjectAction(run.getParent())
-        );
-    }
-
 }

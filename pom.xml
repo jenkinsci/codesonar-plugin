@@ -10,7 +10,7 @@
     <url>https://github.com/Praqma/codesonar-plugin</url>
     <name>CodeSonar Plugin</name>
     <artifactId>codesonar</artifactId>
-    <version>2.1.1-SNAPSHOT</version>
+    <version>3.0.1-SNAPSHOT</version>
     <packaging>hpi</packaging>
 
     <properties>
@@ -39,9 +39,9 @@
     </developers>
 
     <scm>
-        <connection>scm:git:ssh://github.com/Praqma/codesonar-plugin.git</connection>
-        <developerConnection>scm:git:ssh://git@github.com/Praqma/codesonar-plugin.git</developerConnection>
-        <url>https://github.com/Praqma/codesonar-plugin</url>
+        <connection>scm:git:ssh://github.com/eficode/codesonar-plugin.git</connection>
+        <developerConnection>scm:git:ssh://git@github.com/eficode/codesonar-plugin.git</developerConnection>
+        <url>https://github.com/eficode/codesonar-plugin</url>
         <tag>HEAD</tag>
     </scm>
 

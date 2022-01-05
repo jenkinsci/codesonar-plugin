@@ -32,27 +32,7 @@ public class YellowAlertLimitCondition extends Condition {
     public YellowAlertLimitCondition(int alertLimit) {
         this.alertLimit = alertLimit;
     }
-    
-    @Override
-    public Result validate(Run<?, ?> run, Launcher launcher, TaskListener listener) {
-        CodeSonarBuildAction buildAction = run.getAction(CodeSonarBuildAction.class);
-        if (buildAction == null) {
-            return Result.SUCCESS;
-        }
 
-        CodeSonarBuildActionDTO buildActionDTO = buildAction.getBuildActionDTO();
-        if (buildActionDTO == null) {
-            return Result.SUCCESS;
-        }
-        
-        List<Alert> yellowAlerts = buildActionDTO.getAnalysisActiveWarnings().getYellowAlerts();
-        if (yellowAlerts.size() > alertLimit) {
-            return Result.fromString(warrantedResult);
-        }
-
-        return Result.SUCCESS;
-    }
-    
     public int getAlertLimit() {
         return alertLimit;
     }
@@ -69,6 +49,20 @@ public class YellowAlertLimitCondition extends Condition {
     @DataBoundSetter
     public void setWarrantedResult(String warrantedResult) {
         this.warrantedResult = warrantedResult;
+    }
+
+    @Override
+    public Result validate(CodeSonarBuildActionDTO current, CodeSonarBuildActionDTO previous, Launcher launcher, TaskListener listener) {
+        if (current == null) {
+            return Result.SUCCESS;
+        }
+        
+        List<Alert> yellowAlerts = current.getAnalysisActiveWarnings().getYellowAlerts();
+        if (yellowAlerts.size() > alertLimit) {
+            return Result.fromString(warrantedResult);
+        }
+
+        return Result.SUCCESS;
     }
 
     @Symbol("yellowAlerts")

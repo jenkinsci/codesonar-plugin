@@ -37,40 +37,7 @@ public class WarningCountIncreaseSpecifiedScoreAndHigherCondition extends Condit
         this.rankOfWarnings = rankOfWarnings;
         this.warningPercentage = warningPercentage;
     }
-
-    @Override
-    public Result validate(Run<?, ?> run, Launcher launcher, TaskListener listener) {
-        CodeSonarBuildAction buildAction = run.getAction(CodeSonarBuildAction.class);
-        if (buildAction == null) {
-            return Result.SUCCESS;
-        }
-
-        CodeSonarBuildActionDTO buildActionDTO = buildAction.getBuildActionDTO();
-        if (buildActionDTO == null) {
-            return Result.SUCCESS;
-        }
-
-        Analysis analysis = buildActionDTO.getAnalysisActiveWarnings();
-
-        int totalNumberOfWarnings = analysis.getWarnings().size();
-
-        float severeWarnings = 0.0f;
-        List<Warning> warnings = analysis.getWarnings();
-        for (Warning warning : warnings) {
-            if (warning.getScore() > rankOfWarnings) {
-                severeWarnings++;
-            }
-        }
-
-        float calculatedWarningPercentage = (severeWarnings / totalNumberOfWarnings) * 100;
-
-        if (calculatedWarningPercentage > Float.parseFloat(warningPercentage)) {
-            return Result.fromString(warrantedResult);
-        }
-
-        return Result.SUCCESS;
-    }
-
+    
     public int getRankOfWarnings() {
         return rankOfWarnings;
     }
@@ -94,6 +61,33 @@ public class WarningCountIncreaseSpecifiedScoreAndHigherCondition extends Condit
     @DataBoundSetter
     public void setWarrantedResult(String warrantedResult) {
         this.warrantedResult = warrantedResult;
+    }
+
+    @Override
+    public Result validate(CodeSonarBuildActionDTO current, CodeSonarBuildActionDTO previous, Launcher launcher, TaskListener listener) {
+        if (current == null) {
+            return Result.SUCCESS;
+        }
+        
+        Analysis analysis = current.getAnalysisActiveWarnings();
+
+        int totalNumberOfWarnings = analysis.getWarnings().size();
+
+        float severeWarnings = 0.0f;
+        List<Warning> warnings = analysis.getWarnings();
+        for (Warning warning : warnings) {
+            if (warning.getScore() > rankOfWarnings) {
+                severeWarnings++;
+            }
+        }
+
+        float calculatedWarningPercentage = (severeWarnings / totalNumberOfWarnings) * 100;
+
+        if (calculatedWarningPercentage > Float.parseFloat(warningPercentage)) {
+            return Result.fromString(warrantedResult);
+        }
+
+        return Result.SUCCESS;
     }
 
     @Symbol("warningCountIncreaseSpecifiedScoreAndHigher")

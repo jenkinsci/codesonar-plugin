@@ -1,7 +1,6 @@
 package org.jenkinsci.plugins.codesonar;
 
 import hudson.util.*;
-
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.io.IOException;
@@ -21,7 +20,6 @@ import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.StaplerResponse;
 
 /**
- *
  * @author andrius
  */
 public class CodeSonarGraph {

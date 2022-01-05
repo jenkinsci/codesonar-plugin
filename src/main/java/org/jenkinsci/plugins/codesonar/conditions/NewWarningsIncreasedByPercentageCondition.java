@@ -27,34 +27,7 @@ public class NewWarningsIncreasedByPercentageCondition extends Condition {
     public NewWarningsIncreasedByPercentageCondition(String percentage) {
         this.percentage = percentage;
     }
-
-    @Override
-    public Result validate(Run<?, ?> run, Launcher launcher, TaskListener listener) {
-        CodeSonarBuildAction buildAction = run.getAction(CodeSonarBuildAction.class);
-        if (buildAction == null) {
-            return Result.SUCCESS;
-        }
-
-        CodeSonarBuildActionDTO buildActionDTO = buildAction.getBuildActionDTO();
-        if (buildActionDTO == null) {
-            return Result.SUCCESS;
-        }
-
-        Analysis currentActiveWarnings = buildActionDTO.getAnalysisActiveWarnings();
-        Analysis currentNewWarnings = buildActionDTO.getAnalysisNewWarnings();
-
-        float activeWarningCount = (float) currentActiveWarnings.getWarnings().size();
-        float newWarningCount = (float) currentNewWarnings.getWarnings().size();
-
-        float result = (newWarningCount * 100.0f) / activeWarningCount; 
-
-        if (result > Float.parseFloat(percentage)) {
-            return Result.fromString(warrantedResult);
-        }
-
-        return Result.SUCCESS;
-    }
-
+    
     /**
      * @return the percentage
      */
@@ -77,6 +50,26 @@ public class NewWarningsIncreasedByPercentageCondition extends Condition {
     @DataBoundSetter
     public void setWarrantedResult(String warrantedResult) {
         this.warrantedResult = warrantedResult;
+    }
+
+    @Override
+    public Result validate(CodeSonarBuildActionDTO current, CodeSonarBuildActionDTO previous, Launcher launcher, TaskListener listener) {
+        if (current == null) {
+            return Result.SUCCESS;
+        }
+        Analysis currentActiveWarnings = current.getAnalysisActiveWarnings();
+        Analysis currentNewWarnings = current.getAnalysisNewWarnings();
+
+        float activeWarningCount = (float) currentActiveWarnings.getWarnings().size();
+        float newWarningCount = (float) currentNewWarnings.getWarnings().size();
+
+        float result = (newWarningCount * 100.0f) / activeWarningCount; 
+
+        if (result > Float.parseFloat(percentage)) {
+            return Result.fromString(warrantedResult);
+        }
+
+        return Result.SUCCESS;
     }
 
     @Symbol("warningCountIncreaseNewOnly")

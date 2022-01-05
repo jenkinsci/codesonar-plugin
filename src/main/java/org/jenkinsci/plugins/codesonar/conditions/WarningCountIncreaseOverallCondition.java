@@ -28,44 +28,6 @@ public class WarningCountIncreaseOverallCondition extends Condition {
         this.percentage = percentage;
     }
 
-    @Override
-    public Result validate(Run<?, ?> run, Launcher launcher, TaskListener listener) {
-        CodeSonarBuildAction buildAction = run.getAction(CodeSonarBuildAction.class);
-        if (buildAction == null) {
-            return Result.SUCCESS;
-        }
-
-        CodeSonarBuildActionDTO buildActionDTO = buildAction.getBuildActionDTO();
-        if (buildActionDTO == null) {
-            return Result.SUCCESS;
-        }
-        
-        Analysis current = buildActionDTO.getAnalysisActiveWarnings();
-        
-        CodeSonarBuildAction previousBuildAction = buildAction.getPreviousAction();
-        if (previousBuildAction == null) {
-            return Result.SUCCESS;
-        }
-
-        CodeSonarBuildActionDTO prevBuildActionDTO = buildAction.getBuildActionDTO();
-        if (prevBuildActionDTO == null) {
-            return Result.SUCCESS;
-        }
-        
-        Analysis previous = prevBuildActionDTO.getAnalysisActiveWarnings();
-        
-        float previousCount = (float) previous.getWarnings().size();
-        float currentCount = (float) current.getWarnings().size();
-        float diff = currentCount - previousCount;
-
-        if ((diff / previousCount) * 100 > Float.parseFloat(percentage)) {
-            return Result.fromString(warrantedResult);
-        }
-
-        return Result.SUCCESS;
-    }
-
-
     /**
      * @return the percentage
      */
@@ -87,6 +49,27 @@ public class WarningCountIncreaseOverallCondition extends Condition {
     @DataBoundSetter
     public void setWarrantedResult(String warrantedResult) {
         this.warrantedResult = warrantedResult;
+    }
+
+    @Override
+    public Result validate(CodeSonarBuildActionDTO current, CodeSonarBuildActionDTO previous, Launcher launcher, TaskListener listener) {
+        if (current == null) {
+            return Result.SUCCESS;
+        }        
+
+        if (previous == null) {
+            return Result.SUCCESS;
+        }
+
+        float previousCount = (float) previous.getAnalysisActiveWarnings().getWarnings().size();
+        float currentCount = (float) current.getAnalysisActiveWarnings().getWarnings().size();
+        float diff = currentCount - previousCount;
+
+        if ((diff / previousCount) * 100 > Float.parseFloat(percentage)) {
+            return Result.fromString(warrantedResult);
+        }
+
+        return Result.SUCCESS;
     }
 
     @Symbol("warningCountIncreaseOverall")

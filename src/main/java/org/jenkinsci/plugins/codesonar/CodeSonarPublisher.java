@@ -5,7 +5,9 @@ import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.common.*;
 import com.cloudbees.plugins.credentials.domains.DomainRequirement;
 import hudson.*;
+import hudson.FilePath.FileCallable;
 import hudson.model.*;
+import hudson.remoting.VirtualChannel;
 import hudson.security.ACL;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.BuildStepMonitor;
@@ -13,9 +15,9 @@ import hudson.tasks.Publisher;
 import hudson.tasks.Recorder;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
+import java.io.File;
 import jenkins.tasks.SimpleBuildStep;
 import org.apache.commons.collections.ListUtils;
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.javatuples.Pair;
 import org.jenkinsci.Symbol;
@@ -41,17 +43,20 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import org.jenkinsci.remoting.RoleChecker;
 
 /**
  *
  * @author andrius
  */
-public class CodeSonarPublisher extends Recorder implements SimpleBuildStep  {
+public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
     private static final Logger LOGGER = Logger.getLogger(CodeSonarPublisher.class.getName());
     private String visibilityFilter = "2"; // active warnings
     private String hubAddress;
     private String projectName;
     private String protocol = "http";
+    private String aid;
 
     private XmlSerializationService xmlSerializationService = null;
     private HttpService httpService = null;
@@ -88,6 +93,15 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep  {
     public void setVisibilityFilter(String visibilityFilter){
         this.visibilityFilter = visibilityFilter;
     }
+    
+    @DataBoundSetter 
+    public void setAid(String aid) {
+        this.aid = aid;
+    }
+
+    public String getAid() {
+        return aid;
+    }
 
     public String getVisibilityFilter() {
         // Backwards compatibility!
@@ -97,7 +111,40 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep  {
         }
         return this.visibilityFilter;
     }
+    
+    private static final class DetermineAid implements FileCallable<String> {
+        @Override
+        public String invoke(File file, VirtualChannel vc) throws IOException, InterruptedException {
+            LOGGER.log(Level.INFO, "Finding aid....");
+            if(file != null ) {
+                File[] files = file.listFiles();
+                if(files != null) {
+                    LOGGER.log(Level.INFO, "Enumerating files to find aid....");
+                    for(File f : files) {
+                        if (f.isDirectory() && f.getName().endsWith(".prj_files")) {
+                            //String foundAid = new String(Files.readAllBytes(), StandardCharsets.UTF_8);
+                            File aidPath = new File(f, "aid.txt");
+                            FilePath fp = new FilePath(aidPath);
+                            LOGGER.log(Level.INFO, "Found project aid: "+aidPath);
+                            return fp.readToString();
+                        }
+                    }
+                } else {
+                    LOGGER.log(Level.SEVERE, "No files, this is not supposed to happen!");
+                }
+            } else {
+                LOGGER.log(Level.WARNING, "No workspace!");
+            }
+            IOException ex = new IOException("Could not find a .prj files folder for project"); 
+            LOGGER.log(Level.SEVERE, "Could not find a .prj files folder for project", ex);
+            throw ex;
+        }
 
+        @Override
+        public void checkRoles(RoleChecker rc) throws SecurityException { }
+ 
+    }
+       
     @Override
     public void perform(@Nonnull Run<?, ?> run, @Nonnull FilePath workspace, @Nonnull Launcher launcher,
             @Nonnull TaskListener listener)
@@ -132,40 +179,58 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep  {
         analysisServiceFactory.setVersion(hubVersion);
         analysisService = analysisServiceFactory.getAnalysisService(httpService, xmlSerializationService);
         analysisService.setVisibilityFilter(getVisibilityFilter());
-        List<String> logFile = IOUtils.readLines(run.getLogReader());
-        String analysisUrl = analysisService.getAnalysisUrlFromLogFile(logFile);
 
-        if (analysisUrl == null) {
-            analysisUrl = analysisService.getLatestAnalysisUrlForAProject(baseHubUri, expandedProjectName);
+        if(StringUtils.isBlank(aid)) {
+            LOGGER.log(Level.INFO, "Determining analysis id...");
+            aid = workspace.act(new DetermineAid());
+        } else {
+            LOGGER.log(Level.INFO, "Using override analysis id: '" + aid + "'.");
         }
-        // here we also need to change something
+        
+        String analysisUrl = baseHubUri.toString() + "/analysis/" + aid + ".xml";
+
         Analysis analysisWarnings = analysisService.getAnalysisFromUrlWarningsByFilter(analysisUrl);
-        URI metricsUri = metricsService.getMetricsUriFromAnAnalysisId(baseHubUri, analysisWarnings.getAnalysisId());
+        URI metricsUri = metricsService.getMetricsUriFromAnAnalysisId(baseHubUri, aid);
         Metrics metrics = metricsService.getMetricsFromUri(metricsUri);
-        URI proceduresUri = proceduresService.getProceduresUriFromAnAnalysisId(baseHubUri, analysisWarnings.getAnalysisId());
+        URI proceduresUri = proceduresService.getProceduresUriFromAnAnalysisId(baseHubUri, aid);
         Procedures procedures = proceduresService.getProceduresFromUri(proceduresUri);
 
         Analysis analysisNewWarnings = analysisService.getAnalysisFromUrlWithNewWarnings(analysisUrl);
         List<Pair<String, String>> conditionNamesAndResults = new ArrayList<>();
 
-        CodeSonarBuildActionDTO buildActionDTO = new CodeSonarBuildActionDTO(analysisWarnings,
-                analysisNewWarnings, metrics, procedures, baseHubUri);
+        CodeSonarBuildActionDTO buildActionDTO = new CodeSonarBuildActionDTO(analysisWarnings, analysisNewWarnings, metrics, procedures, baseHubUri);
+        CodeSonarBuildAction csba = new CodeSonarBuildAction(buildActionDTO, run, expandedProjectName, analysisUrl);
+        
+        listener.getLogger().println("[Codesonar] Finding previous builds for comparison");
+        
+        CodeSonarBuildActionDTO compareDTO = null;
+        Run<?,?> previosSuccess = run.getPreviousSuccessfulBuild();
+        if(previosSuccess != null) {
+            listener.getLogger().println("[Codesonar] Found previous build to compare to");
+            List<CodeSonarBuildAction> actions = previosSuccess.getActions(CodeSonarBuildAction.class).stream().filter(c -> c.getProjectName() != null && c.getProjectName().equals(expandedProjectName)).collect(Collectors.toList());
+            if(actions != null && !actions.isEmpty() && actions.size() < 2) {
+                listener.getLogger().println("[Codesonar] Found comparison data");
+                compareDTO = actions.get(0).getBuildActionDTO();
+            }
+        }
+        
+        listener.getLogger().println("[Codesonar] Evaluating conditions");
 
-        run.addAction(new CodeSonarBuildAction(buildActionDTO, run));
         for (Condition condition : conditions) {
-            Result validationResult = condition.validate(run, launcher, listener);
-
+            Result validationResult = condition.validate(buildActionDTO, compareDTO, launcher, listener);
             Pair<String, String> pair = Pair.with(condition.getDescriptor().getDisplayName(), validationResult.toString());
             conditionNamesAndResults.add(pair);
-
             run.setResult(validationResult);
             listener.getLogger().println(String.format("'%s' marked the build as %s", condition.getDescriptor().getDisplayName(), validationResult.toString()));
         }
-
-        run.getAction(CodeSonarBuildAction.class).getBuildActionDTO()
-                .setConditionNamesAndResults(conditionNamesAndResults);
-
+        
+        listener.getLogger().println("[Codesonar] Done evaulating conditions");
+        
+        csba.getBuildActionDTO().setConditionNamesAndResults(conditionNamesAndResults);
+        run.addAction(csba);
         authenticationService.signOut(baseHubUri);
+            
+        listener.getLogger().println("[Codesonar] Done performing codesonar actions");
     }
 
     private float getHubVersion(URI baseHubUri) throws AbortException {
@@ -359,7 +424,7 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep  {
             super(CodeSonarPublisher.class);
             load();
         }
-
+                
         @Override
         public boolean isApplicable(Class<? extends AbstractProject> type) {
             return true;
@@ -374,7 +439,7 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep  {
             DescriptorExtensionList<Condition, ConditionDescriptor<Condition>> all = Condition.getAll();
             return new ArrayList<>(all);
         }
-
+        
         public FormValidation doCheckHubAddress(@QueryParameter("hubAddress") String hubAddress) {
             if (!StringUtils.isBlank(hubAddress)) {
                 return FormValidation.ok();

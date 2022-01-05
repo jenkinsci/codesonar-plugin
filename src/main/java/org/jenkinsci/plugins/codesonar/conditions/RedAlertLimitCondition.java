@@ -34,26 +34,6 @@ public class RedAlertLimitCondition extends Condition {
         this.alertLimit = alertLimit;
     }
 
-    @Override
-    public Result validate(Run<?, ?> run, Launcher launcher, TaskListener listener) {
-        CodeSonarBuildAction buildAction = run.getAction(CodeSonarBuildAction.class);
-        if (buildAction == null) {
-            return Result.SUCCESS;
-        }
-
-        CodeSonarBuildActionDTO buildActionDTO = buildAction.getBuildActionDTO();
-        if (buildActionDTO == null) {
-            return Result.SUCCESS;
-        }
-
-        List<Alert> redAlerts = buildActionDTO.getAnalysisActiveWarnings().getRedAlerts();
-        if (redAlerts.size() > alertLimit) {
-            return Result.fromString(warrantedResult);
-        }
-
-        return Result.SUCCESS;
-    }
-
     public int getAlertLimit() {
         return alertLimit;
     }
@@ -70,6 +50,20 @@ public class RedAlertLimitCondition extends Condition {
     @DataBoundSetter
     public void setWarrantedResult(String warrantedResult) {
         this.warrantedResult = warrantedResult;
+    }
+
+    @Override
+    public Result validate(CodeSonarBuildActionDTO current, CodeSonarBuildActionDTO previous, Launcher launcher, TaskListener listener) {
+        if (current == null) {
+            return Result.SUCCESS;
+        }
+
+        List<Alert> redAlerts = current.getAnalysisActiveWarnings().getRedAlerts();
+        if (redAlerts.size() > alertLimit) {
+            return Result.fromString(warrantedResult);
+        }
+
+        return Result.SUCCESS;
     }
 
     @Symbol("redAlerts")
