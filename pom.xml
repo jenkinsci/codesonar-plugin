@@ -41,7 +41,7 @@
     <scm>
         <connection>scm:git:ssh://github.com/eficode/codesonar-plugin.git</connection>
         <developerConnection>scm:git:ssh://git@github.com/eficode/codesonar-plugin.git</developerConnection>
-        <url>https://github.com/Praqma/codesonar-plugin</url>
+        <url>https://github.com/eficode/codesonar-plugin</url>
         <tag>HEAD</tag>
     </scm>
 
