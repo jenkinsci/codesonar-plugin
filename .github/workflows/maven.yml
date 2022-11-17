@@ -33,4 +33,4 @@ jobs:
         with:
           java-version: ${{ matrix.java }}
 
-      - run: mvn test
+      - run: mvn test spotbugs:check
