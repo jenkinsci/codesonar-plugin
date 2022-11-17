@@ -2,8 +2,13 @@
 
 === Master ===
 
-* Use the aid.txt file to get the analysis id, instead of using the search API in CodeSonar.
-  You can now use the plugin to run parallel builds, without risk of race conditions.
+=== Version 3.1.0 (November 2022) ===
+
+* Introduced support for accepting custom Hub Server Certificate by providing the certificate in a Jenkins File Credential
+* Introduced SocketTimeout as parameter
+* Use the aid.txt file to get the analysis id, instead of using the search API in CodeSonar
+  You can now use the plugin to run parallel builds, without risk of race conditions
+* Improved feedback from errors received from the CodeSonar Hub
 
 === Version 3.0.0 (January 2022) ===
 

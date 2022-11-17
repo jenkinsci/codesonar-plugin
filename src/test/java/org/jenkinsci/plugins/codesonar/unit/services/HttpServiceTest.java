@@ -15,8 +15,8 @@ public class HttpServiceTest {
     private static final Logger log = Logger.getLogger(HttpServiceTest.class.toString());
 
     @Before
-    public void setUp() {
-        httpService = new HttpService();
+    public void setUp() throws AbortException {
+        httpService = new HttpService(null);
     }
 
     @Test(expected = AbortException.class)

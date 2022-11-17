@@ -6,6 +6,10 @@
         <f:select />
     </f:entry>
 
+    <f:entry field="socketTimeoutMS" title="Socket Timeout (ms)">
+       <f:textbox />
+    </f:entry>
+
     <f:entry field="hubAddress" title="Hub address">
         <f:textbox/>
     </f:entry>
@@ -19,6 +23,10 @@
     </f:entry>
 
     <f:entry title="Credentials" field="credentialId">
+        <c:select/>
+    </f:entry>
+
+    <f:entry title="ServerCertificateCredentialId" field="serverCertificateCredentialId">
         <c:select/>
     </f:entry>
 

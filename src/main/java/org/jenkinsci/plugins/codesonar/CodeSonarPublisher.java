@@ -4,6 +4,7 @@ import com.cloudbees.plugins.credentials.CredentialsMatchers;
 import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.common.*;
 import com.cloudbees.plugins.credentials.domains.DomainRequirement;
+import com.google.common.base.Throwables;
 import hudson.*;
 import hudson.FilePath.FileCallable;
 import hudson.model.*;
@@ -28,6 +29,7 @@ import org.jenkinsci.plugins.codesonar.models.analysis.Analysis;
 import org.jenkinsci.plugins.codesonar.models.metrics.Metrics;
 import org.jenkinsci.plugins.codesonar.models.procedures.Procedures;
 import org.jenkinsci.plugins.codesonar.services.*;
+import org.jenkinsci.plugins.plaincredentials.FileCredentials;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
@@ -36,6 +38,9 @@ import org.kohsuke.stapler.QueryParameter;
 import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.net.URI;
+import java.security.cert.CertificateException;
+import java.security.cert.CertificateFactory;
+import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -57,6 +62,7 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
     private String projectName;
     private String protocol = "http";
     private String aid;
+    private int socketTimeoutMS = -1;
 
     private XmlSerializationService xmlSerializationService = null;
     private HttpService httpService = null;
@@ -70,6 +76,8 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
     private List<Condition> conditions;
 
     private String credentialId;
+
+    private String serverCertificateCredentialId = "";
 
     @DataBoundConstructor
     public CodeSonarPublisher(
@@ -93,14 +101,32 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
     public void setVisibilityFilter(String visibilityFilter){
         this.visibilityFilter = visibilityFilter;
     }
-    
-    @DataBoundSetter 
+
+    @DataBoundSetter
     public void setAid(String aid) {
         this.aid = aid;
     }
 
     public String getAid() {
         return aid;
+    }
+
+    @DataBoundSetter
+    public void setSocketTimeoutMS(int socketTimeoutMS) {
+        this.socketTimeoutMS = socketTimeoutMS;
+    }
+
+    public int getSocketTimeoutMS() {
+        return socketTimeoutMS;
+    }
+
+    public String getServerCertificateCredentialId() {
+        return serverCertificateCredentialId;
+    }
+
+    @DataBoundSetter
+    public void setServerCertificateCredentialId(String serverCertificateCredentialId) {
+        this.serverCertificateCredentialId = serverCertificateCredentialId;
     }
 
     public String getVisibilityFilter() {
@@ -151,20 +177,20 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
             throws InterruptedException, IOException
     {
         xmlSerializationService = getXmlSerializationService();
-        httpService = getHttpService();
-        authenticationService = getAuthenticationService();
-        metricsService = getMetricsService();
-        proceduresService = getProceduresService();
+        httpService = getHttpService(run);
+        authenticationService = getAuthenticationService(run);
+        metricsService = getMetricsService(run);
+        proceduresService = getProceduresService(run);
         analysisServiceFactory = getAnalysisServiceFactory();
 
         String expandedHubAddress = run.getEnvironment(listener).expand(Util.fixNull(hubAddress));
         String expandedProjectName = run.getEnvironment(listener).expand(Util.fixNull(projectName));
 
         if (expandedHubAddress.isEmpty()) {
-            throw new AbortException("Hub address not provided");
+            throw new AbortException("[CodeSonar] Hub address not provided");
         }
         if (expandedProjectName.isEmpty()) {
-            throw new AbortException("Project name not provided");
+            throw new AbortException("[CodeSonar] Project name not provided");
         }
 
         URI baseHubUri = URI.create(String.format("%s://%s", getProtocol(), expandedHubAddress));
@@ -181,10 +207,10 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
         analysisService.setVisibilityFilter(getVisibilityFilter());
 
         if(StringUtils.isBlank(aid)) {
-            LOGGER.log(Level.INFO, "Determining analysis id...");
+            LOGGER.log(Level.INFO, "[CodeSonar] Determining analysis id...");
             aid = workspace.act(new DetermineAid());
         } else {
-            LOGGER.log(Level.INFO, "Using override analysis id: '" + aid + "'.");
+            LOGGER.log(Level.INFO, "[CodeSonar] Using override analysis id: '" + aid + "'.");
         }
         
         String analysisUrl = baseHubUri.toString() + "/analysis/" + aid + ".xml";
@@ -221,7 +247,7 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
             Pair<String, String> pair = Pair.with(condition.getDescriptor().getDisplayName(), validationResult.toString());
             conditionNamesAndResults.add(pair);
             run.setResult(validationResult);
-            listener.getLogger().println(String.format("'%s' marked the build as %s", condition.getDescriptor().getDisplayName(), validationResult.toString()));
+            listener.getLogger().println(String.format("[CodeSonar] '%s' marked the build as %s", condition.getDescriptor().getDisplayName(), validationResult.toString()));
         }
         
         listener.getLogger().println("[Codesonar] Done evaulating conditions");
@@ -249,9 +275,9 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
             return Float.valueOf(matcher.group(1));
         }
 
-        LOGGER.log(Level.WARNING, "Version info could not be determined by data:\n"+info); // No version could be found
+        LOGGER.log(Level.WARNING, "[CodeSonar] Version info could not be determined by data:\n"+info); // No version could be found
 
-        throw new AbortException("Hub version could not be determined");
+        throw new AbortException("[CodeSonar] Hub version could not be determined");
     }
 
     private void authenticate(Run<?, ?> run, URI baseHubUri) throws AbortException {
@@ -260,7 +286,7 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
                         Collections.<DomainRequirement>emptyList()), CredentialsMatchers.withId(credentialId));
 
         if (credentials instanceof StandardUsernamePasswordCredentials) {
-            LOGGER.log(Level.FINE, "authenticating using username and password");
+            LOGGER.log(Level.FINE, "[CodeSonar] Authenticating using username and password");
             UsernamePasswordCredentials c = (UsernamePasswordCredentials) credentials;
 
             authenticationService.authenticate(baseHubUri,
@@ -268,7 +294,7 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
                     c.getPassword().getPlainText());
         }
         if (credentials instanceof StandardCertificateCredentials) {
-             LOGGER.log(Level.FINE, "authenticating using ssl certificate");
+             LOGGER.log(Level.FINE, "[CodeSonar] Authenticating using ssl certificate");
             if (protocol.equals("http")) {
                 throw new AbortException("[CodeSonar] Authentication using a certificate is only available while SSL is enabled.");
             }
@@ -381,30 +407,53 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
         return xmlSerializationService;
     }
 
-    public HttpService getHttpService() {
-        if (httpService == null) {
-            httpService = new HttpService();
+    public HttpService getHttpService(@Nonnull Run<?, ?> run) throws AbortException {
+        X509Certificate cert = null;
+        if(getServerCertificateCredentialId() != null && !getServerCertificateCredentialId().isEmpty()) {
+            StandardCredentials credentials = CredentialsMatchers.firstOrNull(
+                    CredentialsProvider.lookupCredentials(StandardCredentials.class, run.getParent(), ACL.SYSTEM,
+                            Collections.<DomainRequirement>emptyList()), CredentialsMatchers.withId(getServerCertificateCredentialId()));
+
+            if(credentials instanceof FileCredentials) {
+                LOGGER.log(Level.FINE, "[CodeSonar] Found FileCredentials provided as Hub HTTPS certificate");
+                FileCredentials f = (FileCredentials) credentials;
+                try {
+                    CertificateFactory cf = CertificateFactory.getInstance("X.509");
+                    cert = (X509Certificate)cf.generateCertificate(f.getContent());
+                } catch (IOException | CertificateException e ) {
+                    LOGGER.log(Level.FINE, "[CodeSonar] Found FileCredentials provided as Hub HTTPS certificate");
+                    throw new AbortException(String.format("[CodeSonar] Failed to create X509Certificate from Secret File Credential. %n[CodeSonar] %s: %s%n[CodeSonar] Stack Trace: %s", e.getClass().getName(), e.getMessage(), Throwables.getStackTraceAsString(e)));
+                }
+            } else {
+                LOGGER.log(Level.FINE, "[CodeSonar] Found {0} provided as Hub HTTPS certificate", credentials.getClass().getName());
+                throw  new AbortException(String.format("[CodeSonar] The Jenkins Credentials provided as Hub HTTPS certificate is of type %s.%n[CodeSonar] Please provide a credential of type FileCredentials", credentials.getClass().getName()));
+            }
         }
+
+        if (httpService == null) {
+            httpService = new HttpService(cert);
+        }
+        httpService.setSocketTimeoutMS(getSocketTimeoutMS());
         return httpService;
     }
 
-    public AuthenticationService getAuthenticationService() {
+    public AuthenticationService getAuthenticationService(@Nonnull Run<?, ?> run) throws AbortException {
         if (authenticationService == null) {
-            authenticationService = new AuthenticationService(getHttpService());
+            authenticationService = new AuthenticationService(getHttpService(run));
         }
         return authenticationService;
     }
 
-    public MetricsService getMetricsService() {
+    public MetricsService getMetricsService(@Nonnull Run<?, ?> run) throws AbortException {
         if (metricsService == null) {
-            metricsService = new MetricsService(getHttpService(), getXmlSerializationService());
+            metricsService = new MetricsService(getHttpService(run), getXmlSerializationService());
         }
         return metricsService;
     }
 
-    public ProceduresService getProceduresService() {
+    public ProceduresService getProceduresService(@Nonnull Run<?, ?> run) throws AbortException {
         if (proceduresService == null) {
-            proceduresService = new ProceduresService(getHttpService(), getXmlSerializationService());
+            proceduresService = new ProceduresService(getHttpService(run), getXmlSerializationService());
         }
         return proceduresService;
     }
@@ -481,6 +530,17 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
                                     CredentialsMatchers.instanceOf(StandardUsernamePasswordCredentials.class),
                                     CredentialsMatchers.instanceOf(CertificateCredentials.class)
                             ), credentials);
+        }
+
+        public ListBoxModel doFillSslCertificateCredentialIdItems(final @AncestorInPath ItemGroup<?> context) {
+            final List<StandardCredentials> credentials = CredentialsProvider.lookupCredentials(StandardCredentials.class, context, ACL.SYSTEM, Collections.<DomainRequirement>emptyList());
+
+            return new StandardListBoxModel()
+                    .withEmptySelection()
+                    .withMatching(CredentialsMatchers.anyOf(
+                            CredentialsMatchers.instanceOf(StandardUsernamePasswordCredentials.class),
+                            CredentialsMatchers.instanceOf(CertificateCredentials.class)
+                    ), credentials);
         }
 
         public ListBoxModel doFillProtocolItems() {

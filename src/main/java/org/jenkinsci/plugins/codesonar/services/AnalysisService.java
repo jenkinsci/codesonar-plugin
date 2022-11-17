@@ -77,7 +77,7 @@ public class AnalysisService implements IAnalysisService {
             uriBuilder = new URIBuilder(analysisUrl);
             uriBuilder.addParameter("filter", "5");
         } catch (URISyntaxException ex) {
-            throw new AbortException(ex.getMessage());
+            throw new AbortException("[CodeSonar] "+ ex.getMessage());
         }
 
         return getAnalysisFromUrl(uriBuilder.toString());
@@ -90,7 +90,7 @@ public class AnalysisService implements IAnalysisService {
             uriBuilder = new URIBuilder(analysisUrl);
             uriBuilder.addParameter("filter", this.visibilityFilter);
         } catch (URISyntaxException ex) {
-            throw new AbortException(ex.getMessage());
+            throw new AbortException("[CodeSonar] "+ex.getMessage());
         }
 
         return getAnalysisFromUrl(uriBuilder.toString());

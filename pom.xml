@@ -7,10 +7,10 @@
         <relativePath />
     </parent>
 
-    <url>https://github.com/Praqma/codesonar-plugin</url>
+    <url>https://github.com/eficode/codesonar-plugin</url>
     <name>CodeSonar Plugin</name>
     <artifactId>codesonar</artifactId>
-    <version>3.0.1-SNAPSHOT</version>
+    <version>3.1.0-SNAPSHOT</version>
     <packaging>hpi</packaging>
 
     <properties>
@@ -24,7 +24,7 @@
         <developer>
             <id>MadsNielsen</id>
             <name>Mads Nielsen</name>
-            <email>man@praqma.net</email>
+            <email>mads.nielsen@eficode.com</email>
         </developer>
         <developer>
             <id>kryptag</id>
@@ -35,6 +35,11 @@
             <id>atombrella</id>
             <name>Mads Jensen</name>
             <email>mads.jensen@eficode.com</email>
+        </developer>
+        <developer>
+            <id>madsbaggesen</id>
+            <name>Mads Baggesen</name>
+            <email>mads.baggesen@eficode.com</email>
         </developer>
     </developers>
 
@@ -141,7 +146,7 @@
         <dependency>
             <groupId>org.apache.httpcomponents</groupId>
             <artifactId>fluent-hc</artifactId>
-            <version>4.5.11</version>
+            <version>4.5.13</version>
         </dependency>
 
         <dependency>

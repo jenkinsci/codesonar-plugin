@@ -46,6 +46,19 @@ We currently use the active visibility filter. You may need to update your job (
 use a different visibility filter. The visibilty filter number can be found from the URL of
 analysis, as `filter=<ID>`.
 
+## I get a timeout during the codesonar step
+
+If you received a network timeout during your codesonar steps it may be beneficial to set a higher timeout using the
+`socketTimetoutMS` parameter. The timeout is set in milliseconds. The default value may vary based on the system and java setup. 
+
+## "PKIX path building failed" - the certificate of the CodeSonar Hub is not accepted.
+
+If the CodeSonar Hub has a self-signed Server Certificate that is not included in Jenkins' Trust Stores, 
+then it may be necessary to provide the accepted certificate as a parameter (ServerCertificateCredentialId) to the 
+codesonar step. 
+
+The certificate must be of type X509, and must be store in Jenkins File Credential - found under Manage Jenkins -> Credentials.
+
 ## I don't get any results from CodeSonar.
 
 It's necessary to configure a launch daemon from the CodeSonar instance. The command is given in the
