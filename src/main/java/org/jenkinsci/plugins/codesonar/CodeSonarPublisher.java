@@ -425,8 +425,12 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
                     throw new AbortException(String.format("[CodeSonar] Failed to create X509Certificate from Secret File Credential. %n[CodeSonar] %s: %s%n[CodeSonar] Stack Trace: %s", e.getClass().getName(), e.getMessage(), Throwables.getStackTraceAsString(e)));
                 }
             } else {
-                LOGGER.log(Level.FINE, "[CodeSonar] Found {0} provided as Hub HTTPS certificate", credentials.getClass().getName());
-                throw  new AbortException(String.format("[CodeSonar] The Jenkins Credentials provided as Hub HTTPS certificate is of type %s.%n[CodeSonar] Please provide a credential of type FileCredentials", credentials.getClass().getName()));
+                if(credentials != null) {
+                    LOGGER.log(Level.FINE, "[CodeSonar] Found {0} provided as Hub HTTPS certificate", credentials.getClass().getName());
+                    throw new AbortException(String.format("[CodeSonar] The Jenkins Credentials provided as Hub HTTPS certificate is of type %s.%n[CodeSonar] Please provide a credential of type FileCredentials", credentials.getClass().getName()));
+                }
+                LOGGER.log(Level.FINE, "[CodeSonar] Credentials with id '{0}' not found", getServerCertificateCredentialId());
+                throw new AbortException(String.format("[CodeSonar] Credentials with id '{0}' not found", getServerCertificateCredentialId()));
             }
         }
 
