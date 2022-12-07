@@ -26,7 +26,7 @@
         <c:select/>
     </f:entry>
 
-    <f:entry title="ServerCertificateCredentialId" field="serverCertificateCredentialId">
+    <f:entry title="Server Certificate Credentials" field="serverCertificateCredentialId">
         <c:select/>
     </f:entry>
 

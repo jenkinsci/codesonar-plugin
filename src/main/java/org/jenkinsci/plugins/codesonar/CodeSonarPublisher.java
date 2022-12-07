@@ -70,7 +70,7 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
     private IAnalysisService analysisService = null;
     private MetricsService metricsService = null;
     private ProceduresService proceduresService = null;
-
+    
     private AnalysisServiceFactory analysisServiceFactory = null;
 
     private List<Condition> conditions;
@@ -536,7 +536,7 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
                             ), credentials);
         }
 
-        public ListBoxModel doFillSslCertificateCredentialIdItems(final @AncestorInPath ItemGroup<?> context) {
+        public ListBoxModel doFillServerCertificateCredentialIdItems(final @AncestorInPath ItemGroup<?> context) {
             final List<StandardCredentials> credentials = CredentialsProvider.lookupCredentials(StandardCredentials.class, context, ACL.SYSTEM, Collections.<DomainRequirement>emptyList());
 
             return new StandardListBoxModel()

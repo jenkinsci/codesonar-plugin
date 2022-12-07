@@ -10,7 +10,7 @@
     <url>https://github.com/eficode/codesonar-plugin</url>
     <name>CodeSonar Plugin</name>
     <artifactId>codesonar</artifactId>
-    <version>3.1.0</version>
+    <version>3.1.1</version>
     <packaging>hpi</packaging>
 
     <properties>
