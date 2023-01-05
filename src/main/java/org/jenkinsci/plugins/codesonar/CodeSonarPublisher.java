@@ -70,7 +70,7 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
     private IAnalysisService analysisService = null;
     private MetricsService metricsService = null;
     private ProceduresService proceduresService = null;
-    
+
     private AnalysisServiceFactory analysisServiceFactory = null;
 
     private List<Condition> conditions;
