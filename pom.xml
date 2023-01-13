@@ -7,10 +7,10 @@
         <relativePath />
     </parent>
 
-    <url>https://github.com/jenkinsci/codesonar-plugin</url>
+    <url>https://github.com/eficode/codesonar-plugin</url>
     <name>CodeSonar Plugin</name>
     <artifactId>codesonar</artifactId>
-    <version>3.1.2-SNAPSHOT</version>
+    <version>4.0.0</version>
     <packaging>hpi</packaging>
 
     <properties>
@@ -41,23 +41,13 @@
             <name>Mads Baggesen</name>
             <email>mads.baggesen@eficode.com</email>
         </developer>
-        <developer>
-            <id>gt_dbechtold</id>
-            <name>dbechtold</name>
-            <email>dbechtold@grammatech.com</email>
-        </developer>
-        <developer>
-            <id>aseno-grammatech</id>
-            <name>aseno</name>
-            <email>aseno@grammatech.com</email>
-        </developer>
     </developers>
 
     <scm>
-        <connection>scm:git:ssh://github.com/jenkinsci/codesonar-plugin.git</connection>
-        <developerConnection>scm:git:ssh://git@github.com/jenkinsci/codesonar-plugin.git</developerConnection>
-        <url>https://github.com/jenkinsci/codesonar-plugin</url>
-        <tag>HEAD</tag>
+        <connection>scm:git:ssh://github.com/eficode/codesonar-plugin.git</connection>
+        <developerConnection>scm:git:ssh://git@github.com/eficode/codesonar-plugin.git</developerConnection>
+        <url>https://github.com/eficode/codesonar-plugin</url>
+        <tag>codesonar-3.1.0</tag>
     </scm>
 
     <build>
@@ -170,6 +160,12 @@
             <artifactId>jaxb</artifactId>
             <version>2.3.0</version>
         </dependency>
+
+		<dependency>
+		    <groupId>com.google.code.gson</groupId>
+		    <artifactId>gson</artifactId>
+		    <version>2.10</version>
+		</dependency>
 
     </dependencies>
 

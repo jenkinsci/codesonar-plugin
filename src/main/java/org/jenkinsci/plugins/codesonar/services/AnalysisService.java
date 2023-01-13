@@ -12,6 +12,8 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URLEncoder;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -20,6 +22,7 @@ import java.util.regex.Pattern;
  * @author Andrius
  */
 public class AnalysisService implements IAnalysisService {
+	private static final Logger LOGGER = Logger.getLogger(AnalysisService.class.getName());
 
     final private HttpService httpService;
     final private XmlSerializationService xmlSerializationService;
@@ -72,6 +75,7 @@ public class AnalysisService implements IAnalysisService {
 
     @Override
     public Analysis getAnalysisFromUrlWithNewWarnings(String analysisUrl) throws IOException {
+    	LOGGER.log(Level.WARNING, String.format("Calling getAnalysisFromUrlWithNewWarnings"));
         URIBuilder uriBuilder;
         try {
             uriBuilder = new URIBuilder(analysisUrl);
@@ -85,6 +89,7 @@ public class AnalysisService implements IAnalysisService {
 
     @Override
     public Analysis getAnalysisFromUrlWarningsByFilter(String analysisUrl) throws IOException {
+    	LOGGER.log(Level.WARNING, String.format("Calling getAnalysisFromUrlWarningsByFilter"));
         URIBuilder uriBuilder;
         try {
             uriBuilder = new URIBuilder(analysisUrl);
