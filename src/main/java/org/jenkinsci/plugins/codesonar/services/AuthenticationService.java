@@ -17,6 +17,7 @@ import org.apache.http.NameValuePair;
 import org.apache.http.client.fluent.Form;
 import org.apache.http.client.fluent.Request;
 import org.apache.http.util.EntityUtils;
+import org.jenkinsci.plugins.codesonar.CodeSonarPublisher;
 import org.jenkinsci.plugins.codesonar.models.VersionCompatibilityInfo;
 
 import com.google.common.base.Throwables;
@@ -82,7 +83,7 @@ public class AuthenticationService {
     
     public void authenticate(URI baseHubUri) throws AbortException {
     	LOGGER.log(Level.WARNING, "Starting new certificate authentication request");
-    	VersionCompatibilityInfo vci = fetchVersionCompatibilityInfo(baseHubUri, "jenkins", "400");
+    	VersionCompatibilityInfo vci = fetchVersionCompatibilityInfo(baseHubUri, CodeSonarPublisher.CODESONAR_PLUGIN_NAME, CodeSonarPublisher.CODESONAR_PLUGIN_PROTOCOL_VERSION);
     	
 		//If this client is supposed to be able to talk to the hub
 		if(checkClientOk(vci)) {
@@ -196,7 +197,7 @@ public class AuthenticationService {
     
     public void authenticate(URI baseHubUri, String username, String password) throws AbortException {
     	LOGGER.log(Level.WARNING, "Starting new password authentication request");
-    	VersionCompatibilityInfo vci = fetchVersionCompatibilityInfo(baseHubUri, "jenkins", "400");
+    	VersionCompatibilityInfo vci = fetchVersionCompatibilityInfo(baseHubUri, CodeSonarPublisher.CODESONAR_PLUGIN_NAME, CodeSonarPublisher.CODESONAR_PLUGIN_PROTOCOL_VERSION);
     	
 		//If this client is supposed to be able to talk to the hub
 		if(checkClientOk(vci)) {
