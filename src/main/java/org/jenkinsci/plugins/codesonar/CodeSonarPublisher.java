@@ -13,8 +13,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import javax.annotation.Nonnull;
@@ -26,11 +24,13 @@ import org.jenkinsci.Symbol;
 import org.jenkinsci.plugins.codesonar.conditions.Condition;
 import org.jenkinsci.plugins.codesonar.conditions.ConditionDescriptor;
 import org.jenkinsci.plugins.codesonar.models.CodeSonarBuildActionDTO;
+import org.jenkinsci.plugins.codesonar.models.HubVersion;
 import org.jenkinsci.plugins.codesonar.models.analysis.Analysis;
 import org.jenkinsci.plugins.codesonar.models.metrics.Metrics;
 import org.jenkinsci.plugins.codesonar.models.procedures.Procedures;
 import org.jenkinsci.plugins.codesonar.services.AuthenticationService;
 import org.jenkinsci.plugins.codesonar.services.HttpService;
+import org.jenkinsci.plugins.codesonar.services.HubVersionService;
 import org.jenkinsci.plugins.codesonar.services.IAnalysisService;
 import org.jenkinsci.plugins.codesonar.services.MetricsService;
 import org.jenkinsci.plugins.codesonar.services.ProceduresService;
@@ -99,6 +99,7 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
     private IAnalysisService analysisService = null;
     private MetricsService metricsService = null;
     private ProceduresService proceduresService = null;
+    private HubVersionService hubVersionService = null;
     
     private AnalysisServiceFactory analysisServiceFactory = null;
 
@@ -108,7 +109,7 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
     private StandardCredentials clientCertificateCredentials;
 
     private String serverCertificateCredentialId = "";
-	private StandardCredentials serverCertificateCredentials;
+    private StandardCredentials serverCertificateCredentials;
 
     @DataBoundConstructor
     public CodeSonarPublisher(
@@ -212,6 +213,7 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
         authenticationService = getAuthenticationService(run);
         metricsService = getMetricsService(run);
         proceduresService = getProceduresService(run);
+        hubVersionService = getHubVersionService(run);
         analysisServiceFactory = getAnalysisServiceFactory();
 
         String expandedHubAddress = run.getEnvironment(listener).expand(Util.fixNull(hubAddress));
@@ -227,13 +229,13 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
         URI baseHubUri = URI.create(String.format("%s://%s", getProtocol(), expandedHubAddress));
         listener.getLogger().println("[Codesonar] Using hub URI: "+baseHubUri);
 
-        float hubVersion = getHubVersion(baseHubUri);
-        LOGGER.log(Level.FINE, "hub version: {0}", hubVersion);
+        HubVersion hubVersion = hubVersionService.getHubVersion(baseHubUri);
+        LOGGER.log(Level.FINE, "hub version: {0}", hubVersion.getVersion());
         
-        authenticate(run, baseHubUri);
+        authenticate(run, baseHubUri, hubVersion.isSupportsOpenAPI());
 
         analysisServiceFactory = getAnalysisServiceFactory();
-        analysisServiceFactory.setVersion(hubVersion);
+        analysisServiceFactory.setVersion(hubVersion.getVersion());
         analysisService = analysisServiceFactory.getAnalysisService(httpService, xmlSerializationService);
         analysisService.setVisibilityFilter(getVisibilityFilter());
 
@@ -290,47 +292,28 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
         listener.getLogger().println("[Codesonar] Done performing codesonar actions");
     }
 
-    private float getHubVersion(URI baseHubUri) throws AbortException {
-        String info;
-        try {
-            info = httpService.getContentFromUrlAsString(baseHubUri.resolve("/command/anon_info/"));
-        } catch (AbortException e) {
-            // /command/anon_info/ is not available which means the hub is > 4.2
-            return 4.0f;
-        }
-
-        Pattern pattern = Pattern.compile("Version:\\s(\\d+\\.\\d+)");
-
-        Matcher matcher = pattern.matcher(info);
-        if (matcher.find()) {
-            return Float.valueOf(matcher.group(1));
-        }
-
-        LOGGER.log(Level.WARNING, "[CodeSonar] Version info could not be determined by data:\n"+info); // No version could be found
-
-        throw new AbortException("[CodeSonar] Hub version could not be determined");
-    }
-
-    private void authenticate(Run<?, ?> run, URI baseHubUri) throws AbortException {
-    	//If clientCertificateCredentials is null, then authenticate as anonymous
-    	if(clientCertificateCredentials != null) {
-	        if (clientCertificateCredentials instanceof StandardUsernamePasswordCredentials) {
-	            LOGGER.log(Level.INFO, "[CodeSonar] Authenticating using username and password");
-	            UsernamePasswordCredentials c = (UsernamePasswordCredentials) clientCertificateCredentials;
-	
-	            authenticationService.authenticate(baseHubUri,
-	                    c.getUsername(),
-	                    c.getPassword().getPlainText());
-	        } else if (clientCertificateCredentials instanceof StandardCertificateCredentials) {
-	        	LOGGER.log(Level.INFO, "[CodeSonar] Authenticating using SSL certificate");
-	            if (protocol.equals("http")) {
-	                throw new AbortException("[CodeSonar] Authentication using a certificate is only available while SSL is enabled.");
-	            }
-	
-	            authenticationService.authenticate(baseHubUri);
-	        }
-    	} else {
-        	LOGGER.log(Level.INFO, "[CodeSonar] Authenticating as anonymous");
+    private void authenticate(Run<?, ?> run, URI baseHubUri, boolean supportsOpenAPI) throws AbortException {
+        //If clientCertificateCredentials is null, then authenticate as anonymous
+        if(clientCertificateCredentials != null) {
+            if (clientCertificateCredentials instanceof StandardUsernamePasswordCredentials) {
+                LOGGER.log(Level.INFO, "[CodeSonar] Authenticating using username and password");
+                UsernamePasswordCredentials c = (UsernamePasswordCredentials) clientCertificateCredentials;
+    
+                authenticationService.authenticate(baseHubUri,
+                        supportsOpenAPI,
+                        c.getUsername(),
+                        c.getPassword().getPlainText());
+            } else if (clientCertificateCredentials instanceof StandardCertificateCredentials) {
+                LOGGER.log(Level.INFO, "[CodeSonar] Authenticating using SSL certificate");
+                if (protocol.equals("http")) {
+                    throw new AbortException("[CodeSonar] Authentication using a certificate is only available while SSL is enabled.");
+                }
+    
+                authenticationService.authenticate(baseHubUri,
+                        supportsOpenAPI);
+            }
+        } else {
+            LOGGER.log(Level.INFO, "[CodeSonar] Authenticating as anonymous");
         }
     }
 
@@ -435,55 +418,55 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
     }
 
     public HttpService getHttpService(@Nonnull Run<?, ?> run) throws AbortException {
-    	if (httpService == null) {
-	    	Collection<? extends Certificate> serverCertificates = null;
-	        if(StringUtils.isNotEmpty(serverCertificateCredentialId)) {
-	            serverCertificateCredentials = CredentialsMatchers.firstOrNull(
-	                    CredentialsProvider.lookupCredentials(StandardCredentials.class, run.getParent(), ACL.SYSTEM,
-	                            Collections.<DomainRequirement>emptyList()), CredentialsMatchers.withId(getServerCertificateCredentialId()));
-	
-	            if(serverCertificateCredentials instanceof FileCredentials) {
-	                LOGGER.log(Level.WARNING, "[CodeSonar] Found FileCredentials provided as Hub HTTPS certificate");
-	                FileCredentials f = (FileCredentials) serverCertificateCredentials;
-	                try {
-	                    CertificateFactory cf = CertificateFactory.getInstance("X.509");
-	                    serverCertificates = cf.generateCertificates(f.getContent());
-	                    LOGGER.log(Level.WARNING, "[CodeSonar] X509Certificate initialized");
-	                } catch (IOException | CertificateException e ) {
-	                    throw new AbortException(String.format("[CodeSonar] Failed to create X509Certificate from Secret File Credential. %n[CodeSonar] %s: %s%n[CodeSonar] Stack Trace: %s", e.getClass().getName(), e.getMessage(), Throwables.getStackTraceAsString(e)));
-	                }
-	            } else {
-	                if(serverCertificateCredentials != null) {
-	                    LOGGER.log(Level.WARNING, "[CodeSonar] Found {0} provided as Hub HTTPS certificate", serverCertificateCredentials.getClass().getName());
-	                    throw new AbortException(String.format("[CodeSonar] The Jenkins Credentials provided as Hub HTTPS certificate is of type %s.%n[CodeSonar] Please provide a credential of type FileCredentials", serverCertificateCredentials.getClass().getName()));
-	                }
-	                LOGGER.log(Level.WARNING, "[CodeSonar] Credentials with id '{0}' not found", getServerCertificateCredentialId());
-	                throw new AbortException(String.format("[CodeSonar] Credentials with id '{0}' not found", getServerCertificateCredentialId()));
-	            }
-	        }
-	        
-	        
-	    	//If credentialId is null, then authenticate as anonymous
-	        KeyStore clientCertificateKeyStore = null;
-	        Secret clientCertificatePassword = null;
-	    	if (StringUtils.isNotEmpty(credentialId)) {
-		        clientCertificateCredentials = CredentialsMatchers.firstOrNull(
-		                CredentialsProvider.lookupCredentials(StandardCredentials.class, run.getParent(), ACL.SYSTEM,
-		                        Collections.<DomainRequirement>emptyList()), CredentialsMatchers.withId(credentialId));
+        if (httpService == null) {
+            Collection<? extends Certificate> serverCertificates = null;
+            if(StringUtils.isNotEmpty(serverCertificateCredentialId)) {
+                serverCertificateCredentials = CredentialsMatchers.firstOrNull(
+                        CredentialsProvider.lookupCredentials(StandardCredentials.class, run.getParent(), ACL.SYSTEM,
+                                Collections.<DomainRequirement>emptyList()), CredentialsMatchers.withId(getServerCertificateCredentialId()));
+    
+                if(serverCertificateCredentials instanceof FileCredentials) {
+                    LOGGER.log(Level.WARNING, "[CodeSonar] Found FileCredentials provided as Hub HTTPS certificate");
+                    FileCredentials f = (FileCredentials) serverCertificateCredentials;
+                    try {
+                        CertificateFactory cf = CertificateFactory.getInstance("X.509");
+                        serverCertificates = cf.generateCertificates(f.getContent());
+                        LOGGER.log(Level.WARNING, "[CodeSonar] X509Certificate initialized");
+                    } catch (IOException | CertificateException e ) {
+                        throw new AbortException(String.format("[CodeSonar] Failed to create X509Certificate from Secret File Credential. %n[CodeSonar] %s: %s%n[CodeSonar] Stack Trace: %s", e.getClass().getName(), e.getMessage(), Throwables.getStackTraceAsString(e)));
+                    }
+                } else {
+                    if(serverCertificateCredentials != null) {
+                        LOGGER.log(Level.WARNING, "[CodeSonar] Found {0} provided as Hub HTTPS certificate", serverCertificateCredentials.getClass().getName());
+                        throw new AbortException(String.format("[CodeSonar] The Jenkins Credentials provided as Hub HTTPS certificate is of type %s.%n[CodeSonar] Please provide a credential of type FileCredentials", serverCertificateCredentials.getClass().getName()));
+                    }
+                    LOGGER.log(Level.WARNING, "[CodeSonar] Credentials with id '{0}' not found", getServerCertificateCredentialId());
+                    throw new AbortException(String.format("[CodeSonar] Credentials with id '{0}' not found", getServerCertificateCredentialId()));
+                }
+            }
+            
+            
+            //If credentialId is null, then authenticate as anonymous
+            KeyStore clientCertificateKeyStore = null;
+            Secret clientCertificatePassword = null;
+            if (StringUtils.isNotEmpty(credentialId)) {
+                clientCertificateCredentials = CredentialsMatchers.firstOrNull(
+                        CredentialsProvider.lookupCredentials(StandardCredentials.class, run.getParent(), ACL.SYSTEM,
+                                Collections.<DomainRequirement>emptyList()), CredentialsMatchers.withId(credentialId));
 
-		        if (clientCertificateCredentials instanceof StandardCertificateCredentials) {
-		            if (protocol.equals("http")) {
-		                throw new AbortException("[CodeSonar] Authentication using a certificate is only available while SSL is enabled.");
-		            }
-		
-		            LOGGER.log(Level.INFO, "[CodeSonar] Configuring HttpClient with certificate authentication");
-		            
-		            StandardCertificateCredentials c = (StandardCertificateCredentials) clientCertificateCredentials;
-		
-		            clientCertificateKeyStore = c.getKeyStore();
-		            clientCertificatePassword = c.getPassword();
-		        }
-	    	}
+                if (clientCertificateCredentials instanceof StandardCertificateCredentials) {
+                    if (protocol.equals("http")) {
+                        throw new AbortException("[CodeSonar] Authentication using a certificate is only available while SSL is enabled.");
+                    }
+        
+                    LOGGER.log(Level.INFO, "[CodeSonar] Configuring HttpClient with certificate authentication");
+                    
+                    StandardCertificateCredentials c = (StandardCertificateCredentials) clientCertificateCredentials;
+        
+                    clientCertificateKeyStore = c.getKeyStore();
+                    clientCertificatePassword = c.getPassword();
+                }
+            }
 
             httpService = new HttpService(serverCertificates, clientCertificateKeyStore, clientCertificatePassword, getSocketTimeoutMS());
         }
@@ -509,6 +492,13 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
             proceduresService = new ProceduresService(getHttpService(run), getXmlSerializationService());
         }
         return proceduresService;
+    }
+    
+    public HubVersionService getHubVersionService(@Nonnull Run<?, ?> run) throws AbortException {
+        if (hubVersionService == null) {
+            hubVersionService = new HubVersionService(getHttpService(run));
+        }
+        return hubVersionService;
     }
     
     public AnalysisServiceFactory getAnalysisServiceFactory() {
