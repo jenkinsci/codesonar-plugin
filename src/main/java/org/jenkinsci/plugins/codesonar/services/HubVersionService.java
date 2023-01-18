@@ -11,51 +11,46 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.http.Consts;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
+import org.apache.http.ParseException;
 import org.apache.http.client.fluent.Request;
 import org.apache.http.util.EntityUtils;
 import org.jenkinsci.plugins.codesonar.CodeSonarPublisher;
-import org.jenkinsci.plugins.codesonar.models.HubVersion;
+import org.jenkinsci.plugins.codesonar.models.CodeSonarHubInfo;
 import org.jenkinsci.plugins.codesonar.models.VersionCompatibilityInfo;
 
 import com.google.common.base.Throwables;
 import com.google.gson.Gson;
+import com.google.gson.JsonSyntaxException;
 
 import hudson.AbortException;
 
-/**
- *
- * @author Andrius
- */
 public class HubVersionService {
     private static final Logger LOGGER = Logger.getLogger(HubVersionService.class.getName());
     
     private HttpService httpService;
-    private VersionCompatibilityInfo vci = null;
 
     public HubVersionService(HttpService httpService) {
         this.httpService = httpService;
     }
 
-    public HubVersion getHubVersion(URI baseHubUri) throws AbortException {
+    public CodeSonarHubInfo getHubVersion(URI baseHubUri) throws AbortException {
         LOGGER.log(Level.WARNING, String.format("Retrieving CodeSonar hub version"));
         
-        HubVersion hubVersion = new HubVersion();
+        CodeSonarHubInfo hubVersion = new CodeSonarHubInfo();
         
-        VersionCompatibilityInfo vci;
-        try {
-            vci = fetchVersionCompatibilityInfo(baseHubUri, CodeSonarPublisher.CODESONAR_PLUGIN_NAME, CodeSonarPublisher.CODESONAR_PLUGIN_PROTOCOL_VERSION);
-
+        VersionCompatibilityInfo vci = fetchVersionCompatibilityInfo(baseHubUri, CodeSonarPublisher.CODESONAR_HUB_CLIENT_NAME, CodeSonarPublisher.CODESONAR_HUB_CLIENT_PROTOCOL_VERSION_NUMBER);
+            
+        if(vci != null) {
             hubVersion.setVersion(vci.getHubVersion());
             
             //If this client is supposed to be able to talk to the hub
             if(checkClientOk(vci)) {
-                hubVersion.setSupportsOpenAPI(supportsOpenAPI(vci));
+                hubVersion.setOpenAPISupported(supportsOpenAPI(vci));
             } else {
                 //In this case this client has been rejected by the hub
                 throw new AbortException(String.format("[CodeSonar] client rejected by the hub. %n[CodeSonar] clientOK=%s", vci.getClientOK().toString()));
             }
-        } catch (IOException e) {
-            LOGGER.log(Level.WARNING, String.format("[CodeSonar] failed to fetch version compatibility info from the hub. %n[CodeSonar] IOException: %s%n[CodeSonar] Stack Trace: %s", e.getMessage(), Throwables.getStackTraceAsString(e)));
+        } else {
             /*
              * In such a case the hub version is most likely to be <= 7.0, as a result
              * let's try loading the hub version through the legacy endpoint (/command/anon_info/)
@@ -75,38 +70,58 @@ public class HubVersionService {
      * @param clientVersion the client version
      * @throws IOException thrown when the communication with the hub fails
      */
-    private VersionCompatibilityInfo fetchVersionCompatibilityInfo(URI baseHubUri, String clientName, String clientVersion) throws IOException {
+    private VersionCompatibilityInfo fetchVersionCompatibilityInfo(URI baseHubUri, String clientName, String clientVersion) {
         
         URI resolvedURI = baseHubUri;
         
         resolvedURI = baseHubUri.resolve(String.format("/command/check_version/%s/?version=%s&capability=openapi", clientName, clientVersion));
         LOGGER.log(Level.WARNING, "Calling " + resolvedURI.toString());
         
-        HttpResponse resp = httpService.execute(Request.Get(resolvedURI))
-                .returnResponse();
+        HttpResponse resp;
+        try {
+            resp = httpService.execute(Request.Get(resolvedURI))
+                    .returnResponse();
+        } catch (IOException e) {
+            LOGGER.warning(String.format("[CodeSonar] failed to get a response. %n[CodeSonar] IOException: %s%n[CodeSonar] Stack Trace: %s", e.getMessage(), Throwables.getStackTraceAsString(e)));
+            return null;
+        }
         
         Gson gson = new Gson();
 
         HttpEntity entity = resp.getEntity();
         if(entity == null) {
-            throw new AbortException("[CodeSonar] hub compatibility info cannot be read. %n[CodeSonar] entity is null");
+            LOGGER.warning("[CodeSonar] hub compatibility info cannot be read. %n[CodeSonar] entity is null");
+            return null;
         }
         
-        String responseBody = EntityUtils.toString(entity, Consts.UTF_8);
-        
-        //Hub might respond with just the text "Not Found", in this case we must fail
-        if(StringUtils.isNotEmpty(responseBody) && responseBody.equals("Not Found"))  {
-            throw new AbortException(String.format("[CodeSonar] hub compatibility info have not been returned. %n[CodeSonar] response is \"%s\"", responseBody));
+        //Hub might respond with an HTTP 404, in this case we must fail
+        if(resp.getStatusLine() != null && resp.getStatusLine().getStatusCode() == 404) {
+            LOGGER.warning(String.format("[CodeSonar] hub compatibility info have not been returned. %n[CodeSonar] response is \"%s\"", resp.getStatusLine().getReasonPhrase()));
+            return null;
         }
         
-        VersionCompatibilityInfo vci = gson.fromJson(responseBody, VersionCompatibilityInfo.class);
-        
-        //Returned object might be null if either "responseBody" is null or if it's empty, in such a case we must fail
-        if(vci == null) {
-            throw new AbortException(String.format("[CodeSonar] hub compatibility info cannot be parsed. %n[CodeSonar] response is \"%s\"", responseBody));
+        String responseBody;
+        try {
+            responseBody = EntityUtils.toString(entity, Consts.UTF_8);
+        } catch (ParseException | IOException e) {
+            LOGGER.warning(String.format("[CodeSonar] failed to read the response. %n[CodeSonar] Exception: %s%n[CodeSonar] Stack Trace: %s", e.getMessage(), Throwables.getStackTraceAsString(e)));
+            return null;
         }
         
-        LOGGER.log(Level.WARNING, vci.toString());
+        //We cannot parse the JSON response if "responseBody" is null or if it's empty
+        if(StringUtils.isEmpty(responseBody)) {
+            LOGGER.warning(String.format("[CodeSonar] response is empty. %n[CodeSonar] response is \"%s\"", responseBody));
+            return null;
+        }
+        
+        VersionCompatibilityInfo vci = null;
+        try {
+            vci = gson.fromJson(responseBody, VersionCompatibilityInfo.class);
+            LOGGER.log(Level.WARNING, String.format("[CodeSonar] %s", vci.toString()));
+        } catch(JsonSyntaxException e) {
+            LOGGER.warning(String.format("[CodeSonar] failed to parse JSON response. %n[CodeSonar] Exception: %s%n[CodeSonar] Stack Trace: %s", e.getMessage(), Throwables.getStackTraceAsString(e)));
+            return null;
+        }
         
         return vci;
     }
@@ -122,6 +137,13 @@ public class HubVersionService {
         return vci.getClientOK() == null || vci.getClientOK().booleanValue();
     }
     
+    /**
+     * The most of this method comes from the previous implementation written by Eficode, which
+     * I kept as a fallback.
+     * @param baseHubUri
+     * @return
+     * @throws AbortException
+     */
     private String fetchHubVersionLegacy(URI baseHubUri) throws AbortException {
         String info;
         try {
@@ -129,7 +151,7 @@ public class HubVersionService {
             LOGGER.log(Level.WARNING, "Calling " + endpoint.toString());
             info = httpService.getContentFromUrlAsString(endpoint);
         } catch (AbortException e) {
-            // /command/anon_info/ is not available which means the hub is > 4.2
+            // /command/anon_info/ is not available. Assume hub is older than v4.2
             return "4.0";
         }
 

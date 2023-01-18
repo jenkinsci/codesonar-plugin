@@ -24,7 +24,7 @@ import org.jenkinsci.Symbol;
 import org.jenkinsci.plugins.codesonar.conditions.Condition;
 import org.jenkinsci.plugins.codesonar.conditions.ConditionDescriptor;
 import org.jenkinsci.plugins.codesonar.models.CodeSonarBuildActionDTO;
-import org.jenkinsci.plugins.codesonar.models.HubVersion;
+import org.jenkinsci.plugins.codesonar.models.CodeSonarHubInfo;
 import org.jenkinsci.plugins.codesonar.models.analysis.Analysis;
 import org.jenkinsci.plugins.codesonar.models.metrics.Metrics;
 import org.jenkinsci.plugins.codesonar.models.procedures.Procedures;
@@ -83,8 +83,8 @@ import jenkins.tasks.SimpleBuildStep;
 public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
     private static final Logger LOGGER = Logger.getLogger(CodeSonarPublisher.class.getName());
     
-    public static final String CODESONAR_PLUGIN_NAME = "jenkins";
-    public static final String CODESONAR_PLUGIN_PROTOCOL_VERSION = "400";
+    public static final String CODESONAR_HUB_CLIENT_NAME = "jenkins";
+    public static final String CODESONAR_HUB_CLIENT_PROTOCOL_VERSION_NUMBER = "200";
     
     private String visibilityFilter = "2"; // active warnings
     private String hubAddress;
@@ -229,10 +229,10 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
         URI baseHubUri = URI.create(String.format("%s://%s", getProtocol(), expandedHubAddress));
         listener.getLogger().println("[Codesonar] Using hub URI: "+baseHubUri);
 
-        HubVersion hubVersion = hubVersionService.getHubVersion(baseHubUri);
+        CodeSonarHubInfo hubVersion = hubVersionService.getHubVersion(baseHubUri);
         LOGGER.log(Level.FINE, "hub version: {0}", hubVersion.getVersion());
         
-        authenticate(run, baseHubUri, hubVersion.isSupportsOpenAPI());
+        authenticate(run, baseHubUri, hubVersion.isOpenAPISupported());
 
         analysisServiceFactory = getAnalysisServiceFactory();
         analysisServiceFactory.setVersion(hubVersion.getVersion());

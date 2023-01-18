@@ -1,15 +1,15 @@
 package org.jenkinsci.plugins.codesonar.models;
 
-public class HubVersion {
+public class CodeSonarHubInfo {
     
     public static final String VERSION_NOT_INITIALIZED = "none";
 
     private String version;
-    private boolean supportsOpenAPI;
+    private boolean openAPISupported;
     
-    public HubVersion() {
+    public CodeSonarHubInfo() {
         version = VERSION_NOT_INITIALIZED;
-        supportsOpenAPI = false;
+        openAPISupported = false;
     }
 
     public String getVersion() {
@@ -20,12 +20,12 @@ public class HubVersion {
         this.version = version;
     }
 
-    public boolean isSupportsOpenAPI() {
-        return supportsOpenAPI;
+    public boolean isOpenAPISupported() {
+        return openAPISupported;
     }
 
-    public void setSupportsOpenAPI(boolean supportsOpenAPI) {
-        this.supportsOpenAPI = supportsOpenAPI;
+    public void setOpenAPISupported(boolean openAPISupported) {
+        this.openAPISupported = openAPISupported;
     }
     
 }
