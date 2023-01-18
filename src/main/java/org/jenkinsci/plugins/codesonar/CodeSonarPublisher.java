@@ -568,7 +568,7 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
             final List<StandardCredentials> credentials = CredentialsProvider.lookupCredentials(StandardCredentials.class, context, ACL.SYSTEM, Collections.<DomainRequirement>emptyList());
 
             return new StandardListBoxModel()
-                    .withEmptySelection()
+                    .includeEmptyValue()
                     .withMatching(CredentialsMatchers.anyOf(
                                     CredentialsMatchers.instanceOf(StandardUsernamePasswordCredentials.class),
                                     CredentialsMatchers.instanceOf(CertificateCredentials.class)
@@ -579,10 +579,9 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
             final List<StandardCredentials> credentials = CredentialsProvider.lookupCredentials(StandardCredentials.class, context, ACL.SYSTEM, Collections.<DomainRequirement>emptyList());
 
             return new StandardListBoxModel()
-                    .withEmptySelection()
+                    .includeEmptyValue()
                     .withMatching(CredentialsMatchers.anyOf(
-                            CredentialsMatchers.instanceOf(StandardUsernamePasswordCredentials.class),
-                            CredentialsMatchers.instanceOf(CertificateCredentials.class)
+                            CredentialsMatchers.instanceOf(FileCredentials.class)
                     ), credentials);
         }
 
