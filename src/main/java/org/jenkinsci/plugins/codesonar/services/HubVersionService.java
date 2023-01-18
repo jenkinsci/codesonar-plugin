@@ -86,17 +86,24 @@ public class HubVersionService {
             return null;
         }
         
-        Gson gson = new Gson();
-
-        HttpEntity entity = resp.getEntity();
-        if(entity == null) {
-            LOGGER.warning("[CodeSonar] hub compatibility info cannot be read. %n[CodeSonar] entity is null");
+        if(resp.getStatusLine() == null) {
+            LOGGER.warning(String.format("[CodeSonar] not able to read http status."));
             return null;
         }
         
-        //Hub might respond with an HTTP 404, in this case we must fail
-        if(resp.getStatusLine() != null && resp.getStatusLine().getStatusCode() == 404) {
-            LOGGER.warning(String.format("[CodeSonar] hub compatibility info have not been returned. %n[CodeSonar] response is \"%s\"", resp.getStatusLine().getReasonPhrase()));
+        if(resp.getStatusLine().getStatusCode() == 404) {
+            //Hub might respond with an HTTP 404, we want to keep track this special case
+            LOGGER.warning(String.format("[CodeSonar] specified endpoint seems not to exist on the hub. %n[CodeSonar] response is \"%d, %s\"", resp.getStatusLine().getStatusCode() , resp.getStatusLine().getReasonPhrase()));
+            return null;
+        } else if(resp.getStatusLine().getStatusCode() != 200) {
+            //Hub returned an unexpected response
+            LOGGER.warning(String.format("[CodeSonar] response is not successfull. %n[CodeSonar] response is \"%d, %s\"", resp.getStatusLine().getStatusCode() , resp.getStatusLine().getReasonPhrase()));
+            return null;
+        }
+        
+        HttpEntity entity = resp.getEntity();
+        if(entity == null) {
+            LOGGER.warning("[CodeSonar] hub compatibility info cannot be read. %n[CodeSonar] entity is null");
             return null;
         }
         
@@ -114,6 +121,7 @@ public class HubVersionService {
             return null;
         }
         
+        Gson gson = new Gson();
         VersionCompatibilityInfo vci = null;
         try {
             vci = gson.fromJson(responseBody, VersionCompatibilityInfo.class);

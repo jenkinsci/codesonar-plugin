@@ -46,6 +46,7 @@ public class AuthenticationService {
      * @throws AbortException
      */
     private void authenticate702(URI baseHubUri) throws AbortException {
+        //The implementation of this function comes from authenticate701(URI baseHubUri)
         LOGGER.log(Level.WARNING, "OpenAPI certificate authentication request");
         
         List<NameValuePair> loginForm = Form.form()
@@ -142,6 +143,7 @@ public class AuthenticationService {
      * @throws AbortException
      */
     private void authenticate702(URI baseHubUri, String username, String password) throws AbortException {
+        //The implementation of this function comes from authenticate7011(URI baseHubUri, String username, String password)
         LOGGER.log(Level.WARNING, "OpenAPI password authentication request");
         List<NameValuePair> loginForm = Form.form()
                 .add("key", "cookie")
