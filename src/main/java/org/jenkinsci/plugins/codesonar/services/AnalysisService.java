@@ -75,7 +75,7 @@ public class AnalysisService implements IAnalysisService {
 
     @Override
     public Analysis getAnalysisFromUrlWithNewWarnings(String analysisUrl) throws IOException {
-    	LOGGER.log(Level.WARNING, String.format("Calling getAnalysisFromUrlWithNewWarnings"));
+    	LOGGER.log(Level.INFO, String.format("Calling getAnalysisFromUrlWithNewWarnings"));
         URIBuilder uriBuilder;
         try {
             uriBuilder = new URIBuilder(analysisUrl);
@@ -89,7 +89,7 @@ public class AnalysisService implements IAnalysisService {
 
     @Override
     public Analysis getAnalysisFromUrlWarningsByFilter(String analysisUrl) throws IOException {
-    	LOGGER.log(Level.WARNING, String.format("Calling getAnalysisFromUrlWarningsByFilter"));
+    	LOGGER.log(Level.INFO, String.format("Calling getAnalysisFromUrlWarningsByFilter"));
         URIBuilder uriBuilder;
         try {
             uriBuilder = new URIBuilder(analysisUrl);

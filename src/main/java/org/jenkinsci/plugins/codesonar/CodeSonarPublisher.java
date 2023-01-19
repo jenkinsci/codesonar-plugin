@@ -426,21 +426,21 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
                                 Collections.<DomainRequirement>emptyList()), CredentialsMatchers.withId(getServerCertificateCredentialId()));
     
                 if(serverCertificateCredentials instanceof FileCredentials) {
-                    LOGGER.log(Level.WARNING, "[CodeSonar] Found FileCredentials provided as Hub HTTPS certificate");
+                    LOGGER.log(Level.INFO, "[CodeSonar] Found FileCredentials provided as Hub HTTPS certificate");
                     FileCredentials f = (FileCredentials) serverCertificateCredentials;
                     try {
                         CertificateFactory cf = CertificateFactory.getInstance("X.509");
                         serverCertificates = cf.generateCertificates(f.getContent());
-                        LOGGER.log(Level.WARNING, "[CodeSonar] X509Certificate initialized");
+                        LOGGER.log(Level.INFO, "[CodeSonar] X509Certificate initialized");
                     } catch (IOException | CertificateException e ) {
                         throw new AbortException(String.format("[CodeSonar] Failed to create X509Certificate from Secret File Credential. %n[CodeSonar] %s: %s%n[CodeSonar] Stack Trace: %s", e.getClass().getName(), e.getMessage(), Throwables.getStackTraceAsString(e)));
                     }
                 } else {
                     if(serverCertificateCredentials != null) {
-                        LOGGER.log(Level.WARNING, "[CodeSonar] Found {0} provided as Hub HTTPS certificate", serverCertificateCredentials.getClass().getName());
+                        LOGGER.log(Level.INFO, "[CodeSonar] Found {0} provided as Hub HTTPS certificate", serverCertificateCredentials.getClass().getName());
                         throw new AbortException(String.format("[CodeSonar] The Jenkins Credentials provided as Hub HTTPS certificate is of type %s.%n[CodeSonar] Please provide a credential of type FileCredentials", serverCertificateCredentials.getClass().getName()));
                     }
-                    LOGGER.log(Level.WARNING, "[CodeSonar] Credentials with id '{0}' not found", getServerCertificateCredentialId());
+                    LOGGER.log(Level.INFO, "[CodeSonar] Credentials with id '{0}' not found", getServerCertificateCredentialId());
                     throw new AbortException(String.format("[CodeSonar] Credentials with id '{0}' not found", getServerCertificateCredentialId()));
                 }
             }

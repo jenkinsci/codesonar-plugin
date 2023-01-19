@@ -46,19 +46,19 @@ public class HttpService {
     private int socketTimeoutMS = -1;
 
 	public HttpService(Collection<? extends Certificate> serverCertificates, KeyStore clientCertificateKeyStore, Secret clientCertificatePassword, int socketTimeoutMS) throws AbortException {
-    	LOGGER.log(Level.WARNING, "Initializing HttpService");
+    	LOGGER.log(Level.INFO, "Initializing HttpService");
     	this.socketTimeoutMS = socketTimeoutMS;
         httpCookieStore = new BasicCookieStore();
     	HttpClientBuilder httpClientBuilder = HttpClients.custom();
     	
     	if(serverCertificates != null
     			|| (clientCertificateKeyStore != null && clientCertificatePassword != null)) {
-    		LOGGER.log(Level.WARNING, "Initializing SSL context");
+    		LOGGER.log(Level.INFO, "Initializing SSL context");
     		SSLContextBuilder sslContextBuilder = SSLContextBuilder.create();
         	//If a server certificates are available, then set them in the SSL context so that they can be used by the trust strategy
         	if(serverCertificates != null) {
-        		LOGGER.log(Level.WARNING, "Adding server certificates to the SSL context");
-        		LOGGER.log(Level.WARNING, String.format("Server certificates list size %d", serverCertificates.size()));
+        		LOGGER.log(Level.INFO, "Adding server certificates to the SSL context");
+        		LOGGER.log(Level.INFO, String.format("Server certificates list size %d", serverCertificates.size()));
         		try {
 					sslContextBuilder.loadTrustMaterial(new CertificateFileTrustStrategy(serverCertificates));
 				} catch (NoSuchAlgorithmException | KeyStoreException e) {
@@ -68,7 +68,7 @@ public class HttpService {
         	
         	//If a client certificate is available, then set it in the SSL context so that it will be used during the authentication process
         	if(clientCertificateKeyStore != null && clientCertificatePassword != null) {
-        		LOGGER.log(Level.WARNING, "Adding client certificate to the SSL context");
+        		LOGGER.log(Level.INFO, "Adding client certificate to the SSL context");
         		try {
 					sslContextBuilder.loadKeyMaterial(clientCertificateKeyStore, clientCertificatePassword.getPlainText().toCharArray());
 				} catch (UnrecoverableKeyException | NoSuchAlgorithmException | KeyStoreException e) {
@@ -81,7 +81,7 @@ public class HttpService {
 				sslContext = sslContextBuilder.build();
 				final SSLConnectionSocketFactory csf = new SSLConnectionSocketFactory(sslContext);
 				httpClientBuilder.setSSLSocketFactory(csf);
-				LOGGER.log(Level.WARNING, "SSL context initialized");
+				LOGGER.log(Level.INFO, "SSL context initialized");
 			} catch (KeyManagementException | NoSuchAlgorithmException e) {
 				throw new AbortException(String.format("[CodeSonar] Error initiating SSL context.%n[CodeSonar] Exception message: %s", e.getMessage()));
 			}
@@ -90,7 +90,7 @@ public class HttpService {
     	CloseableHttpClient httpClient = httpClientBuilder.evictExpiredConnections()
     			.build();
         executor = Executor.newInstance(httpClient).use(httpCookieStore);
-        LOGGER.log(Level.WARNING, "HttpService initialized");
+        LOGGER.log(Level.INFO, "HttpService initialized");
     }
 
     public void setSocketTimeoutMS(int socketTimeoutMS) {
@@ -106,6 +106,7 @@ public class HttpService {
         if(!url.contains("response_try_plaintext")) {
             url = (url.contains("?")) ? url + "#response_try_plaintext=1" : url + "?response_try_plaintext=1";
         }
+        LOGGER.log(Level.INFO, String.format("getContentFromUrlAsString(%s)", url));
         int status = -1;
         String reason = "";
         String body = "";
@@ -113,9 +114,8 @@ public class HttpService {
         try {
             Request req = Request.Get(url);
             if(socketTimeoutMS != -1) req.socketTimeout(socketTimeoutMS);
-            LOGGER.log(Level.WARNING, String.format("getContentFromUrlAsString(%s)", url));
-            LOGGER.log(Level.WARNING, String.format("Listing cookies held by coockie store (instance: %s)", httpCookieStore.getClass().getName()));
-            httpCookieStore.getCookies().forEach(cookie -> LOGGER.log(Level.WARNING, String.format("%s  %s=%s", cookie.getClass().getName(), cookie.getName(), cookie.getValue())));
+//            LOGGER.log(Level.INFO, String.format("Listing cookies held by coockie store (instance: %s)", httpCookieStore.getClass().getName()));
+//            httpCookieStore.getCookies().forEach(cookie -> LOGGER.log(Level.INFO, String.format("%s  %s=%s", cookie.getClass().getName(), cookie.getName(), cookie.getValue())));
             HttpResponse resp = executor.execute(req).returnResponse();
             status = resp.getStatusLine().getStatusCode();
             reason = resp.getStatusLine().getReasonPhrase();
@@ -138,6 +138,7 @@ public class HttpService {
         if(!url.contains("response_try_plaintext")) {
             url = (url.contains("?")) ? url + "#response_try_plaintext=1" : url + "?response_try_plaintext=1";
         }
+        LOGGER.log(Level.INFO, String.format("getContentFromUrlAsInputStream(%s)", url));
         int status = -1;
         String reason = "";
         String body = "";
@@ -145,9 +146,8 @@ public class HttpService {
         try {
             Request req = Request.Get(url);
             if(socketTimeoutMS != -1) req.socketTimeout(socketTimeoutMS);
-            LOGGER.log(Level.WARNING, String.format("getContentFromUrlAsInputStream(%s)", url));
-            LOGGER.log(Level.WARNING, String.format("Listing cookies held by coockie store (instance: %s)", httpCookieStore.getClass().getName()));
-            httpCookieStore.getCookies().forEach(cookie -> LOGGER.log(Level.WARNING, String.format("%s  %s=%s", cookie.getClass().getName(), cookie.getName(), cookie.getValue())));
+//            LOGGER.log(Level.INFO, String.format("Listing cookies held by coockie store (instance: %s)", httpCookieStore.getClass().getName()));
+//            httpCookieStore.getCookies().forEach(cookie -> LOGGER.log(Level.INFO, String.format("%s  %s=%s", cookie.getClass().getName(), cookie.getName(), cookie.getValue())));
             HttpResponse resp = executor.execute(req).returnResponse();
             is = resp.getEntity().getContent();
             status = resp.getStatusLine().getStatusCode();

@@ -28,7 +28,7 @@ public class ProceduresService {
     }
     
     public Procedures getProceduresFromUri(URI proceduresUri) throws IOException {
-    	LOGGER.log(Level.WARNING, String.format("Calling getProceduresFromUri"));
+    	LOGGER.log(Level.INFO, String.format("Calling getProceduresFromUri"));
     	
         InputStream xmlContent = httpService.getContentFromUrlAsInputStream(proceduresUri);
 

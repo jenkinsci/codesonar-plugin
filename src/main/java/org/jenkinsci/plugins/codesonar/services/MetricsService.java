@@ -29,7 +29,7 @@ public class MetricsService {
     }
     
     public Metrics getMetricsFromUri(URI metricsUri) throws IOException {
-    	LOGGER.log(Level.WARNING, String.format("Calling getMetricsFromUri"));
+    	LOGGER.log(Level.INFO, String.format("Calling getMetricsFromUri"));
         InputStream xmlContent = httpService.getContentFromUrlAsInputStream(metricsUri);
         return  xmlSerializationService.deserialize(xmlContent, Metrics.class);
     }

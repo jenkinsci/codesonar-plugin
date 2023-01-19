@@ -34,7 +34,7 @@ public class HubVersionService {
     }
 
     public CodeSonarHubInfo getHubVersion(URI baseHubUri) throws AbortException {
-        LOGGER.log(Level.WARNING, String.format("Retrieving CodeSonar hub version"));
+        LOGGER.log(Level.INFO, String.format("Retrieving CodeSonar hub version"));
         
         CodeSonarHubInfo hubVersion = new CodeSonarHubInfo();
         
@@ -55,7 +55,7 @@ public class HubVersionService {
              * In such a case the hub version is most likely to be <= 7.0, as a result
              * let's try loading the hub version through the legacy endpoint (/command/anon_info/)
              */
-            LOGGER.log(Level.WARNING, String.format("Falling back to legacy version endpoint (/command/anon_info/)"));
+            LOGGER.log(Level.INFO, String.format("Falling back to legacy version endpoint (/command/anon_info/)"));
             String hubVersionLegacy = fetchHubVersionLegacy(baseHubUri);
             hubVersion.setVersion(hubVersionLegacy);
         }
@@ -75,35 +75,35 @@ public class HubVersionService {
         URI resolvedURI = baseHubUri;
         
         resolvedURI = baseHubUri.resolve(String.format("/command/check_version/%s/?version=%s&capability=openapi", clientName, clientVersion));
-        LOGGER.log(Level.WARNING, "Calling " + resolvedURI.toString());
+        LOGGER.log(Level.INFO, "Calling " + resolvedURI.toString());
         
         HttpResponse resp;
         try {
             resp = httpService.execute(Request.Get(resolvedURI))
                     .returnResponse();
         } catch (IOException e) {
-            LOGGER.warning(String.format("[CodeSonar] failed to get a response. %n[CodeSonar] IOException: %s%n[CodeSonar] Stack Trace: %s", e.getMessage(), Throwables.getStackTraceAsString(e)));
+        	LOGGER.log(Level.WARNING, String.format("[CodeSonar] failed to get a response. %n[CodeSonar] IOException: %s%n[CodeSonar] Stack Trace: %s", e.getMessage(), Throwables.getStackTraceAsString(e)));
             return null;
         }
         
         if(resp.getStatusLine() == null) {
-            LOGGER.warning(String.format("[CodeSonar] not able to read http status."));
+        	LOGGER.log(Level.INFO, String.format("[CodeSonar] not able to read http status."));
             return null;
         }
         
         if(resp.getStatusLine().getStatusCode() == 404) {
             //Hub might respond with an HTTP 404, we want to keep track this special case
-            LOGGER.warning(String.format("[CodeSonar] specified endpoint seems not to exist on the hub. %n[CodeSonar] response is \"%d, %s\"", resp.getStatusLine().getStatusCode() , resp.getStatusLine().getReasonPhrase()));
+        	LOGGER.log(Level.INFO, String.format("[CodeSonar] specified endpoint seems not to exist on the hub. %n[CodeSonar] response is \"%d, %s\"", resp.getStatusLine().getStatusCode() , resp.getStatusLine().getReasonPhrase()));
             return null;
         } else if(resp.getStatusLine().getStatusCode() != 200) {
             //Hub returned an unexpected response
-            LOGGER.warning(String.format("[CodeSonar] response is not successfull. %n[CodeSonar] response is \"%d, %s\"", resp.getStatusLine().getStatusCode() , resp.getStatusLine().getReasonPhrase()));
+        	LOGGER.log(Level.INFO, String.format("[CodeSonar] response is not successfull. %n[CodeSonar] response is \"%d, %s\"", resp.getStatusLine().getStatusCode() , resp.getStatusLine().getReasonPhrase()));
             return null;
         }
         
         HttpEntity entity = resp.getEntity();
         if(entity == null) {
-            LOGGER.warning("[CodeSonar] hub compatibility info cannot be read. %n[CodeSonar] entity is null");
+        	LOGGER.log(Level.INFO, "[CodeSonar] hub compatibility info cannot be read. %n[CodeSonar] entity is null");
             return null;
         }
         
@@ -111,13 +111,13 @@ public class HubVersionService {
         try {
             responseBody = EntityUtils.toString(entity, Consts.UTF_8);
         } catch (ParseException | IOException e) {
-            LOGGER.warning(String.format("[CodeSonar] failed to read the response. %n[CodeSonar] Exception: %s%n[CodeSonar] Stack Trace: %s", e.getMessage(), Throwables.getStackTraceAsString(e)));
+        	LOGGER.log(Level.WARNING, String.format("[CodeSonar] failed to read the response. %n[CodeSonar] Exception: %s%n[CodeSonar] Stack Trace: %s", e.getMessage(), Throwables.getStackTraceAsString(e)));
             return null;
         }
         
         //We cannot parse the JSON response if "responseBody" is null or if it's empty
         if(StringUtils.isEmpty(responseBody)) {
-            LOGGER.warning(String.format("[CodeSonar] response is empty. %n[CodeSonar] response is \"%s\"", responseBody));
+        	LOGGER.log(Level.INFO, String.format("[CodeSonar] response is empty. %n[CodeSonar] response is \"%s\"", responseBody));
             return null;
         }
         
@@ -125,9 +125,9 @@ public class HubVersionService {
         VersionCompatibilityInfo vci = null;
         try {
             vci = gson.fromJson(responseBody, VersionCompatibilityInfo.class);
-            LOGGER.log(Level.WARNING, String.format("[CodeSonar] %s", vci.toString()));
+            LOGGER.log(Level.INFO, String.format("[CodeSonar] %s", vci.toString()));
         } catch(JsonSyntaxException e) {
-            LOGGER.warning(String.format("[CodeSonar] failed to parse JSON response. %n[CodeSonar] Exception: %s%n[CodeSonar] Stack Trace: %s", e.getMessage(), Throwables.getStackTraceAsString(e)));
+        	LOGGER.log(Level.WARNING, String.format("[CodeSonar] failed to parse JSON response. %n[CodeSonar] Exception: %s%n[CodeSonar] Stack Trace: %s", e.getMessage(), Throwables.getStackTraceAsString(e)));
             return null;
         }
         
@@ -156,7 +156,7 @@ public class HubVersionService {
         String info;
         try {
             URI endpoint = baseHubUri.resolve("/command/anon_info/");
-            LOGGER.log(Level.WARNING, "Calling " + endpoint.toString());
+            LOGGER.log(Level.INFO, "Calling " + endpoint.toString());
             info = httpService.getContentFromUrlAsString(endpoint);
         } catch (AbortException e) {
             // /command/anon_info/ is not available. Assume hub is older than v4.2

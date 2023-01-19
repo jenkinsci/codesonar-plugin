@@ -29,7 +29,7 @@ public class AuthenticationService {
     }
     
     public void authenticate(URI baseHubUri, boolean supportsOpenAPI) throws AbortException {
-        LOGGER.log(Level.WARNING, "Starting new certificate authentication request");
+        LOGGER.log(Level.INFO, "Starting new certificate authentication request");
         if(supportsOpenAPI) {
             //If the hub supports OpenAPI, then leverage that new form of authentication
             authenticate702(baseHubUri);
@@ -47,7 +47,7 @@ public class AuthenticationService {
      */
     private void authenticate702(URI baseHubUri) throws AbortException {
         //The implementation of this function comes from authenticate701(URI baseHubUri)
-        LOGGER.log(Level.WARNING, "OpenAPI certificate authentication request");
+        LOGGER.log(Level.INFO, "OpenAPI certificate authentication request");
         
         List<NameValuePair> loginForm = Form.form()
                 .add("key", "cookie")
@@ -85,7 +85,7 @@ public class AuthenticationService {
     }
 
     private void authenticate701(URI baseHubUri) throws AbortException {
-        LOGGER.log(Level.WARNING, "Legacy certificate authentication request");
+        LOGGER.log(Level.INFO, "Legacy certificate authentication request");
 
         List<NameValuePair> loginForm = Form.form()
                 .add("sif_use_tls", "yes")
@@ -125,7 +125,7 @@ public class AuthenticationService {
     }
     
     public void authenticate(URI baseHubUri, boolean supportsOpenAPI, String username, String password) throws AbortException {
-        LOGGER.log(Level.WARNING, "Starting new password authentication request");
+        LOGGER.log(Level.INFO, "Starting new password authentication request");
         if(supportsOpenAPI) {
             //If the hub supports OpenAPI, then leverage that new form of authentication
             authenticate702(baseHubUri, username, password);
@@ -144,7 +144,7 @@ public class AuthenticationService {
      */
     private void authenticate702(URI baseHubUri, String username, String password) throws AbortException {
         //The implementation of this function comes from authenticate7011(URI baseHubUri, String username, String password)
-        LOGGER.log(Level.WARNING, "OpenAPI password authentication request");
+        LOGGER.log(Level.INFO, "OpenAPI password authentication request");
         List<NameValuePair> loginForm = Form.form()
                 .add("key", "cookie")
                 .build();
@@ -162,10 +162,10 @@ public class AuthenticationService {
             status = resp.getStatusLine().getStatusCode();
             reason = resp.getStatusLine().getReasonPhrase();
             Header[] allHeaders = resp.getAllHeaders();
-            LOGGER.log(Level.WARNING, "Response headers:");
-            for (int i = 0; i < allHeaders.length; i++) {
-                LOGGER.log(Level.WARNING, String.format("%s:%s", allHeaders[i].getName(), allHeaders[i].getValue()));
-            }
+//            LOGGER.log(Level.INFO, "Response headers:");
+//            for (int i = 0; i < allHeaders.length; i++) {
+//                LOGGER.log(Level.INFO, String.format("%s:%s", allHeaders[i].getName(), allHeaders[i].getValue()));
+//            }
             body = EntityUtils.toString(resp.getEntity(), "UTF-8");
         } catch (IOException e) {
             throw new AbortException(String.format("[CodeSonar] failed to authenticate. %n[CodeSonar] IOException: %s%n[CodeSonar] Stack Trace: %s", e.getMessage(), Throwables.getStackTraceAsString(e)));
@@ -183,7 +183,7 @@ public class AuthenticationService {
     }
 
     private void authenticate701(URI baseHubUri, String username, String password) throws AbortException {
-        LOGGER.log(Level.WARNING, "Legacy password authentication request");
+        LOGGER.log(Level.INFO, "Legacy password authentication request");
         List<NameValuePair> loginForm = Form.form()
                 .add("sif_username", username)
                 .add("sif_password", password)
@@ -205,10 +205,10 @@ public class AuthenticationService {
             status = resp.getStatusLine().getStatusCode();
             reason = resp.getStatusLine().getReasonPhrase();
             Header[] allHeaders = resp.getAllHeaders();
-            LOGGER.log(Level.WARNING, "Response headers:");
-            for (int i = 0; i < allHeaders.length; i++) {
-                LOGGER.log(Level.WARNING, String.format("%s:%s", allHeaders[i].getName(), allHeaders[i].getValue()));
-            }
+//            LOGGER.log(Level.INFO, "Response headers:");
+//            for (int i = 0; i < allHeaders.length; i++) {
+//                LOGGER.log(Level.INFO, String.format("%s:%s", allHeaders[i].getName(), allHeaders[i].getValue()));
+//            }
             body = EntityUtils.toString(resp.getEntity(), "UTF-8");
         } catch (IOException e) {
             throw new AbortException(String.format("[CodeSonar] failed to authenticate. %n[CodeSonar] IOException: %s%n[CodeSonar] Stack Trace: %s", e.getMessage(), Throwables.getStackTraceAsString(e)));
