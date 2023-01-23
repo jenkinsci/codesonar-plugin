@@ -8,7 +8,6 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import org.apache.http.Header;
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.fluent.Form;
@@ -161,7 +160,7 @@ public class AuthenticationService {
             
             status = resp.getStatusLine().getStatusCode();
             reason = resp.getStatusLine().getReasonPhrase();
-            Header[] allHeaders = resp.getAllHeaders();
+//            Header[] allHeaders = resp.getAllHeaders();
 //            LOGGER.log(Level.INFO, "Response headers:");
 //            for (int i = 0; i < allHeaders.length; i++) {
 //                LOGGER.log(Level.INFO, String.format("%s:%s", allHeaders[i].getName(), allHeaders[i].getValue()));
@@ -204,7 +203,7 @@ public class AuthenticationService {
             
             status = resp.getStatusLine().getStatusCode();
             reason = resp.getStatusLine().getReasonPhrase();
-            Header[] allHeaders = resp.getAllHeaders();
+//            Header[] allHeaders = resp.getAllHeaders();
 //            LOGGER.log(Level.INFO, "Response headers:");
 //            for (int i = 0; i < allHeaders.length; i++) {
 //                LOGGER.log(Level.INFO, String.format("%s:%s", allHeaders[i].getName(), allHeaders[i].getValue()));

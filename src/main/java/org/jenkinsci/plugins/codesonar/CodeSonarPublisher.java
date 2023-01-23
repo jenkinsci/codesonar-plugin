@@ -30,7 +30,7 @@ import org.jenkinsci.plugins.codesonar.models.metrics.Metrics;
 import org.jenkinsci.plugins.codesonar.models.procedures.Procedures;
 import org.jenkinsci.plugins.codesonar.services.AuthenticationService;
 import org.jenkinsci.plugins.codesonar.services.HttpService;
-import org.jenkinsci.plugins.codesonar.services.HubVersionService;
+import org.jenkinsci.plugins.codesonar.services.HubInfoService;
 import org.jenkinsci.plugins.codesonar.services.IAnalysisService;
 import org.jenkinsci.plugins.codesonar.services.MetricsService;
 import org.jenkinsci.plugins.codesonar.services.ProceduresService;
@@ -84,7 +84,7 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
     private static final Logger LOGGER = Logger.getLogger(CodeSonarPublisher.class.getName());
     
     public static final String CODESONAR_HUB_CLIENT_NAME = "jenkins";
-    public static final String CODESONAR_HUB_CLIENT_PROTOCOL_VERSION_NUMBER = "200";
+    public static final int CODESONAR_HUB_CLIENT_PROTOCOL_VERSION_NUMBER = 2;
     
     private String visibilityFilter = "2"; // active warnings
     private String hubAddress;
@@ -99,7 +99,7 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
     private IAnalysisService analysisService = null;
     private MetricsService metricsService = null;
     private ProceduresService proceduresService = null;
-    private HubVersionService hubVersionService = null;
+    private HubInfoService hubInfoService = null;
     
     private AnalysisServiceFactory analysisServiceFactory = null;
 
@@ -213,7 +213,7 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
         authenticationService = getAuthenticationService(run);
         metricsService = getMetricsService(run);
         proceduresService = getProceduresService(run);
-        hubVersionService = getHubVersionService(run);
+        hubInfoService = getHubInfoService(run);
         analysisServiceFactory = getAnalysisServiceFactory();
 
         String expandedHubAddress = run.getEnvironment(listener).expand(Util.fixNull(hubAddress));
@@ -229,13 +229,13 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
         URI baseHubUri = URI.create(String.format("%s://%s", getProtocol(), expandedHubAddress));
         listener.getLogger().println("[Codesonar] Using hub URI: "+baseHubUri);
 
-        CodeSonarHubInfo hubVersion = hubVersionService.getHubVersion(baseHubUri);
-        LOGGER.log(Level.FINE, "hub version: {0}", hubVersion.getVersion());
+        CodeSonarHubInfo hubInfo = hubInfoService.fetchHubInfo(baseHubUri);
+        LOGGER.log(Level.FINE, "hub version: {0}", hubInfo.getVersion());
         
-        authenticate(run, baseHubUri, hubVersion.isOpenAPISupported());
+        authenticate(run, baseHubUri, hubInfo.isOpenAPISupported());
 
         analysisServiceFactory = getAnalysisServiceFactory();
-        analysisServiceFactory.setVersion(hubVersion.getVersion());
+        analysisServiceFactory.setVersion(hubInfo.getVersion());
         analysisService = analysisServiceFactory.getAnalysisService(httpService, xmlSerializationService);
         analysisService.setVisibilityFilter(getVisibilityFilter());
 
@@ -494,11 +494,11 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
         return proceduresService;
     }
     
-    public HubVersionService getHubVersionService(@Nonnull Run<?, ?> run) throws AbortException {
-        if (hubVersionService == null) {
-            hubVersionService = new HubVersionService(getHttpService(run));
+    public HubInfoService getHubInfoService(@Nonnull Run<?, ?> run) throws AbortException {
+        if (hubInfoService == null) {
+            hubInfoService = new HubInfoService(getHttpService(run));
         }
-        return hubVersionService;
+        return hubInfoService;
     }
     
     public AnalysisServiceFactory getAnalysisServiceFactory() {
