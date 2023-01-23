@@ -1,6 +1,6 @@
 package org.jenkinsci.plugins.codesonar.models;
 
-public class Capabilities {
+public class CodeSonarHubCapabilityInfo {
 	private Boolean openapi;
 
 	public Boolean getOpenapi() {

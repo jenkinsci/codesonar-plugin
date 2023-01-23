@@ -16,7 +16,7 @@ import org.apache.http.client.fluent.Request;
 import org.apache.http.util.EntityUtils;
 import org.jenkinsci.plugins.codesonar.CodeSonarPublisher;
 import org.jenkinsci.plugins.codesonar.models.CodeSonarHubInfo;
-import org.jenkinsci.plugins.codesonar.models.VersionCompatibilityInfo;
+import org.jenkinsci.plugins.codesonar.models.CodeSonarHubClientCompatibilityInfo;
 
 import com.google.common.base.Throwables;
 import com.google.gson.Gson;
@@ -38,17 +38,17 @@ public class HubInfoService {
         
         CodeSonarHubInfo hubInfo = new CodeSonarHubInfo();
         
-        VersionCompatibilityInfo vci = fetchVersionCompatibilityInfo(baseHubUri, CodeSonarPublisher.CODESONAR_HUB_CLIENT_NAME, CodeSonarPublisher.CODESONAR_HUB_CLIENT_PROTOCOL_VERSION_NUMBER);
+        CodeSonarHubClientCompatibilityInfo cci = fetchVersionCompatibilityInfo(baseHubUri, CodeSonarPublisher.CODESONAR_HUB_CLIENT_NAME, CodeSonarPublisher.CODESONAR_HUB_CLIENT_PROTOCOL_VERSION_NUMBER);
             
-        if(vci != null) {
-            hubInfo.setVersion(vci.getHubVersion());
+        if(cci != null) {
+            hubInfo.setVersion(cci.getHubVersion());
             
             //If this client is supposed to be able to talk to the hub
-            if(checkClientOk(vci)) {
-                hubInfo.setOpenAPISupported(supportsOpenAPI(vci));
+            if(checkClientOk(cci)) {
+                hubInfo.setOpenAPISupported(supportsOpenAPI(cci));
             } else {
                 //In this case this client has been rejected by the hub
-                throw new AbortException(String.format("[CodeSonar] client rejected by the hub. %n[CodeSonar] clientOK=%s", vci.getClientOK().toString()));
+                throw new AbortException(String.format("[CodeSonar] client rejected by the hub. %n[CodeSonar] clientOK=%s", cci.getClientOK().toString()));
             }
         } else {
             /*
@@ -71,7 +71,7 @@ public class HubInfoService {
      * @throws AbortException when hub returns an unexpected response
      * @throws IOException thrown when the communication with the hub fails
      */
-    private VersionCompatibilityInfo fetchVersionCompatibilityInfo(URI baseHubUri, String clientName, int clientVersion) throws AbortException {
+    private CodeSonarHubClientCompatibilityInfo fetchVersionCompatibilityInfo(URI baseHubUri, String clientName, int clientVersion) throws AbortException {
         
         URI resolvedURI = baseHubUri;
         
@@ -114,16 +114,16 @@ public class HubInfoService {
         }
         
         Gson gson = new Gson();
-        VersionCompatibilityInfo vci = null;
+        CodeSonarHubClientCompatibilityInfo cci = null;
         try {
-            vci = gson.fromJson(responseBody, VersionCompatibilityInfo.class);
-            LOGGER.log(Level.INFO, String.format("[CodeSonar] %s", vci.toString()));
+            cci = gson.fromJson(responseBody, CodeSonarHubClientCompatibilityInfo.class);
+            LOGGER.log(Level.INFO, String.format("[CodeSonar] %s", cci.toString()));
         } catch(JsonSyntaxException e) {
         	LOGGER.log(Level.WARNING, String.format("[CodeSonar] failed to parse JSON response. %n[CodeSonar] Exception: %s%n[CodeSonar] Stack Trace: %s", e.getMessage(), Throwables.getStackTraceAsString(e)));
             return null;
         }
         
-        return vci;
+        return cci;
     }
     
     private String readResponseBody(HttpResponse resp) {
@@ -141,15 +141,15 @@ public class HubInfoService {
         }
     }
     
-    private boolean supportsOpenAPI(VersionCompatibilityInfo vci) {
-        return vci.getCapabilities() != null
-                && vci.getCapabilities().getOpenapi() != null
-                && vci.getCapabilities().getOpenapi().booleanValue();
+    private boolean supportsOpenAPI(CodeSonarHubClientCompatibilityInfo cci) {
+        return cci.getCapabilities() != null
+                && cci.getCapabilities().getOpenapi() != null
+                && cci.getCapabilities().getOpenapi().booleanValue();
     }
 
-    private boolean checkClientOk(VersionCompatibilityInfo vci) {
+    private boolean checkClientOk(CodeSonarHubClientCompatibilityInfo cci) {
         //If "clientOk" is either "true" or "null", this means that this client is supposed to be able to talk to the hub
-        return vci.getClientOK() == null || vci.getClientOK().booleanValue();
+        return cci.getClientOK() == null || cci.getClientOK().booleanValue();
     }
     
     /**

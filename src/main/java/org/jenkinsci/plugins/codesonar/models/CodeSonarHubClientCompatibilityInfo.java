@@ -1,12 +1,12 @@
 package org.jenkinsci.plugins.codesonar.models;
 
-public class VersionCompatibilityInfo {
+public class CodeSonarHubClientCompatibilityInfo {
 	private String hubVersion;
 	private long hubVersionNumber;
 	private long hubProtocol;
 	private Boolean clientOK;
 	private String message;
-	private Capabilities capabilities;
+	private CodeSonarHubCapabilityInfo capabilities;
 	
 	public String getHubVersion() {
 		return hubVersion;
@@ -38,10 +38,10 @@ public class VersionCompatibilityInfo {
 	public void setMessage(String message) {
 		this.message = message;
 	}
-	public Capabilities getCapabilities() {
+	public CodeSonarHubCapabilityInfo getCapabilities() {
 		return capabilities;
 	}
-	public void setCapabilities(Capabilities capabilities) {
+	public void setCapabilities(CodeSonarHubCapabilityInfo capabilities) {
 		this.capabilities = capabilities;
 	}
 	
