@@ -14,9 +14,8 @@ import org.apache.http.HttpResponse;
 import org.apache.http.ParseException;
 import org.apache.http.client.fluent.Request;
 import org.apache.http.util.EntityUtils;
-import org.jenkinsci.plugins.codesonar.CodeSonarPublisher;
-import org.jenkinsci.plugins.codesonar.models.CodeSonarHubInfo;
 import org.jenkinsci.plugins.codesonar.models.CodeSonarHubClientCompatibilityInfo;
+import org.jenkinsci.plugins.codesonar.models.CodeSonarHubInfo;
 
 import com.google.common.base.Throwables;
 import com.google.gson.Gson;
@@ -26,6 +25,9 @@ import hudson.AbortException;
 
 public class HubInfoService {
     private static final Logger LOGGER = Logger.getLogger(HubInfoService.class.getName());
+    
+    public static final String CODESONAR_HUB_CLIENT_NAME = "jenkins";
+    public static final int CODESONAR_HUB_CLIENT_PROTOCOL_VERSION_NUMBER = 2;
     
     private HttpService httpService;
 
@@ -38,7 +40,7 @@ public class HubInfoService {
         
         CodeSonarHubInfo hubInfo = new CodeSonarHubInfo();
         
-        CodeSonarHubClientCompatibilityInfo cci = fetchVersionCompatibilityInfo(baseHubUri, CodeSonarPublisher.CODESONAR_HUB_CLIENT_NAME, CodeSonarPublisher.CODESONAR_HUB_CLIENT_PROTOCOL_VERSION_NUMBER);
+        CodeSonarHubClientCompatibilityInfo cci = fetchVersionCompatibilityInfo(baseHubUri, CODESONAR_HUB_CLIENT_NAME, CODESONAR_HUB_CLIENT_PROTOCOL_VERSION_NUMBER);
             
         if(cci != null) {
             hubInfo.setVersion(cci.getHubVersion());

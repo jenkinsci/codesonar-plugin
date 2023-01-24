@@ -83,9 +83,6 @@ import jenkins.tasks.SimpleBuildStep;
 public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
     private static final Logger LOGGER = Logger.getLogger(CodeSonarPublisher.class.getName());
     
-    public static final String CODESONAR_HUB_CLIENT_NAME = "jenkins";
-    public static final int CODESONAR_HUB_CLIENT_PROTOCOL_VERSION_NUMBER = 2;
-    
     private String visibilityFilter = "2"; // active warnings
     private String hubAddress;
     private String projectName;
