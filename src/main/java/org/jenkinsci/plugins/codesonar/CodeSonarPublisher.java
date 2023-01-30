@@ -280,7 +280,7 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
             listener.getLogger().println(String.format("[CodeSonar] '%s' marked the build as %s", condition.getDescriptor().getDisplayName(), validationResult.toString()));
         }
         
-        listener.getLogger().println("[Codesonar] Done evaulating conditions");
+        listener.getLogger().println("[Codesonar] Done evaluating conditions");
         
         csba.getBuildActionDTO().setConditionNamesAndResults(conditionNamesAndResults);
         run.addAction(csba);
