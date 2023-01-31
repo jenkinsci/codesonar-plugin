@@ -85,33 +85,33 @@ public class HubInfoService {
             resp = httpService.execute(Request.Get(resolvedURI))
                     .returnResponse();
         } catch (IOException e) {
-        	LOGGER.log(Level.WARNING, String.format("[CodeSonar] failed to get a response. %n[CodeSonar] IOException: %s%n[CodeSonar] Stack Trace: %s", e.getMessage(), Throwables.getStackTraceAsString(e)));
+            LOGGER.log(Level.WARNING, String.format("[CodeSonar] failed to get a response. %n[CodeSonar] IOException: %s%n[CodeSonar] Stack Trace: %s", e.getMessage(), Throwables.getStackTraceAsString(e)));
             return null;
         }
         
         if(resp.getStatusLine() == null) {
-        	LOGGER.log(Level.INFO, String.format("[CodeSonar] not able to read http status."));
+            LOGGER.log(Level.INFO, String.format("[CodeSonar] not able to read http status."));
             return null;
         }
         
         if(resp.getStatusLine().getStatusCode() == 404) {
             //Hub might respond with an HTTP 404, we want to keep track this special case
-        	LOGGER.log(Level.INFO, String.format("[CodeSonar] specified endpoint seems not to exist on the hub. %n[CodeSonar] response is \"%d, %s\"", resp.getStatusLine().getStatusCode() , resp.getStatusLine().getReasonPhrase()));
+            LOGGER.log(Level.INFO, String.format("[CodeSonar] specified endpoint seems not to exist on the hub. %n[CodeSonar] response is \"%d, %s\"", resp.getStatusLine().getStatusCode() , resp.getStatusLine().getReasonPhrase()));
             return null;
         } else if(resp.getStatusLine().getStatusCode() != 200) {
             //Hub returned an unexpected response
             String responseBody = readResponseBody(resp);
-        	throw new AbortException(String.format("[CodeSonar] response is not successfull. %n[CodeSonar] response is \"%d, %s\" %n[CodeSonar] respose body: \"%s\"", resp.getStatusLine().getStatusCode() , resp.getStatusLine().getReasonPhrase(), responseBody));
+            throw new AbortException(String.format("[CodeSonar] response is not successfull. %n[CodeSonar] response is \"%d, %s\" %n[CodeSonar] respose body: \"%s\"", resp.getStatusLine().getStatusCode() , resp.getStatusLine().getReasonPhrase(), responseBody));
         }
         
         String responseBody = readResponseBody(resp);
         if(responseBody == null) {
-        	return null;
+            return null;
         }
         
         //We cannot parse the JSON response if "responseBody" is null or if it's empty
         if(StringUtils.isEmpty(responseBody)) {
-        	LOGGER.log(Level.INFO, String.format("[CodeSonar] response is empty. %n[CodeSonar] response is \"%s\"", responseBody));
+            LOGGER.log(Level.INFO, String.format("[CodeSonar] response is empty. %n[CodeSonar] response is \"%s\"", responseBody));
             return null;
         }
         
@@ -121,7 +121,7 @@ public class HubInfoService {
             cci = gson.fromJson(responseBody, CodeSonarHubClientCompatibilityInfo.class);
             LOGGER.log(Level.INFO, String.format("[CodeSonar] %s", cci.toString()));
         } catch(JsonSyntaxException e) {
-        	LOGGER.log(Level.WARNING, String.format("[CodeSonar] failed to parse JSON response. %n[CodeSonar] Exception: %s%n[CodeSonar] Stack Trace: %s", e.getMessage(), Throwables.getStackTraceAsString(e)));
+            LOGGER.log(Level.WARNING, String.format("[CodeSonar] failed to parse JSON response. %n[CodeSonar] Exception: %s%n[CodeSonar] Stack Trace: %s", e.getMessage(), Throwables.getStackTraceAsString(e)));
             return null;
         }
         
@@ -131,14 +131,14 @@ public class HubInfoService {
     private String readResponseBody(HttpResponse resp) {
         HttpEntity entity = resp.getEntity();
         if(entity == null) {
-        	LOGGER.log(Level.INFO, "[CodeSonar] hub compatibility info cannot be read. %n[CodeSonar] entity is null");
+            LOGGER.log(Level.INFO, "[CodeSonar] hub compatibility info cannot be read. %n[CodeSonar] entity is null");
             return null;
         }
         
         try {
             return EntityUtils.toString(entity, Consts.UTF_8);
         } catch (ParseException | IOException e) {
-        	LOGGER.log(Level.WARNING, String.format("[CodeSonar] failed to read the response. %n[CodeSonar] Exception: %s%n[CodeSonar] Stack Trace: %s", e.getMessage(), Throwables.getStackTraceAsString(e)));
+            LOGGER.log(Level.WARNING, String.format("[CodeSonar] failed to read the response. %n[CodeSonar] Exception: %s%n[CodeSonar] Stack Trace: %s", e.getMessage(), Throwables.getStackTraceAsString(e)));
             return null;
         }
     }

@@ -45,50 +45,50 @@ public class HttpService {
     private Executor executor;
     private int socketTimeoutMS = -1;
 
-	public HttpService(Collection<? extends Certificate> serverCertificates, KeyStore clientCertificateKeyStore, Secret clientCertificatePassword, int socketTimeoutMS) throws AbortException {
-    	LOGGER.log(Level.INFO, "Initializing HttpService");
-    	this.socketTimeoutMS = socketTimeoutMS;
+    public HttpService(Collection<? extends Certificate> serverCertificates, KeyStore clientCertificateKeyStore, Secret clientCertificatePassword, int socketTimeoutMS) throws AbortException {
+        LOGGER.log(Level.INFO, "Initializing HttpService");
+        this.socketTimeoutMS = socketTimeoutMS;
         httpCookieStore = new BasicCookieStore();
-    	HttpClientBuilder httpClientBuilder = HttpClients.custom();
-    	
-    	if(serverCertificates != null
-    			|| (clientCertificateKeyStore != null && clientCertificatePassword != null)) {
-    		LOGGER.log(Level.INFO, "Initializing SSL context");
-    		SSLContextBuilder sslContextBuilder = SSLContextBuilder.create();
-        	//If a server certificates are available, then set them in the SSL context so that they can be used by the trust strategy
-        	if(serverCertificates != null) {
-        		LOGGER.log(Level.INFO, "Adding server certificates to the SSL context");
-        		LOGGER.log(Level.INFO, String.format("Server certificates list size %d", serverCertificates.size()));
-        		try {
-					sslContextBuilder.loadTrustMaterial(new CertificateFileTrustStrategy(serverCertificates));
-				} catch (NoSuchAlgorithmException | KeyStoreException e) {
-					throw new AbortException(String.format("[CodeSonar] Error setting up server certificates  %n[CodeSonar] %s: %s%n[CodeSonar] Stack Trace: %s", e.getClass().getName(), e.getMessage(), Throwables.getStackTraceAsString(e)));
-				}
-        	}
-        	
-        	//If a client certificate is available, then set it in the SSL context so that it will be used during the authentication process
-        	if(clientCertificateKeyStore != null && clientCertificatePassword != null) {
-        		LOGGER.log(Level.INFO, "Adding client certificate to the SSL context");
-        		try {
-					sslContextBuilder.loadKeyMaterial(clientCertificateKeyStore, clientCertificatePassword.getPlainText().toCharArray());
-				} catch (UnrecoverableKeyException | NoSuchAlgorithmException | KeyStoreException e) {
-					throw new AbortException(String.format("[CodeSonar] Error setting up client certificate  %n[CodeSonar] %s: %s%n[CodeSonar] Stack Trace: %s", e.getClass().getName(), e.getMessage(), Throwables.getStackTraceAsString(e)));
-				}
-        	}
-        	//Prepare the SSL context in order to let the HTTP client using specified certificates
-        	SSLContext sslContext;
-			try {
-				sslContext = sslContextBuilder.build();
-				final SSLConnectionSocketFactory csf = new SSLConnectionSocketFactory(sslContext);
-				httpClientBuilder.setSSLSocketFactory(csf);
-				LOGGER.log(Level.INFO, "SSL context initialized");
-			} catch (KeyManagementException | NoSuchAlgorithmException e) {
-				throw new AbortException(String.format("[CodeSonar] Error initiating SSL context.%n[CodeSonar] Exception message: %s", e.getMessage()));
-			}
-    	}
-    	
-    	CloseableHttpClient httpClient = httpClientBuilder.evictExpiredConnections()
-    			.build();
+        HttpClientBuilder httpClientBuilder = HttpClients.custom();
+        
+        if(serverCertificates != null
+                || (clientCertificateKeyStore != null && clientCertificatePassword != null)) {
+            LOGGER.log(Level.INFO, "Initializing SSL context");
+            SSLContextBuilder sslContextBuilder = SSLContextBuilder.create();
+            //If a server certificates are available, then set them in the SSL context so that they can be used by the trust strategy
+            if(serverCertificates != null) {
+                LOGGER.log(Level.INFO, "Adding server certificates to the SSL context");
+                LOGGER.log(Level.INFO, String.format("Server certificates list size %d", serverCertificates.size()));
+                try {
+                    sslContextBuilder.loadTrustMaterial(new CertificateFileTrustStrategy(serverCertificates));
+                } catch (NoSuchAlgorithmException | KeyStoreException e) {
+                    throw new AbortException(String.format("[CodeSonar] Error setting up server certificates  %n[CodeSonar] %s: %s%n[CodeSonar] Stack Trace: %s", e.getClass().getName(), e.getMessage(), Throwables.getStackTraceAsString(e)));
+                }
+            }
+            
+            //If a client certificate is available, then set it in the SSL context so that it will be used during the authentication process
+            if(clientCertificateKeyStore != null && clientCertificatePassword != null) {
+                LOGGER.log(Level.INFO, "Adding client certificate to the SSL context");
+                try {
+                    sslContextBuilder.loadKeyMaterial(clientCertificateKeyStore, clientCertificatePassword.getPlainText().toCharArray());
+                } catch (UnrecoverableKeyException | NoSuchAlgorithmException | KeyStoreException e) {
+                    throw new AbortException(String.format("[CodeSonar] Error setting up client certificate  %n[CodeSonar] %s: %s%n[CodeSonar] Stack Trace: %s", e.getClass().getName(), e.getMessage(), Throwables.getStackTraceAsString(e)));
+                }
+            }
+            //Prepare the SSL context in order to let the HTTP client using specified certificates
+            SSLContext sslContext;
+            try {
+                sslContext = sslContextBuilder.build();
+                final SSLConnectionSocketFactory csf = new SSLConnectionSocketFactory(sslContext);
+                httpClientBuilder.setSSLSocketFactory(csf);
+                LOGGER.log(Level.INFO, "SSL context initialized");
+            } catch (KeyManagementException | NoSuchAlgorithmException e) {
+                throw new AbortException(String.format("[CodeSonar] Error initiating SSL context.%n[CodeSonar] Exception message: %s", e.getMessage()));
+            }
+        }
+        
+        CloseableHttpClient httpClient = httpClientBuilder.evictExpiredConnections()
+                .build();
         executor = Executor.newInstance(httpClient).use(httpCookieStore);
         LOGGER.log(Level.INFO, "HttpService initialized");
     }

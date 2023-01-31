@@ -14,8 +14,8 @@ import org.jenkinsci.plugins.codesonar.models.metrics.Metrics;
  * @author Andrius
  */
 public class MetricsService {
-	private static final Logger LOGGER = Logger.getLogger(MetricsService.class.getName());
-	
+    private static final Logger LOGGER = Logger.getLogger(MetricsService.class.getName());
+    
     private HttpService httpService;
     private XmlSerializationService xmlSerializationService;
 
@@ -29,7 +29,7 @@ public class MetricsService {
     }
     
     public Metrics getMetricsFromUri(URI metricsUri) throws IOException {
-    	LOGGER.log(Level.INFO, String.format("Calling getMetricsFromUri"));
+        LOGGER.log(Level.INFO, String.format("Calling getMetricsFromUri"));
         InputStream xmlContent = httpService.getContentFromUrlAsInputStream(metricsUri);
         return  xmlSerializationService.deserialize(xmlContent, Metrics.class);
     }

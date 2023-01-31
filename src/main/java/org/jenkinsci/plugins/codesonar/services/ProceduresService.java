@@ -13,8 +13,8 @@ import org.jenkinsci.plugins.codesonar.models.procedures.Procedures;
  * @author Andrius
  */
 public class ProceduresService {
-	private static final Logger LOGGER = Logger.getLogger(ProceduresService.class.getName());
-	
+    private static final Logger LOGGER = Logger.getLogger(ProceduresService.class.getName());
+    
     final private HttpService httpService;
     final private XmlSerializationService xmlSerializationService;
 
@@ -28,8 +28,8 @@ public class ProceduresService {
     }
     
     public Procedures getProceduresFromUri(URI proceduresUri) throws IOException {
-    	LOGGER.log(Level.INFO, String.format("Calling getProceduresFromUri"));
-    	
+        LOGGER.log(Level.INFO, String.format("Calling getProceduresFromUri"));
+        
         InputStream xmlContent = httpService.getContentFromUrlAsInputStream(proceduresUri);
 
         return xmlSerializationService.deserialize(xmlContent, Procedures.class);
