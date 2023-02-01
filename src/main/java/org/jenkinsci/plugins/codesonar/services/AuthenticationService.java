@@ -1,43 +1,90 @@
 package org.jenkinsci.plugins.codesonar.services;
 
-import com.google.common.base.Throwables;
-import hudson.AbortException;
 import java.io.IOException;
 import java.net.URI;
-import java.security.KeyManagementException;
-import java.security.KeyStore;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
-import java.security.UnrecoverableKeyException;
+import java.nio.charset.Charset;
+import java.util.Base64;
 import java.util.List;
-import javax.net.ssl.SSLContext;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.fluent.Executor;
 import org.apache.http.client.fluent.Form;
 import org.apache.http.client.fluent.Request;
-import org.apache.http.impl.client.HttpClients;
-import org.apache.http.ssl.SSLContexts;
 import org.apache.http.util.EntityUtils;
 
+import com.google.common.base.Throwables;
+
+import hudson.AbortException;
+
 public class AuthenticationService {
+    private static final Logger LOGGER = Logger.getLogger(AuthenticationService.class.getName());
+    private static final String HTTP_HEADER_AUTHORIZATION = "Authorization";
     private HttpService httpService;
 
     public AuthenticationService(HttpService httpService) {
         this.httpService = httpService;
     }
+    
+    public void authenticate(URI baseHubUri, boolean supportsOpenAPI) throws AbortException {
+        LOGGER.log(Level.INFO, "Starting new certificate authentication request");
+        if(supportsOpenAPI) {
+            //If the hub supports OpenAPI, then leverage that new form of authentication
+            authenticate702(baseHubUri);
+        } else {
+            //If the hub does not support OpenAPI, then fallback to the legacy authentication method
+            authenticate701(baseHubUri);
+        }
+    }
 
-    public void authenticate(URI baseHubUri, KeyStore keyStore, String password) throws AbortException {
-        SSLContext sslContext;
+    /**
+     * OpenAPI certificate authentication
+     * @param baseHubUri
+     * @param username
+     * @throws AbortException
+     */
+    private void authenticate702(URI baseHubUri) throws AbortException {
+        //The implementation of this function comes from authenticate701(URI baseHubUri)
+        LOGGER.log(Level.INFO, "OpenAPI certificate authentication request");
+        
+        List<NameValuePair> loginForm = Form.form()
+                .add("key", "cookie")
+                .build();
+
+        int status = -1;
+        String reason = "";
+        String body = "";
+        URI resolvedURI = baseHubUri;
+
         try {
-            sslContext = SSLContexts.custom().loadKeyMaterial(keyStore, password.toCharArray()).build();
-        } catch (KeyManagementException | NoSuchAlgorithmException | KeyStoreException | UnrecoverableKeyException e) {
-            throw new AbortException(String.format("[CodeSonar] failed to authenticate. %n[CodeSonar] %s: %s%n[CodeSonar] Stack Trace: %s", e.getClass().getName(), e.getMessage(), Throwables.getStackTraceAsString(e)));        }
+            resolvedURI = baseHubUri.resolve("/session/create-tls-client-certificate/");
 
-        HttpClient httpClient = HttpClients.custom().setSSLContext(sslContext).build();
+            HttpResponse resp = httpService.execute(Request.Post(resolvedURI)
+                    .addHeader("X-CSHUB-USE-TLS-CLIENT-AUTH", "1")
+                    .bodyForm(loginForm))
+                    .returnResponse();
 
-        httpService.setExecutor(Executor.newInstance(httpClient).use(httpService.getHttpCookieStore()));
+            status = resp.getStatusLine().getStatusCode();
+            reason = resp.getStatusLine().getReasonPhrase();
+            body = EntityUtils.toString(resp.getEntity(), "UTF-8");
+        } catch (IOException e) {
+            throw new AbortException(String.format("[CodeSonar] failed to authenticate. %n[CodeSonar] IOException: %s%n[CodeSonar] Stack Trace: %s", e.getMessage(), Throwables.getStackTraceAsString(e)));
+        }
+
+        if(status == 301) { //HTTP 301 - MOVED PERMANENTLY
+            if(baseHubUri.getScheme().equalsIgnoreCase("http")) {
+                throw new AbortException(String.format("[CodeSonar] failed to authenticate. Possible reason could be the CodeSonar hub running on https, while protocol http was specified.%n[CodeSonar] HTTP status code: %s - %s %n[CodeSonar] HTTP Body: %s", status, reason, body));
+            }
+        }
+
+        if (status != 200) {
+            throw new AbortException(String.format("[CodeSonar] failed to authenticate. %n[CodeSonar] HTTP status code: %s - %s %n[CodeSonar] HTTP Body: %s", status, reason, body));
+        }
+    }
+
+    private void authenticate701(URI baseHubUri) throws AbortException {
+        LOGGER.log(Level.INFO, "Legacy certificate authentication request");
 
         List<NameValuePair> loginForm = Form.form()
                 .add("sif_use_tls", "yes")
@@ -75,8 +122,67 @@ public class AuthenticationService {
             throw new AbortException(String.format("[CodeSonar] failed to authenticate. %n[CodeSonar] HTTP status code: %s - %s %n[CodeSonar] HTTP Body: %s", status, reason, body));
         }
     }
+    
+    public void authenticate(URI baseHubUri, boolean supportsOpenAPI, String username, String password) throws AbortException {
+        LOGGER.log(Level.INFO, "Starting new password authentication request");
+        if(supportsOpenAPI) {
+            //If the hub supports OpenAPI, then leverage that new form of authentication
+            authenticate702(baseHubUri, username, password);
+        } else {
+            //If the hub does not support OpenAPI, then fallback to the legacy authentication method
+            authenticate701(baseHubUri, username, password);
+        }
+    }
 
-    public void authenticate(URI baseHubUri, String username, String password) throws AbortException {
+    /**
+     * OpenAPI password authentication endpoint
+     * @param baseHubUri
+     * @param username
+     * @param password
+     * @throws AbortException
+     */
+    private void authenticate702(URI baseHubUri, String username, String password) throws AbortException {
+        //The implementation of this function comes from authenticate7011(URI baseHubUri, String username, String password)
+        LOGGER.log(Level.INFO, "OpenAPI password authentication request");
+        List<NameValuePair> loginForm = Form.form()
+                .add("key", "cookie")
+                .build();
+        int status = -1;
+        String reason = "";
+        String body = "";
+        URI resolvedURI = baseHubUri;
+        try {
+            resolvedURI = baseHubUri.resolve("/session/create-basic-auth/");
+            HttpResponse resp = httpService.execute(Request.Post(resolvedURI)
+                    .addHeader(HTTP_HEADER_AUTHORIZATION, formatBasicAuthHeader(username, password))
+                    .bodyForm(loginForm))
+                    .returnResponse();
+            
+            status = resp.getStatusLine().getStatusCode();
+            reason = resp.getStatusLine().getReasonPhrase();
+//            Header[] allHeaders = resp.getAllHeaders();
+//            LOGGER.log(Level.INFO, "Response headers:");
+//            for (int i = 0; i < allHeaders.length; i++) {
+//                LOGGER.log(Level.INFO, String.format("%s:%s", allHeaders[i].getName(), allHeaders[i].getValue()));
+//            }
+            body = EntityUtils.toString(resp.getEntity(), "UTF-8");
+        } catch (IOException e) {
+            throw new AbortException(String.format("[CodeSonar] failed to authenticate. %n[CodeSonar] IOException: %s%n[CodeSonar] Stack Trace: %s", e.getMessage(), Throwables.getStackTraceAsString(e)));
+        }
+
+        if(status == 301) { //HTTP 301 - MOVED PERMANENTLY
+            if(baseHubUri.getScheme().equalsIgnoreCase("http")) {
+                throw new AbortException(String.format("[CodeSonar] failed to authenticate. Possible reason could be the CodeSonar hub running on https, while protocol http was specified.%n[CodeSonar] HTTP status code: %s - %s %n[CodeSonar] HTTP Body: %s", status, reason, body));
+            }
+        }
+
+        if (status != 200) {
+            throw new AbortException(String.format("[CodeSonar] failed to authenticate. %n[CodeSonar] HTTP status code: %s - %s %n[CodeSonar] HTTP Body: %s", status, reason, body));
+        }
+    }
+
+    private void authenticate701(URI baseHubUri, String username, String password) throws AbortException {
+        LOGGER.log(Level.INFO, "Legacy password authentication request");
         List<NameValuePair> loginForm = Form.form()
                 .add("sif_username", username)
                 .add("sif_password", password)
@@ -97,6 +203,11 @@ public class AuthenticationService {
             
             status = resp.getStatusLine().getStatusCode();
             reason = resp.getStatusLine().getReasonPhrase();
+//            Header[] allHeaders = resp.getAllHeaders();
+//            LOGGER.log(Level.INFO, "Response headers:");
+//            for (int i = 0; i < allHeaders.length; i++) {
+//                LOGGER.log(Level.INFO, String.format("%s:%s", allHeaders[i].getName(), allHeaders[i].getValue()));
+//            }
             body = EntityUtils.toString(resp.getEntity(), "UTF-8");
         } catch (IOException e) {
             throw new AbortException(String.format("[CodeSonar] failed to authenticate. %n[CodeSonar] IOException: %s%n[CodeSonar] Stack Trace: %s", e.getMessage(), Throwables.getStackTraceAsString(e)));
@@ -113,6 +224,14 @@ public class AuthenticationService {
         }
     }
 
+    /**
+     * Encode username/password into HTTP Basic Authentication, Authorization header value.
+     */
+    private static String formatBasicAuthHeader(String user, String password) {
+        return "Basic " + Base64.getEncoder().encodeToString((user + ":" + password).getBytes(Charset.forName("UTF-8")));
+        
+    }
+    
     public void signOut(URI baseHubUri) throws AbortException {
         try {
             HttpResponse resp = httpService.execute(Request.Get(baseHubUri.resolve("/sign_out.html?response_try_plaintext=1"))).returnResponse();

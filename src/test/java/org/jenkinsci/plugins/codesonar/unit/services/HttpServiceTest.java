@@ -1,10 +1,12 @@
 package org.jenkinsci.plugins.codesonar.unit.services;
 
-import hudson.AbortException;
 import java.util.logging.Logger;
+
 import org.jenkinsci.plugins.codesonar.services.HttpService;
 import org.junit.Before;
 import org.junit.Test;
+
+import hudson.AbortException;
 
 /**
  *
@@ -16,7 +18,7 @@ public class HttpServiceTest {
 
     @Before
     public void setUp() throws AbortException {
-        httpService = new HttpService(null);
+        httpService = new HttpService(null, null, null, -1);
     }
 
     @Test(expected = AbortException.class)

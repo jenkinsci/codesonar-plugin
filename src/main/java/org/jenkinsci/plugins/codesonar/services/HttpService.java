@@ -1,6 +1,20 @@
 package org.jenkinsci.plugins.codesonar.services;
 
-import hudson.AbortException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URI;
+import java.security.KeyManagementException;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.UnrecoverableKeyException;
+import java.security.cert.Certificate;
+import java.util.Collection;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import javax.net.ssl.SSLContext;
+
 import org.apache.http.HttpResponse;
 import org.apache.http.client.CookieStore;
 import org.apache.http.client.fluent.Executor;
@@ -9,24 +23,15 @@ import org.apache.http.client.fluent.Response;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.impl.client.BasicCookieStore;
 import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.ssl.SSLContextBuilder;
 import org.apache.http.util.EntityUtils;
-import org.jenkinsci.plugins.codesonar.CodeSonarPublisher;
 
-import javax.net.ssl.SSLContext;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.URI;
-import java.security.KeyManagementException;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
-import java.security.cert.Certificate;
-import java.security.cert.X509Certificate;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import com.google.common.base.Throwables;
+
+import hudson.AbortException;
+import hudson.util.Secret;
 
 /**
  *
@@ -34,35 +39,58 @@ import java.util.logging.Logger;
  */
 public class HttpService {
 
-    private static final Logger LOGGER = Logger.getLogger(CodeSonarPublisher.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(HttpService.class.getName());
 
     private CookieStore httpCookieStore;
     private Executor executor;
     private int socketTimeoutMS = -1;
 
-    public HttpService(X509Certificate certificate) throws AbortException {
+    public HttpService(Collection<? extends Certificate> serverCertificates, KeyStore clientCertificateKeyStore, Secret clientCertificatePassword, int socketTimeoutMS) throws AbortException {
+        LOGGER.log(Level.INFO, "Initializing HttpService");
+        this.socketTimeoutMS = socketTimeoutMS;
         httpCookieStore = new BasicCookieStore();
-        Collection<X509Certificate> certsLocalCopy = new ArrayList<X509Certificate>();
-        if(certificate != null) certsLocalCopy.add(certificate);
-        try {
-            SSLContext sslContext = SSLContextBuilder
-                    .create()
-                    .loadTrustMaterial(new CertificateFileTrustStrategy(certsLocalCopy))
-                    .build();
-
-            final SSLConnectionSocketFactory csf = new SSLConnectionSocketFactory(sslContext);
-            CloseableHttpClient httpClient = HttpClients.custom()
-                    .setSSLSocketFactory(csf)
-                    .evictExpiredConnections()
-                    .build();
-            executor = Executor.newInstance(httpClient).use(httpCookieStore);
-        } catch (KeyManagementException | NoSuchAlgorithmException | KeyStoreException e) {
-            throw new AbortException(String.format("[CodeSonar] Error initiating httpClient.%n[CodeSonar] Exception message: %s", e.getMessage()));
+        HttpClientBuilder httpClientBuilder = HttpClients.custom();
+        
+        if(serverCertificates != null
+                || (clientCertificateKeyStore != null && clientCertificatePassword != null)) {
+            LOGGER.log(Level.INFO, "Initializing SSL context");
+            SSLContextBuilder sslContextBuilder = SSLContextBuilder.create();
+            //If a server certificates are available, then set them in the SSL context so that they can be used by the trust strategy
+            if(serverCertificates != null) {
+                LOGGER.log(Level.INFO, "Adding server certificates to the SSL context");
+                LOGGER.log(Level.INFO, String.format("Server certificates list size %d", serverCertificates.size()));
+                try {
+                    sslContextBuilder.loadTrustMaterial(new CertificateFileTrustStrategy(serverCertificates));
+                } catch (NoSuchAlgorithmException | KeyStoreException e) {
+                    throw new AbortException(String.format("[CodeSonar] Error setting up server certificates  %n[CodeSonar] %s: %s%n[CodeSonar] Stack Trace: %s", e.getClass().getName(), e.getMessage(), Throwables.getStackTraceAsString(e)));
+                }
+            }
+            
+            //If a client certificate is available, then set it in the SSL context so that it will be used during the authentication process
+            if(clientCertificateKeyStore != null && clientCertificatePassword != null) {
+                LOGGER.log(Level.INFO, "Adding client certificate to the SSL context");
+                try {
+                    sslContextBuilder.loadKeyMaterial(clientCertificateKeyStore, clientCertificatePassword.getPlainText().toCharArray());
+                } catch (UnrecoverableKeyException | NoSuchAlgorithmException | KeyStoreException e) {
+                    throw new AbortException(String.format("[CodeSonar] Error setting up client certificate  %n[CodeSonar] %s: %s%n[CodeSonar] Stack Trace: %s", e.getClass().getName(), e.getMessage(), Throwables.getStackTraceAsString(e)));
+                }
+            }
+            //Prepare the SSL context in order to let the HTTP client using specified certificates
+            SSLContext sslContext;
+            try {
+                sslContext = sslContextBuilder.build();
+                final SSLConnectionSocketFactory csf = new SSLConnectionSocketFactory(sslContext);
+                httpClientBuilder.setSSLSocketFactory(csf);
+                LOGGER.log(Level.INFO, "SSL context initialized");
+            } catch (KeyManagementException | NoSuchAlgorithmException e) {
+                throw new AbortException(String.format("[CodeSonar] Error initiating SSL context.%n[CodeSonar] Exception message: %s", e.getMessage()));
+            }
         }
-    }
-
-    public int getSocketTimeoutMS() {
-        return socketTimeoutMS;
+        
+        CloseableHttpClient httpClient = httpClientBuilder.evictExpiredConnections()
+                .build();
+        executor = Executor.newInstance(httpClient).use(httpCookieStore);
+        LOGGER.log(Level.INFO, "HttpService initialized");
     }
 
     public void setSocketTimeoutMS(int socketTimeoutMS) {
@@ -78,13 +106,16 @@ public class HttpService {
         if(!url.contains("response_try_plaintext")) {
             url = (url.contains("?")) ? url + "#response_try_plaintext=1" : url + "?response_try_plaintext=1";
         }
+        LOGGER.log(Level.INFO, String.format("getContentFromUrlAsString(%s)", url));
         int status = -1;
         String reason = "";
         String body = "";
 
         try {
             Request req = Request.Get(url);
-            if(getSocketTimeoutMS() != -1) req.socketTimeout(getSocketTimeoutMS());
+            if(socketTimeoutMS != -1) req.socketTimeout(socketTimeoutMS);
+//            LOGGER.log(Level.INFO, String.format("Listing cookies held by coockie store (instance: %s)", httpCookieStore.getClass().getName()));
+//            httpCookieStore.getCookies().forEach(cookie -> LOGGER.log(Level.INFO, String.format("%s  %s=%s", cookie.getClass().getName(), cookie.getName(), cookie.getValue())));
             HttpResponse resp = executor.execute(req).returnResponse();
             status = resp.getStatusLine().getStatusCode();
             reason = resp.getStatusLine().getReasonPhrase();
@@ -107,13 +138,16 @@ public class HttpService {
         if(!url.contains("response_try_plaintext")) {
             url = (url.contains("?")) ? url + "#response_try_plaintext=1" : url + "?response_try_plaintext=1";
         }
+        LOGGER.log(Level.INFO, String.format("getContentFromUrlAsInputStream(%s)", url));
         int status = -1;
         String reason = "";
         String body = "";
 
         try {
             Request req = Request.Get(url);
-            if(getSocketTimeoutMS() != -1) req.socketTimeout(getSocketTimeoutMS());
+            if(socketTimeoutMS != -1) req.socketTimeout(socketTimeoutMS);
+//            LOGGER.log(Level.INFO, String.format("Listing cookies held by coockie store (instance: %s)", httpCookieStore.getClass().getName()));
+//            httpCookieStore.getCookies().forEach(cookie -> LOGGER.log(Level.INFO, String.format("%s  %s=%s", cookie.getClass().getName(), cookie.getName(), cookie.getValue())));
             HttpResponse resp = executor.execute(req).returnResponse();
             is = resp.getEntity().getContent();
             status = resp.getStatusLine().getStatusCode();
@@ -129,23 +163,8 @@ public class HttpService {
     }
     
     public Response execute(Request request) throws IOException {
-        if(getSocketTimeoutMS() != -1) request.socketTimeout(getSocketTimeoutMS());
+        if(socketTimeoutMS != -1) request.socketTimeout(socketTimeoutMS);
         return executor.execute(request);
     }
     
-    public Executor getExecutor() {
-        return executor;
-    }
-
-    public void setExecutor(Executor executor) {
-        this.executor = executor;
-    }
-    
-    public CookieStore getHttpCookieStore() {
-        return httpCookieStore;
-    }
-
-    public void setHttpCookieStore(CookieStore httpCookieStore) {
-        this.httpCookieStore = httpCookieStore;
-    }
 }
