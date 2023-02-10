@@ -10,177 +10,381 @@ hard-to-find defects early in the application development lifecycle.
 
 The CodeSonar plugin collects project analysis data from a designated CodeSonar hub.
 
-Historical data about CodeSonar warning counts and code size are presented in the Job Dashboard.
-
 The plugin can be configured to change the build result if the CodeSonar analysis results meet specified conditions.
 The following documentation cites relevant sections in the CodeSonar manual. These citations take the form:
 
-**MANUAL**: **Subject** > ... > **Page Title**
+**MANUAL:** *Subject > ... > Page Title*
 
-where **Subject** > **....** > **Page Title** denotes a navigation path through the CodeSonar manual table of contents.
+where *Subject > .... > Page Title* denotes a navigation path through the CodeSonar manual table of contents.
+
+### About CodeSonar ®
+
+[CodeSonar](https://www.grammatech.com/codesonar-cc), GrammaTech's flagship static analysis software, identifies programming bugs that can result in system crashes, memory corruption, leaks, data races, and security vulnerabilities.
+
+By analyzing both source code and binaries, CodeSonar empowers developers to eliminate the most costly and hard-to-find defects early in the application development lifecycle.
 
 ## Setting Up The Plugin
 
 These instructions assume that you have:
 
-* Installed Jenkins.
-* Established a Jenkins job to build your software.
-* Installed CodeSonar.
+* Established a Jenkins Pipeline to build your software.
+  If you are using a different type of project, adapt the three main steps to your project type.
 * Installed the CodeSonar plugin for Jenkins.
 
-## Setting up the plugin involves three steps, each detailed below.
+Setting up the plugin involves three steps, each detailed below.
 
-* Make sure CodeSonar is ready to analyze your software
-* Incorporate the CodeSonar build/analysis in your Jenkins job
-* Apply the CodeSonar plugin to your Jenkins job
+* [A. Make sure CodeSonar is ready to analyze your software](#a-make-sure-codesonar-is-ready-to-analyze-your-software)
+* [B. Incorporate the CodeSonar build/analysis in your Jenkins Pipeline](#b-incorporate-the-codesonar-buildanalysis-in-your-jenkins-pipeline)
+* [C. Apply the CodeSonar plugin to your Jenkins Pipeline](#c-apply-the-codesonar-plugin-to-your-jenkins-pipeline)
 
-### Make sure CodeSonar is ready to analyze your software
-Work through the following steps to make sure that CodeSonar is in a suitable state to be invoked by your Jenkins job.
+### A. Make sure CodeSonar is ready to analyze your software
+Work through the following steps to make sure that CodeSonar is in a suitable state to be invoked in your Jenkins Pipeline.
 
-1. Make sure the path to `/codesonar/bin` is in the `PATH` of the user who is running Jenkins.
-    * Otherwise, your codesonar analyze command will have to specify the path to the codesonar executable.
-2. Please make sure that the launch daemon is running on the server. This needs to run as the user
-   running Jenkins. It is encouraged to configured a [cronjob](https://en.wikipedia.org/wiki/Cron)
-   for this
-3. Start the CodeSonar hub to use for recording the analysis results (if it is not already running).
-    * **MANUAL**: **How CodeSonar Works** > **CodeSonar Structure** > **Hub** > **Starting a Hub**
-    * The remainder of these instructions will refer to the hub location as `host:port`.
-4. Establish a project directory and project name for the CodeSonar project that will be built and analyzed.
-    * If you have previously analyzed your software with CodeSonar, you can use the existing project infrastructure.
-    * Otherwise, choose a project directory, and create the directory if it does not already exist.
-      In either case, make sure the project directory has a suitable location and read/write settings.
-      If Jenkins is running with different OS credentials to your own, remember to take this into account.
-    * Use the same project directory and project name every time you perform the CodeSonar
-      build/analysis for a given project.
-    * The project directory should not be deleted at the end of the build: the CodeSonar GUI needs
-      to interact with its contents, and incremental builds need information that is stored there.
-        * Make sure the project directory is in a location where Jenkins will not automatically
-          delete it after running the job. For example, it is probably a good idea to locate it
-          outside the Jenkins workspace.
-        * Similarly, take steps to ensure that your other build tools will not delete the project directory.
-    * Set the project directory permissions to allow the Jenkins process to read and write to it.
-    * The remainder of these instructions will refer to the project directory as `projdir` and the project name as `proj-name`.
-    * If the project directory does not include a general project configuration file (for example, because you just created
-      the directory in the previous step), create one now:<br>
-        * `codesonar create-conf projdir/proj-name`
-      **MANUAL: Using CodeSonar** > **Building and Analyzing Projects** > **Options, Preferences, and Configuration Files** > **Configuration Files**
+1. Install CodeSonar on one or more *Jenkins agents* that are capable of building your pipeline. Include the following steps.
+   1. Set environment variable `CSONAR` to the path to the CodeSonar installation directory.
+   1. Set up a working directory to contain your CodeSonar project build directories, and set environment variable `CSONAR_WORKDIR` to the path to this directory.
+   1. Update the node configuration for the agent to add an identifying label, such as `CodeSonar`, to the **Labels** set.
+1. Start the CodeSonar hub to use for recording the analysis results (if it is not already running).
+    * **MANUAL:** How CodeSonar Works > CodeSonar Structure > Hub > Starting a Hub
+    * The remainder of these instructions will refer to the hub location as *host*:*port*.
+1. If you have not already done so, choose a hub user account to authenticate the CodeSonar operations that that you will be invoking within Jenkins. This account will need sufficient permissions to:
+    * Sign into the hub.
+    * Analyze the project you are interested in.
+    * Create a launch daemon.
+    * Browse analysis results.
 
-5. Edit the general project configuration file (`projdir/proj-name.conf`) to specify your required
-   configuration parameter settings (unless the factory settings are suitable).
-    _MANUAL_: _Using CodeSonar_ > _Building and Analyzing Projects_ > _Options, Preferences, and Configuration Files_ >
-        _Compiler-Independent Configuration File Parameters for CodeSonar_
+    With factory settings, it is sufficient for the hub user account to have the built-in `Enabled` and `User` roles.
 
-In particular:
-You may wish to specify one or more `CFLAGS_APPEND` rules.
-If you are performing a clean build every time, set `INCREMENTAL_BUILD=No`.
+    **MANUAL:** Role-Based Access Control > RBAC: Role-Permissions
 
-6. Make sure there is a CodeSonar launch daemon running on the analysis machine, with the same owner as the Jenkins process.
+    You may wish to create a dedicated hub user account for this purpose.
 
-MANUAL: How CodeSonar Works > Build and Analysis > cslaunchd: The CodeSonar Launch Daemon
+    The remainder of these instructions will refer to this user account as *hubuser*.
+1. [HTTPS hubs only] If your hub has a self-signed server certificate, Jenkins agents that communicate with the hub will need to establish trust in the certificate. For each agent where you installed CodeSonar in the first step above, do the following.
+   1. Sign into the agent.
+   1. Run the following command.
+      ```
+      "$CSONAR/codesonar/bin/codesonar" get https://<host>:<port>/index.csv
+      ```
+      (This command fetches the hub home page in CSV format: we don't need this page, it is merely a convenient way to trigger the certificate interaction.)
 
-If the analysis machine is running Windows, check to see whether there is a `cslaunchd` service on the
-analysis machine, with the same owner as the Jenkins process. If not, set one up.
+      For example, if your hub is located at `myhub.example.com:7340`:
+      ```
+      "$CSONAR/codesonar/bin/codesonar" get https://myhub.example.com:7340/index.csv
+      ```
+    1. If you are prompted with a warning that the hub certificate is self-signed, select the option to trust the certificate.
 
-**MANUAL**: _Using CodeSonar_ > _Building and Analyzing Projects_ > _Continuous Integration_ > _Using CodeSonar With Continuous Integration Tools_
+       (If you are not prompted, either the certificate is not self-signed or trust has already been established.)
+    1. Discard the downloaded file, unless you want to keep it.
+       ```
+       rm index.csv
+       ```
+1. Make sure there is a suitable launch daemon available to perform the CodeSonar analysis.
+   * If you are using CodeSonar SaaS, launch daemons are provided as part of your SaaS deployment.
+   * Otherwise, if you are planning to perform *remote-managed* analysis using a launch daemon running elsewhere, make sure that the launch daemon you want to use is available and connected to the hub.
+   * Otherwise, run a launch daemon inside each agent where you installed CodeSonar  in the first step above:
+      1. Sign into the agent as the same Jenkins user that will run the pipeline.
+      1. Run the following command to start a launch daemon.
+         ```
+         "$CSONAR/codesonar/bin/codesonar" install-launchd -auth password -hubuser <hubuser> \
+             -max-processes auto <protocol>://<host>:<port>
+         ```
+         For example:
+         ```
+         "$CSONAR/codesonar/bin/codesonar" install-launchd -auth password -hubuser alex \
+             -max-processes auto http://myhub.example.com:7340
+         ```
+         You will be prompted for the *hubuser* password.
+      1. Set up the agent to restart the launch daemon automatically.
+         * On Windows systems, check to see whether there is a `cslaunchd` service. If not, set one up.
+         * On other systems, use a `cron` job or similar.
 
-Note that if Jenkins is running as a service, its owner will usually be
-`SYSTEM`.  Otherwise, arrange to start the launch daemon at system startup.
-Go on to Incorporate the CodeSonar build/analysis in your Jenkins job.
+    **MANUAL:** How CodeSonar Works > Build and Analysis > cslaunchd: The CodeSonar Launch Daemon
 
-### Incorporate the CodeSonar build/analysis in your Jenkins job
+    **MANUAL:** Using CodeSonar > Building and Analyzing Projects > Continuous Integration > Using CodeSonar With Continuous Integration Tools
+1. Choose a name for your CodeSonar project. The remainder of these instructions will refer to this as *proj-name*.
+   * If you are building the same project in multiple Jenkins Pipelines, use a different project name for each. For example, add a suffix or prefix to the base project name.
+   **MANUAL:** How CodeSonar Works > Project
+1. If your *regular software build directory* does not include a general project configuration file (for example, because you have never previously analyzed the project), create one now.
+   1. Create the initial configuration file.
+        ```bash
+        codesonar create-conf <proj-name>
+        ```
+      For example, if the CodeSonar project name is `ProjectX`:
+        ```bash
+        codesonar create-conf ProjectX
+        ```
+      **MANUAL:** Using CodeSonar > Building and Analyzing Projects > Options, Preferences, and Configuration Files > Configuration Files
+   1. If you are using source control, add *proj-name*.conf to your repository.
+   1. Edit *proj-name*.conf to specify your required configuration parameter settings (unless the factory settings are suitable).
 
-You will incorporate the CodeSonar build/analysis in your Jenkins job by
-extending the current contents of the Build section as described in the following steps.
+      **MANUAL:** Using CodeSonar > Building and Analyzing Projects > Options, Preferences, and Configuration Files > Compiler-Independent Configuration File Parameters for CodeSonar
 
-1. View the Job Dashboard for the Jenkins job that is building your software.
-2. Click Configure to open the Job Configurations page.
-3. Define a HUB parameter for the job, so you can use it both for the CodeSonar analysis invocation and to configure the CodeSonar plugin later:
-    1. Make sure This build is parameterized is selected.
-    1. Under This build is parameterized, click Add Parameter, then select String Parameter from the menu that pops up.
-    1. Jenkins will display a set of fields for setting up your new parameter. Fill them out as follows.
-        * Name: `HUB`
-        * Default Value: the location (host:port) of your CodeSonar hub. For example, `alexhubmachine:7340`.
-        * Description: you may want to enter a short description to remind yourself why you have this variable.
-4. Use the same process to define a `PROJ_NAME` parameter whose value matches your established CodeSonar project name (proj-name).
-![Jenkins configuration parameters](docs/img/jenkins_params.png "Jenkins configuration parameters")
+      In particular:
+       * You may wish to specify one or more `CFLAGS_APPEND` rules.
+       * If you are performing a clean build every time, set `INCREMENTAL_BUILD`=No.
+1. Go on to **B. Incorporate the CodeSonar build/analysis in your Jenkins Pipeline**.
 
-5. Edit the Build section to integrate the CodeSonar build/analysis.
-   Remember to specify authentication options in your build/analysis commands if they will be required by your hub.
-   **MANUAL**: **How CodeSonar Works** > **CodeSonar Structure** > **Hub** > **Authentication and Access Control**
+### B. Incorporate the CodeSonar build/analysis in your Jenkins Pipeline
 
-| Project Language | Editing the Build Section |
-| :------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **C, C++**               | For every existing build step that involves C/C++ compilation, edit the build step to incorporate the CodeSonar build/analysis command. If the current build step or steps contain one command that involves C/C++ compilation, this will involve constructing a single codesonar analyze command. Otherwise there are two possible approaches: |
-|                          | * Accumulate components into a CodeSonar project by constructing a codesonar build command for each software build command that involves C/C++ compilation, then add a final codesonar analyze command to analyze the project.                                                                                                                  |
-|                          | *or*                                                                                                                                                                                                                                                                                                                                            |
-|                          | Replace the text of the build step or steps with an invocation of a shell script or batch file with equivalent contents, then construct a single codesonar analyze command based on that invocation.                                                                                                                                            |
-|                          | The codesonar analyze command must include the -foreground option.                                                                                                                                                                                                                                                                              |
-|                          | See Example 1 and Example 2.                                                                                                                                                                                                                                                                                                                    |
-| **Java**                 | Add a new, final build step that executes the CodeSonar Java build/analysis on the bytecode produced by the other build steps. The codesonar analyze command must include the -foreground option.                                                                                                                                               |
-|                          | See Example 3.                                                                                                                                                                                                                                                                                                                                  |
-|                          | *MANUAL*: Using CodeSonar > Building and Analyzing Projects  > Java > Build and Analysis for Java Projects                                                                                                                                                                                                                                      |
-| **Mixed Java and C/C++** | Combine the approaches for Java-only and C/C++-only projects:                                                                                                                                                                                                                                                                                   |
-|                          | 1. Edit the build steps to incorporate a codesonar build command for each software build command that involves C/C++ compilation.                                                                                                                                                                                                               |
-|                          | 2. Add a new build step that executes codesonar build on any Java bytecode produced by earlier build steps.                                                                                                                                                                                                                                     |
-|                          | 3. Add a new, final build step that invokes codesonar analyze to analyze the project.                                                                                                                                                                                                                                                           |
-|                          |                                                                                                                                                                                                                                                                                                                                                 |
-|                          | See Example 4 and Example 5.                                                                                                                                                                                                                                                                                                                    |
+You will incorporate the CodeSonar build/analysis in your Jenkins Pipeline by
+extending the Pipeline's build stage as described in the following steps.
 
-6. Click Save.
-7. Check everything is working properly:
-    1. Click Build with Parameters, check the parameter settings are correct, and click **Build**.
-    2. Jenkins will execute the updated job.
-      Check that the Jenkins job executed successfully, and check the job's Console Output to ensure that the build proceeded as you expected.
-      * If necessary, click _Configure_ and adjust your edits, and make any other changes necessary to get your job running correctly.
-      * If the CodeSonar build/analysis is not running to completion, the manual section on Troubleshooting the build may be helpful.
-        MANUAL: Using CodeSonar > Building and Analyzing Projects > Troubleshooting the Build
-    3. Open the CodeSonar GUI in your web browser and inspect your analysis results on the Analysis page.
-       MANUAL: Using CodeSonar > GUI Reference > GUI Reference
-8. Go on to Apply the CodeSonar plugin to your Jenkins job.
+1. View the  **Configure** page for your Pipeline.
+1. Define some new parameters. You will use these to incorporate the CodeSonar build/analysis.
+   1. Switch to the **General** tab if it is not already displayed.
+   1. Make sure **This build is parameterized** is selected.
+   1. Use the **Add Parameter** button and form to add the following parameters.
 
-### Apply the CodeSonar plugin to your Jenkins job
+      | **Type (select from Add Parameter pulldown)** | **Name**  | **Value** |
+      |------------------|---------------------------|-------------------------|
+      | String Parameter | `CSONAR_HUB_ADDRESS` | Your hub location as *host*:*port* without protocol. For example, `myhub.example.com:7340` |
+      | String Parameter | `CSONAR_PROJECT_NAME`  | The CodeSonar project name to use. If there is already a CodeSonar project set up to for analyzing your software project, use the name of that project. |
 
-Once your Jenkins job is correctly invoking the CodeSonar analysis, you can apply the CodeSonar plugin to collect
+    ![Jenkins configuration parameters](docs/img/jenkins_params.png "Jenkins configuration parameters")
+1. Set up parameters for hub user account credentials: you will need these to authorize the CodeSonar build/analysis.
+
+   **MANUAL:** How CodeSonar Works > CodeSonar Structure > Hub > Authentication and Access Control
+
+   There are two options.
+   * Option 1: User name and password.
+      | **Type (select from Add Parameter pulldown)** | **Name**  | **Value** |
+      |------------------|---------------------------|-------------------------|
+      | String Parameter | `CSONAR_HUBUSER` | The username of the hub user account. |
+      | Credentials Parameter | `CSONAR_HUBPWFILE_ID` | A **secret file** containing the password corresponding to `CSONAR_HUBUSER`. |
+
+   * Option 2: Hub user certificate (HTTPS hubs only).
+
+     If the hub user account you want to use for authenticating the build/analysis does not already have a user certificate and private key, configure one from the **User Certificates** page before proceeding.
+
+      | **Type (select from Add Parameter pulldown)** | **Name**  | **Value** |
+      |------------------|---------------------------|-------------------------|
+      | Credentials Parameter | `CSONAR_USER_CERT_ID` | A **secret file** containing a *user certificate* (PEM format) for the hub user account. This will be presented to the hub for authentication. |
+      | Credentials Parameter | `CSONAR_USER_PRIVKEY_ID` | A **secret file** containing the *private key* (PEM format) corresponding to `CSONAR_USER_CERT_ID`. This will be used to sign challenges from the hub: it will *not* be presented to the hub. |
+
+      **MANUAL:** How CodeSonar Works > CodeSonar Structure > TLS Certificates
+
+      **MANUAL:**  Using CodeSonar > GUI Reference > Hub and Account Management > GUI: User Certificates
+1. Edit the build stage of your Jenkins pipeline integrate the CodeSonar build/analysis.
+   1. Edit the agent specification to add the `CodeSonar` label (or whatever label you added to the agents where you installed CodeSonar.)
+   1. Wrap the software build command or commands in a `withCredentials()` block.
+      * Password authentication:
+        ```
+        withCredentials([file(credentialsId: params.CSONAR_HUBPWFILE_ID, variable: 'CSONAR_HUBPWFILE')]) { ... }
+        ```
+      * Certificate authentication:
+        ```
+        withCredentials([file(credentialsId: params.CSONAR_USER_CERT_ID, variable: 'CSONAR_USER_CERT'),
+                          file(credentialsId: params.CSONAR_USER_PRIVKEY_ID, variable: 'CSONAR_USER_PRIVKEY')]) { ... }
+        ```
+    1. Set up environment variable `CSONAR_CMD_ARGS` to collect together the various `codesonar` command line elements.
+       ```
+       env.CSONAR_CMD_ARGS = "$CSONAR_HUB_ADDRESS \
+                              $CSONAR_WORKDIR/$CSONAR_PROJECT_NAME \
+                              -project $CSONAR_PROJECT_NAME \
+                              -auth password -hubuser $CSONAR_HUBUSER -hubpwfile $CSONAR_HUBPWFILE \
+                              -foreground"
+       ```
+       * For certificate-based authentication, replace the `-auth` line with:
+         ```
+         -auth certificate -hubcert $CSONAR_USER_CERT -hubkey $CSONAR_USER_PRIVKEY \
+         ```
+       * For CodeSonar SaaS, replace the `-foreground` flag with:
+         ```
+         -remote /saas/*
+         ```
+       * For (non-SaaS) remote-managed analyses, replace the `-foreground` flag with:
+         ```
+         -remote <analysis-launchd>
+         ```
+         Where `<analysis-launchd>` specifies a suitable launch daemon or launchd group that is connected to your hub and can perform the analysis.
+       * If you want to specify any addition `codesonar` command line options, add them to this setting.
+         See [Optional Extras for $CSONAR_CMD_ARGS](#optional-extras-for-csonar_cmd_args), below, for some ideas.
+
+       **MANUAL:** Using CodeSonar > Command Line Build/Analysis
+    1. Edit the build steps to incorporate the CodeSonar build/analysis.
+
+       | Project Language | Editing the Build Steps |
+       |------------------|---------------------------|
+       | **C, C++**       | For every existing build step that involves C/C++ compilation, edit the build step to incorporate the CodeSonar build/analysis command. If the current build step or steps contain one command that involves C/C++ compilation, this will involve constructing a single `codesonar analyze` command. Otherwise there are two possible approaches: <ul><li>Accumulate components into a CodeSonar project by constructing a `codesonar build` command for each software build command that involves C/C++ compilation, then add a final `codesonar analyze` command to analyze the project.<br><i>or</i></li><li>Replace the text of the build step or steps with an invocation of a shell script or batch file with equivalent contents, then construct a single `codesonar analyze` command based on that invocation. </li></ul><p>See [Example 1](#example-1-cc-project-jenkins-build-steps-include-one-command-that-involves-cc-compilation) and [Example 2](#example-2-cc-project-jenkins-build-steps-include-multiple-commands-that-involve-cc-compilation).</p> |
+       | **Java**         | Add a new, final build step that executes the CodeSonar Java build/analysis on the bytecode produced by the other build steps. <p>See [Example 3](#example-3-java-project).</p> <p> <b>MANUAL:</b> Using CodeSonar > Building and Analyzing Projects > Java > Build and Analysis for Java Projects |
+       | **C#**         | Add a new, final build step that executes the CodeSonar C# build/analysis on the artifacts produced by the other build steps.  <p> <b>MANUAL:</b> Using CodeSonar > Building and Analyzing Projects > C# > Build and Analysis for C# Projects |
+       | **Mixed Java and C/C++** | Combine the approaches for Java-only and C/C++-only projects: <ol><li>Edit the build steps to incorporate a `codesonar build` command for each software build command that involves C/C++ compilation. </li><li>Add a new build step that executes `codesonar build` on any Java bytecode produced by earlier build steps. </li><li>Add a new, final build step that invokes `codesonar analyze` to analyze the project.</li></ol><p>See [Example 4](#example-4-mixed-cc-and-java-project-single-build-command) and [Example 5](#example-5-mixed-cc-and-java-project-multiple-build-commands).</p> |
+
+    For example, suppose you have a simple Pipeline with a GitHub project that is built by invoking `make`.
+    ```
+    pipeline {
+        agent any
+          stages {
+            stage('My Build Stage') {
+              agent {
+                node {
+                  label 'Linux && GCC'
+                }
+              }
+              steps {
+                git branch: 'alex/branch1', url: 'https://github.example.com/ProjectX/'
+                sh 'make clean'
+                script {
+                    sh '''make'''
+              }
+            }
+          }
+        }
+    }
+    ```
+    Then the updated Pipeline will be as follows (for certificate-based hub authentication; no SaaS or other remote analysis).
+    ```
+    pipeline {
+        agent any
+          stages {
+            stage('My Build Stage') {
+              agent {
+                node {
+                    label 'Linux && GCC && CodeSonar'
+                }
+              }
+              steps {
+                git branch: 'alex/branch1', url: 'https://github.example.com/ProjectX/'
+                sh 'make clean'
+                script {
+                    withCredentials([file(credentialsId: params.CSONAR_USER_CERT_ID, variable: 'CSONAR_USER_CERT'),
+                                    file(credentialsId: params.CSONAR_USER_PRIVKEY_ID, variable: 'CSONAR_USER_PRIVKEY')]) {
+                        env.CSONAR_CMD_ARGS = "$CSONAR_HUB_ADDRESS \
+                                              $CSONAR_WORKDIR/$CSONAR_PROJECT_NAME \
+                                              -project $CSONAR_PROJECT_NAME \
+                                              -auth certificate -hubcert $CSONAR_USER_CERT -hubkey $CSONAR_USER_PRIVKEY \
+                                              -foreground"
+                        sh '''$CSONAR/codesonar/bin/codesonar analyze $CSONAR_CMD_ARGS make'''
+                    }
+                }
+              }
+            }
+        }
+    }
+    ```
+1. Click **Save**.
+1. Check everything is working properly:
+    1. Click **Build with Parameters**, check the parameter settings are correct, and click **Build**.
+
+        Jenkins will execute the updated Pipeline.
+    1. Check that the Pipeline executed successfully, and check the **Console Output** to ensure that the build proceeded as you expected.
+         * If necessary, click **Configure** and adjust your edits, and make any other changes necessary to get your Pipeline running correctly.
+         * If the CodeSonar build/analysis is not running to completion, the manual section on troubleshooting the build may be helpful.
+
+           **MANUAL:** Using CodeSonar > Building and Analyzing Projects > Troubleshooting the Build
+    1. Open the CodeSonar GUI in your web browser and inspect your analysis results on the Analysis page.
+
+       **MANUAL:** Using CodeSonar > GUI Reference > GUI Reference
+1. Go on to **C. Apply the CodeSonar plugin to your Jenkins Pipeline**.
+
+#### Optional Extras for $CSONAR_CMD_ARGS
+
+You may wish to do one or more of the following.
+
+* **Fully rebuild the CodeSonar project every time the Pipeline runs.**
+
+  Add `-clean` to the `env.CSONAR_CMD_ARGS` string.
+
+* **Specify an analysis name that includes information about the current Git branch/commit and about the Pipeline invocation.**
+  1. Define environment variables `GIT_BRANCH` and `GIT_COMMIT`.
+     ```
+     env.GIT_BRANCH = sh(
+                script: 'git rev-parse --abbrev-ref HEAD',
+                returnStdout: true).trim()
+     env.GIT_COMMIT = sh(
+                script: 'git rev-parse HEAD',
+                returnStdout: true).trim()
+     ```
+   1. Add the following line after the `-project` line in the `env.CSONAR_CMD_ARGS` definition.
+     ```
+     -name "$GIT_BRANCH/$GIT_COMMIT/agent/$NODE_NAME/exe/$EXECUTOR_NUMBER/build/$BUILD_NUMBER" \
+     ```
+
+
+### C. Apply the CodeSonar plugin to your Jenkins Pipeline
+
+Once your Jenkins Pipeline is correctly invoking the CodeSonar analysis, you can apply the CodeSonar plugin to collect
 analysis information from the hub.
 
-1. Go back to Job Configurations page for the Jenkins job that is building your software.
-1. Under Post-build Actions, click Add post-build action, and select CodeSonar from the menu that pops up.
-    * If CodeSonar is not a menu option, the plugin may not be installed.
-1. Jenkins will display fields for you to configure this application of the plugin.
-    1. Select the protocol used by your hub from the Protocol menu: either http or https.
-    1. Enter `${HUB}` in the hub address field.
-    1. Enter `${PROJ_NAME}` in the Project name field.
-    1. Click the **Add** button next to the **Credentials** field, then fill in **Add Credentials** form that opens and click Add.
-1. Set Kind to "Username with password" or "Certificate".
-1. Set Scope to Global.
-1. Use the remaining fields to specify the hub user account credentials that the plug-in should use in obtaining analysis information from the hub. See below for information about the permissions required and additional manual references.
-1. These credentials will not be applied to the build/analysis commands you specified in the previous step. If you want to specify authentication credentials for those commands, use the appropriate command-line authentication options.
-    **Optional** If you want to configure one or more "CodeSonar conditions", see the descriptions below.
-1. Click Save.
-    * The list of links at the left-hand side of the Job Dashboard will now include Latest CodeSonar Analysis link.
-      This navigates to the CodeSonar GUI Analysis page for the most recently executed analysis of this project.
-1. Please check if everything is working properly:
-    1. Click Build with Parameters, check that the parameter settings are correct, and click Build.
-       Jenkins will execute the updated job.
-    1. Please check if the Jenkins job executed successfully, and check the job's Console Output to ensure that the build proceeded as you expected.
-        * If necessary, click Configure and adjust your edits, and make any other changes necessary to get your job running correctly.
-1. Notice that the dashboard now contains charts of "Total number of warnings" and "Lines of Code" (if it doesn't, reload the page). These charts represent CodeSonar analysis history for this project.
+1. Go back to **Configure** page for your pipeline.
+1. Set up hub credentials to authorize the CodeSonar plugin's interactions with the hub. These should generally be for the same hub user account that you are using to authenticate your `codesonar build` and `codesonar analyze` commands, but you will need to set up separate parameters for the plugin to use.
+   | **Authentication Type** | **Parameter Name** | **Type** | **Value** |
+   |-------------------------|--------------------|--------------------|-----------|
+   | Username/Password       | `CSONAR_HUBUSERPASS` | Credentials Parameter | A **Username with password** containing the hub user account username and password |
+   | Certificate | `CSONAR_HUBUSERCERT` | Credentials Parameter | A **Certificate** containing the user certificate and its private key in PKCS#12 format.<p>**MANUAL:** How CodeSonar Works > CodeSonar Structure > Hub > Manually Generating and Uploading User Certificates</p> |
+1. [HTTPS hubs only] If your hub uses a self-signed server certificate, create a parameter to store a copy of this certificate so that the plugin can be instructed to trust it.
+   | **Parameter Name** | **Type** | **Value** |
+   |--------------------|--------------------|-----------|
+   | `CSONAR_HUB_CACERT_ID` | Credentials Parameter | A **secret file** containing the hub server certificate (PEM format). |
+1. Add the following step to your Pipeline after all your build steps.
+   ```
+   script {
+        def analysisId = sh(
+            script: 'cat "$CSONAR_WORKDIR/$CSONAR_PROJECT_NAME.prj_files/aid.txt"',
+            returnStdout: true).trim()
+        codesonar(
+            conditions: [],
+            credentialId: params.CSONAR_HUBUSERPASS,
+            hubAddress: params.CSONAR_HUB_ADDRESS,
+            socketTimeoutMS: 300000,
+            projectName: params.CSONAR_PROJECT_NAME,
+            aid: analysisId,
+            protocol: "http",
+            visibilityFilter: "active")
+    }
+    ```
+    For HTTPS hubs only, do the following.
+    * *Change* the `protocol` line to:
+      ```
+      protocol: "https",
+      ```
+    * If you are performing certificate-based authentication, *change* the `credentialId` line to:
+      ```
+      credentialId: params.CSONAR_HUBUSERCERT,
+      ```
+    * If your hub has a self-signed server certificate, *add* the following line after the `socketTimeoutMS` line.
+      ```
+      serverCertificateCredentialId: params.CSONAR_HUB_CACERT_ID,
+      ```
 
-**Warning**: When configuring a project, please make sure that the project names in CodeSonar are unique if you build the same 
-project in two different Jenkins jobs. One possibility is to add a suffix or prefix to the project names. Otherwise, you may end
-with unexpected results in the jobs!
+1. Click **Save**.
+1. Check that everything is working properly.
+    1. Click **Build with Parameters**, check that the parameter settings are correct, and click **Build**.
+       Jenkins will execute the updated Pipeline.
+    1. Check that the Pipeline executed successfully, and check its **Console Output** to ensure that the build proceeded as you expected.
+        * If necessary, click **Configure** and adjust your edits, and make any other changes necessary to get your Pipeline running correctly.
+1. Look at the **Build** page for this most recent Pipeline exection.
+   * There is now a **CodeSonar (*proj-name*)** link in the page menu. This navigates to the hub GUI page for the most recent analysis of  *proj-name*.
+   * There is also a **CodeSonar project *proj-name*** section in the body of the page. At the moment this section contains the text "No conditions selected".
+1. [Optional] You can specify a different visibility filter: see the [note on visibility filters](#note-on-visibility-filters) below.
+1. [Optional] Set up one or more CodeSonar *conditions* for the pipeline.
 
-### Build Step Examples
+   1. Add suitable condition terms to the `conditions` field.
 
-These examples all assume the following:
+      For example, suppose we want the Pipeline to fail if overall warning count (with respect to the specified `visibilityFilter`) has increased by more than 1% over the previous analysis. Then replace
+      ```
+      conditions: [],
+      ```
+      with
+      ```
+      conditions: [warningCountIncreaseOverall(percentage:'1.0', warrantedResult:'FAILURE')],
+      ```
+      For details of available conditions, see the descriptions [below](#codesonar-conditions).
+    1. Run the Pipeline again.
+        * The Pipeline result may change, depending on whether or not any of your conditions were met.
+    1. View the **Build** page.
+        * The **CodeSonar** section of the page body will now include information about the outcome for each of your conditions.
 
-* Build parameter `${HUB}` has been established and set to the hub location.
-* Build parameter `${PROJ_NAME}` has been established and set to the CodeSonar project name.
-* The project directory is `/myfiles/csonar_projects/projX`
 
-#### Example 1: C/C++ project; Jenkins build steps include one command that involves C/C++ compilation.
+## Build Step Examples
 
-Suppose that the Jenkins job build step text is:
+These examples all assume that the Pipeline has been configured as described above.
+
+
+### Example 1: C/C++ project; Pipeline build steps include one command that involves C/C++ compilation.
+
+Suppose that the Jenkins build step text is:
 
 ```bash
 cd /myfiles/src/projX && make normal
@@ -189,12 +393,12 @@ cd /myfiles/src/projX && make normal
 Then replace the build step text with:
 
 ```bash
-cd /myfiles/src/projX && codesonar analyze /myfiles/csonar_projects/projX/${PROJ_NAME} -foreground ${HUB} make normal
+cd /myfiles/src/projX && codesonar analyze $CSONAR_CMD_ARGS make normal
 ```
 
-#### Example 2: C/C++ project; Jenkins build steps include multiple commands that involve C/C++ compilation.
+### Example 2: C/C++ project; Pipeline build steps include multiple commands that involve C/C++ compilation.
 
-Suppose that the Jenkins job build step text is:
+Suppose that the Jenkins build step text is:
 
 ```bash
 cd /myfiles/src/projX
@@ -206,72 +410,75 @@ gcc -c C.c
 
 There are several possible approaches.
 
-1.
+* **Option 1.** Replace the build step text with:
+   ```bash
+   cd /myfiles/src/projX
+   rm -f *.o
+   codesonar build $CSONAR_CMD_ARGS gcc -c A.c
+   codesonar build $CSONAR_CMD_ARGS gcc -c B.c
+   codesonar build $CSONAR_CMD_ARGS gcc -c C.c
+   codesonar analyze $CSONAR_CMD_ARGS
+   ```
+* **Option 2.** Collect the build step text into a single shell script `/path/to/dir/mybuildscript.sh`:
+   ```bash
+   cd /myfiles/src/projX
+   rm -f *.o
+   gcc -c A.c
+   gcc -c B.c
+   gcc -c C.c
+   ```
 
-```
-cd /myfiles/src/projX
-rm -f *.o
-codesonar build /myfiles/csonar_projects/projX/${PROJNAME} -foreground  ${HUB} gcc -c A.c
-codesonar build /myfiles/csonar_projects/projX/${PROJNAME} -foreground ${HUB} gcc -c B.c
-codesonar build /myfiles/csonar_projects/projX/${PROJNAME} -foreground ${HUB} gcc -c C.c
-codesonar analyze /myfiles/csonar_projects/projX/${PROJNAME} -foreground ${HUB}
-```
+   then replace the build step text with:
+   ```bash
+   cd /path/to/dir && codesonar analyze $CSONAR_CMD_ARGS sh -xe mybuildscript.sh
+   ```
+* **Option 3.** Collect the build step text into a single batch file `path\to\dir\mybuildbat.bat`:
+   ```bash
+   cd \myfiles\src\projX
+   rm -f *.o
+   gcc -c A.c
+   gcc -c B.c
+   gcc -c C.c
+   ```
 
-1. Collect the build step text into a single shell script /path/to/dir/mybuildscript.sh:
+   then replace the build step text with:
 
-```
-cd /myfiles/src/projX
-rm -f *.o
-gcc -c A.c
-gcc -c B.c
-gcc -c C.c
-```
+   ```bash
+   codesonar analyze $CSONAR_CMD_ARGS path\to\dir\mybuildbat.bat
+   ```
 
-then replace the build step text with:
+### Example 3: Java project
 
-```
-cd /path/to/dir && codesonar analyze ${PROJNAME} -foreground ${HUB} sh -xe mybuildscript.sh
-```
-
-2. Collect the build step text into a single batch file path\to\dir\mybuildbat.bat:
-
-```bash
-cd \myfiles\src\projX
-rm -f *.o
-gcc -c A.c
-gcc -c B.c
-gcc -c C.c
-```
-then replace the build step text with:
-
-```bash
-codesonar analyze ${PROJNAME} -foreground ${HUB} path\to\dir\mybuildbat.bat
-```
-
-#### Example 3: Java project
-
-Suppose that the Jenkins job writes Java build output to /myfiles/buildoutput/classes.
+Suppose that the Jenkins build writes Java build output to `/myfiles/buildoutput/classes`.
 
 Then add a new "Execute shell" build step with the following contents.
 
 ```bash
-codesonar analyze /myfiles/csonar_projects/projX/${PROJNAME} -foreground ${HUB} cs-java-scan /myfiles/buildoutput/classes
+codesonar analyze $CSONAR_CMD_ARGS cs-java-scan /myfiles/buildoutput/classes
 ```
 
-#### Example 4: Mixed C/C++ and Java project; single build command
+### Example 4: Mixed C/C++ and Java project; single build command
 
-Suppose that the Jenkins job build step text is:
+Suppose that the Jenkins build step text is:
 
 ```bash
 cd /myfiles/src/projX
 make all
 ```
 
-and that the Jenkins job writes Java build output to `/myfiles/buildoutput/classes`.
+and that it writes Java build output to `/myfiles/buildoutput/classes`.
 
-#### Example 5: Mixed C/C++ and Java project; multiple build commands
+Then replace the build step text with:
 
-Suppose the Jenkins job build step text is:
+```bash
+cd /myfiles/src/projX
+codesonar build $CSONAR_CMD_ARGS make all
+codesonar build $CSONAR_CMD_ARGS cs-java-scan /myfiles/buildoutput/classes
+codesonar analyze $CSONAR_CMD_ARGS
+```
+### Example 5: Mixed C/C++ and Java project; multiple build commands
+
+Suppose the Jenkins build step text is:
 
 ```bash
 cd /myfiles/src/projX
@@ -282,251 +489,83 @@ gcc -c B.c
 javac J.java
 ```
 
-and that the Jenkins job writes Java build output to /myfiles/buildoutput/classes.
+and that it writes Java build output to `/myfiles/buildoutput/classes`.
 
 There are several possible approaches.
 
-1. Move the build text to a Makefile, shell script, batch file, or similar, then follow the approach illustrated in Example 4.   |
-2. Replace the build step text with:
+* **Option 1.** Move the build text to a Makefile, shell script, batch file, or similar, then follow the approach illustrated in [Example 4](#example-4-mixed-cc-and-java-project-single-build-command).
+* **Option 2.** Replace the build step text with:
+   ```bash
+   cd /myfiles/src/projX
+   rm  -f  *.o
+   rm  -f  *.class
+   codesonar build $CSONAR_CMD_ARGS gcc -c A.c
+   codesonar build $CSONAR_CMD_ARGS gcc -c B.c
+   javac J.java
+   codesonar build $CSONAR_CMD_ARGS cs-java-scan /myfiles/buildoutput/classes
+   codesonar analyze $CSONAR_CMD_ARGS
+   ```
 
-```bash
-cd /myfiles/src/projX
-rm  -f  *.o
-rm  -f  *.class
-codesonar build /myfiles/csonar_projects/projX/${PROJNAME} -foreground  ${HUB} gcc -c A.c
-codesonar build /myfiles/csonar_projects/projX/${PROJNAME} -foreground ${HUB} gcc -c B.c
-javac J.java
-codesonar build /myfiles/csonar_projects/projX/${PROJNAME} -foreground ${HUB} cs-java-scan /myfiles/buildoutput/classes
-codesonar analyze /myfiles/csonar_projects/projX/${PROJNAME} -foreground ${HUB}
-```
+## Additional Material
 
-## Configuration Settings
+### CodeSonar conditions
 
-The CodeSonar plugin for Jenkins has two required configuration settings and a number of optional ones.
-
-* Protocol, Hub address, Project name are always required.
-* The Credentials setting is required if special user Anonymous does not have sufficient permissions to interact with
-  the CodeSonar analysis information on the hub.
-* Users can also specify zero or more CodeSonar conditions.
-
-### Required Configuration Settings
-
-| Setting Name     | Description                                                                                                    | Notes                                                                                                                                  |
-|------------------|----------------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------|
-| **Protocol**     | The protocol that should be used to communicate with the hub: either http or https.                            | Always explicitly specify https if you are concerned about security, otherwise you may be sending unencrypted data to an imposter hub. |
-|                  | MANUAL: How CodeSonar Works > CodeSonar Structure > Hub > Hub Location                                         |                                                                                                                                        |
-| **Hub address**  | The location of the CodeSonar hub that you are using to manage your analysis results, in format hostname:port. | If you have set up a `${HUB}` parameter for the job, you can use it here.                                                              |
-|                  | MANUAL: How CodeSonar Works > CodeSonar Structure > Hub > Hub Location                                         |                                                                                                                                        |
-| **Project name** | The CodeSonar project name.                                                                                    | If you have set up a `${PROJNAME}` parameter for the job, you can use it here.                                                         |
-|                  | | |
-
-### Optional Configuration Settings
-
-The hub user account you specify here must have sufficient permissions to access the relevant analysis information.
-
-The hub user account credentials that the plugin should use when obtaining analysis information from the hub.
-
-* **MANUAL**: How CodeSonar Works > CodeSonar Structure > Hub > Hub User Accounts
-* **MANUAL**: Role-Based Access Control (RBAC) > RBAC: Role-Permissions
-
-#### Global permissions
-
-You need to configure the CodeSonar user to have the following permissions.
-
-* `G_LIST_PROPERTIES`
-* `G_LIST_USERS`
-* `G_SIGN_IN`
-* `G_SIGN_IN_CERTIFICATE` or `G_SIGN_IN_PASSWORD`, depending on the **Kind of credentials** you are specifying.
-
-#### Permissions on analyzed project `${PROJNAME}`
-
-In addition, these permissions are needed for the project.
-
-* `ANALYSIS_ANNOTATE`
-* `ANALYSIS_EXISTS`
-* `ANALYSIS_READ`
-* `ANALYSIS_WARNING_EXISTS`
-* `ANALYSIS_WRITE`
-* `PROJECT_EXISTS`
-* `PROJECT_READ`
-
-* `NAMEDSEARCH_READ` for the following built-in warning searches: _active_, _new_, _active and new_.
-
-You do not need to configure credentials if special user _Anonymous_ has sufficient permissions to obtain analysis information from the hub: in this case, the plugin will interact with the hub in an anonymous session (Anonymous does not need `G_SIGN_IN_CERTIFICATE` or `G_SIGN_IN_PASSWORD`).
-Note that these credentials are not used to authenticate CodeSonar build/analysis commands issued by your Jenkins job.
-If you want to specify authentication credentials for those commands, use the appropriate command line
-authentication options.
-
-## CodeSonar conditions
-
-Users can specify zero or more CodeSonar conditions. Each condition specifies a bound on some particular
-property of the CodeSonar analysis results, along with the build result setting to be applied if the property's
-value lies outside the specified bound.
+Users can specify zero or more *CodeSonar conditions*. 
+* Each condition specifies a bound on some particular property of the CodeSonar analysis results, along with the build *result* setting to be applied if the property's value lies outside the specified bound.
+* The available *result* values are `{'Unstable', 'Failed'}`.
+* If multiple conditions are met, the most severe of their corresponding *result* settings is applied.
+* For conditions based on warning counts, the count is with respect to the [`visibilityFilter` setting](#note-on-visibility-filters).
 
 There are six different condition types.
 
-* **Cyclomatic complexity**
+| CodeSonar Condition Type | Syntax/Semantics |
+|--|--|
+| **Cyclomatic complexity** | cyclomaticComplexity(maxCyclomaticComplexity:'*limit*', warrantedResult:'*result*'),<p>Set the build result to *result* if one or more procedures has cyclomatic complexity (as determined by CodeSonar) that exceeds *limit*. </p> **MANUAL**: How CodeSonar Works > CodeSonar Structure > Metrics |
+| **Red alerts** |  redAlerts(alertLimit:'*limit*', warrantedResult:'*result*')<p>Set the build result to *result* if the number of [red alerts](#yellow-and-red-alerts) from CodeSonar analysis exceeds *limit*. </p> **MANUAL**: Using CodeSonar > GUI Reference > Alerts |
+| **Warnings count absolute: specified score and higher** | warningCountIncreaseSpecifiedScoreAndHigher(rankOfWarnings:'*minrank*', warningCountThreshold:'*limit', warrantedResult:'*result*')<p>Set the build result to *result* if the number of  warnings with rank *minrank* or higher issued by the CodeSonar analysis exceeds *limit*. </p> **MANUAL**: How CodeSonar Works > CodeSonar Structure > Warnings > Warnings: Instances and Groups |
+| **Warning count increase: new only** | warningCountIncreaseNewOnly(percentage:'*limit*', warrantedResult:'*result*') <p>Set the build result to *result* if the number of new warnings issued by the CodeSonar analysis exceeds the number issued for the previous analysis by more than *limit*%. </p> **MANUAL**: How CodeSonar Works > CodeSonar Structure > Warnings > Warnings: Instances and Groups |
+| **Warning count increase: overall** | warningCountIncreaseOverall(percentage:'*limit*', warrantedResult:'*result*')<p>Set the build result to *result* if the number of warnings issued by the CodeSonar analysis exceeds the number issued for the previous analysis by more than *limit*%. </p> **MANUAL**: How CodeSonar Works > CodeSonar Structure > Warnings > Warnings: Instances and Groups |
+| **Warnings count increase: specified score and higher** | warningCountIncreaseSpecifiedScoreAndHigher(rankOfWarnings:'*minrank*', warningPercentage:'*limit', warrantedResult:'*result*')<p>Set the build result to *result* if the number of warnings with rank *minrank* or higher issued by the CodeSonar analysis exceeds the number issued for the previous analysis by more than *limit*%. </p> **MANUAL**: How CodeSonar Works > CodeSonar Structure > Warnings > Warnings: Instances and Groups |
+| **Yellow alerts** | yellowAlerts(alertLimit:'*limit*', warrantedResult:'*result*')<p>Set the build result to *result* if the number of [yellow alerts](#yellow-and-red-alerts) from CodeSonar analysis exceeds *limit*. </p>**MANUAL**: Using CodeSonar > GUI Reference > Alerts |
 
-One or more procedures has cyclomatic complexity (as determined by CodeSonar) that exceeds the specified limit.
+### Yellow and red alerts
 
-**MANUAL**: How CodeSonar Works > CodeSonar Structure > Metrics
+CodeSonar issues *alerts* when certain problems arise with the build/analysis.
 
-* **Red alerts**
-
-The number of red alerts from CodeSonar analysis exceeds the specified limit. Please note that this has nothing to
-do with the color in the margin of the warning page. Instead, you can see the specification in the manual
-for when CodeSonar marks a warning as red. Please see the image under **Yellow alerts**.
-
-**MANUAL**: Using CodeSonar > GUI Reference > Alerts
-
-* **Warning count increase: new only**
-
-The number of new warnings issued by the CodeSonar analysis exceeds the number issued for the previous analysis by more than the specified percentage.
-
-**MANUAL**: How CodeSonar Works > CodeSonar Structure > Warnings > Warnings: Instances and Groups
-
-* **Warning count increase: overall**
-
-The number of warnings issued by the CodeSonar analysis exceeds the number issued for the previous analysis by more than the specified percentage.
-
-**MANUAL**: How CodeSonar Works > CodeSonar Structure > Warnings > Warnings: Instances and Groups
-
-* **Warnings count increase: specified score and higher**
-
-The number of warnings in the specified score range issued by the CodeSonar analysis exceeds the number issued for the previous analysis by more than the specified percentage.
-
-**MANUAL**: How CodeSonar Works > CodeSonar Structure > Warnings > Warnings: Instances and Groups
-
-* **Yellow alerts**
-
-The number of yellow alerts from the CodeSonar analysis exceeds the specified limit. Please note that this has
-nothing to do with the color in the margin of the warning page. Instead, you can see the specification in the manual
-for when CodeSonar marks a warning as yellow.
-
-**MANUAL**: Using CodeSonar > GUI Reference > Alerts
-
-### Note on yellow and red alerts
-
-The red and yellow alerts in CodeSonar do not correlate to the red and yellow warning score coloring,
-as shown in the following image.
-
-![score-coloring](docs/img/codesonar-red-yellow-score.png "Warning score coloring")
-
-Instead, you can see how many red and yellow warnings that CodeSonar found under an analysis in the
-upper right corner. Yellow warnings are typically related to parse errors, while red warnings are a bit severe.
-Please see the list when an alert will be marked as either red or yellow in the manual pages:
-
-**MANUAL**: Using CodeSonar > GUI Reference > Alerts
+When you are using the CodeSonar web GUI to view an analysis-specific page (for example, a Warning Report from that analysis), the alerts for that analysis are displayed in the top right corner of the page.
 
 ![red-yellow-warnings](docs/img/hub_alerts.png "Red and yellow")
 
-## Configuration Example
+* A red alert indicates a severe problem. In some cases, the build/analysis will not run to completion until the problem is resolved.
+* A yellow alert indicates a less severe problem that may cause analysis results to be incomplete.
 
-With this configuration, the plugin will mark the build as "Failed" if the CodeSonar analysis produces one or more
-red alerts or 2 or more warnings with a score of at least 56.
+**MANUAL**: Using CodeSonar > GUI Reference > Alerts
 
-![Jenkins actions](docs/img/jenkins_post_build.png "Jenkins post-build conditions")
+Note that alerts and their colors are not related to the notion of *score coloring* for CodeSonar *warnings*.
 
-The visibility filter parameter `filter` can be found under `<hub url>/savedsearches.html?ssdomain=0`.
-You may need to right-click to trigger the `id` column. The visibility filter that's used by default is
-`active` (the filter with the id number `2`).
+### Conditions Example
 
-## Pipeline DSL
+With this set of conditions, the plugin will mark the Pipeline as "Failed" if the CodeSonar analysis produces one or more
+red alerts *or* the overall warning count (with respect to the specified [visibility filter](#note-on-visibility-filters)) exceeds that of the previous analysis by more than 1%.
+If neither of those conditions are met but there is at least one procedure with cyclomatic complexity greater than 8, the plugin will mark the Pipeline as "Unstable".
 
-It's also possible to use the plugin with [Pipeline DSL](https://www.jenkins.io/doc/book/pipeline/syntax/)
-The easiest way to get a usable template for your job is to use the
-[snippet generator](https://www.jenkins.io/doc/book/pipeline/getting-started/#snippet-generator). This is a small
-sample you may build upon:
-
-```groovy
-pipeline {
-    agent any
-    parameters {
-        string (
-            defaultValue: 'some-name',
-            description: 'The name of the project in CodeSonar',
-            name : 'JOB_NAME'
-        )
-        string (
-            defaultValue: '127.0.0.1:7340',
-            description: 'The default address of the CodeSonar hub',
-            name : 'HUB'
-        )
-    }
-    stages {
-        stage('build and analyze') {
-            steps {
-                // run the codesonar analyze commands ...
-                script {
-                    codesonar conditions:
-                        [warningCountIncreaseSpecifiedScoreAndHigher(rankOfWarnings: 55, warningPercentage: '3')],
-                            credentialId: '....', hubAddress: '${HUB}', projectName: '${JOB_NAME}', protocol: 'http',
-                            filter: '2'
-                }
-            }
-        }
-    }
-}
+```
+cyclomaticComplexity(maxCyclomaticComplexity:'8', warrantedResult:'UNSTABLE'),
+                     warningCountIncreaseOverall(percentage:'1.0', warrantedResult:'FAILURE'),
+                     redAlerts(alertLimit:'1', warrantedResult:'FAILURE')
 ```
 
-The credential id can be found in **Manage Jenkins** -> **Credentials**. It's a UUID-ish string.
 
-The visibility filter parameter `filter` can be found under `<hub url>/savedsearches.html?ssdomain=0`. By default, 
-we use the `active` warning filter.
+### Note on visibility filters
 
-## Note on visibility filters
+The CodeSonar warning visibility filter allows you to specify exactly which warnings you are interested in: for example, you might be interested in all warnings, or only in new warnings (that is, those that were issued for the first time in the current analysis). 
 
-![CodeSonar visibility filters](docs/img/codesonar-visibility-filters.png "CodeSonar visibility filters")
+* You can specify a warning visibility filter by *name* or by numeric *ID*.
+* The available warning visibility filters for a given hub user account are those for which the account has `NAMEDSEARCH_READ` permission. The exception is the **all** filter, which is always available to all users.
+* To view the list of available warning visibility filters, including their names, IDs, and search definitions, see the **Warnings** tab of the **Saved Searches** page in the CodeSonar GUI.
 
-When you configure the job where you need to change the default visibility filter, you need to use the ID 
-of the visibility filter in the form. Please note that the visibility filters are based on access control,
-so the user you configure in the credentials needs to be able to use the filter defined.
+  **MANUAL**: Using CodeSonar > GUI Reference > Searching > GUI: Saved Searches
 
-**Manual**: Using CodeSonar -> GUI reference -> GUI reference (see under **Visibility Filter selector**).
-
-* `NAMEDSEARCH_READ` for the following built-in warning searches: _active_, _new_, _active and new_.
-* `NAMEDSEARCH_EXISTS` to see the filters.
-
-## Configuration Example
-
-With this configuration, the plugin will mark the build as "Unstable" if the CodeSonar analysis produces one oxr two red alerts, but "Failed" if there are three or more. 
-
-![Jenkins actions](docs/img/jenkins_params.png "Jenkins post-build conditions")
-
-## Jenkins Job DSL
-
-Available options
-
-```jenkins
-job{
-    publishers{
-        codeSonar(String hubAddress, String projectName){
-            cyclomaticComplexity(int maxComplexity, boolean markAsFailed)
-            redAlert(int maxAlerts, boolean markAsFailed)
-            yellowAlert(int maxAlerts, boolean markAsFailed)
-            newWarningCountIncrease(float percentage, boolean markAsFailed)
-            overallWarningCountIncrease(float percentage, boolean markAsFailed)
-            rankedWarningCountIncrease(int minRank, float percentage, boolean markAsFailed)
-        }
-    }
-}
-```
-Example
-
-```jenkins
-job('myProject_GEN'){
-    publishers{
-        codeSonar('hub','proj'){
-            cyclomaticComplexity(20, false)
-            redAlert(3, true)
-            yellowAlert(10, false)
-            newWarningCountIncrease(5, true)
-            overallWarningCountIncrease(5, false)
-            rankedWarningCountIncrease(30, 5, true)
-        }
-    }
-}
-```
 
 ## Support and Contact
-Please send an email on [support@praqma.net](mailto:support@praqma.net) if you have a request or question regarding the plugin.
+Please contact [https://support.grammatech.com/](https://support.grammatech.com/) if you have a request or question regarding the plugin.
