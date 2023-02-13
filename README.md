@@ -494,8 +494,6 @@ gcc -c B.c
 javac J.java
 ```
 
-and that it writes Java build output to `/myfiles/buildoutput/classes`, with Java source files located in `/myfiles/src/projX/sources`.
-
 There are several possible approaches.
 
 * **Option 1.** Move the build text to a Makefile, shell script, batch file, or similar, then follow the approach illustrated in [Example 4](#example-4-mixed-cc-and-java-project-single-build-command).
@@ -508,7 +506,7 @@ There are several possible approaches.
    codesonar build $CSONAR_CMD_ARGS gcc -c B.c
    javac J.java
    codesonar build $CSONAR_CMD_ARGS cs-java-scan \
-      -include-artifacts /myfiles/buildoutput/classes -include-sources /myfiles/src/projX/sources
+      -include-artifacts J.class -include-sources J.java
    codesonar analyze $CSONAR_CMD_ARGS
    ```
 
