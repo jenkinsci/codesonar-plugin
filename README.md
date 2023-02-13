@@ -1,5 +1,5 @@
 ## About CodeSonar
-[GrammaTech CodeSonar](https://www.grammatech.com/products/codesonar) GrammaTech's flagship static analysis software,
+[GrammaTech CodeSonar](https://www.grammatech.com/codesonar-cc) GrammaTech's flagship static analysis software,
 identifies programming bugs that can result in system crashes, memory corruption, leaks, data races, and security
 vulnerabilities.
 
@@ -16,12 +16,6 @@ The following documentation cites relevant sections in the CodeSonar manual. The
 **MANUAL:** *Subject > ... > Page Title*
 
 where *Subject > .... > Page Title* denotes a navigation path through the CodeSonar manual table of contents.
-
-### About CodeSonar ®
-
-[CodeSonar](https://www.grammatech.com/codesonar-cc), GrammaTech's flagship static analysis software, identifies programming bugs that can result in system crashes, memory corruption, leaks, data races, and security vulnerabilities.
-
-By analyzing both source code and binaries, CodeSonar empowers developers to eliminate the most costly and hard-to-find defects early in the application development lifecycle.
 
 ## Setting Up The Plugin
 
@@ -47,7 +41,7 @@ Work through the following steps to make sure that CodeSonar is in a suitable st
 1. Start the CodeSonar hub to use for recording the analysis results (if it is not already running).
     * **MANUAL:** How CodeSonar Works > CodeSonar Structure > Hub > Starting a Hub
     * The remainder of these instructions will refer to the hub location as *host*:*port*.
-1. If you have not already done so, choose a hub user account to authenticate the CodeSonar operations that that you will be invoking within Jenkins. This account will need sufficient permissions to:
+1. If you have not already done so, choose a hub user account to authenticate the CodeSonar operations that you will be invoking within Jenkins. This account will need sufficient permissions to:
     * Sign into the hub.
     * Analyze the project you are interested in.
     * Create a launch daemon.
@@ -64,21 +58,17 @@ Work through the following steps to make sure that CodeSonar is in a suitable st
    1. Sign into the agent.
    1. Run the following command.
       ```
-      "$CSONAR/codesonar/bin/codesonar" get https://<host>:<port>/index.csv
+      "$CSONAR/codesonar/bin/codesonar" get -o - https://<host>:<port>/index.csv
       ```
-      (This command fetches the hub home page in CSV format: we don't need this page, it is merely a convenient way to trigger the certificate interaction.)
+      (This command fetches the hub home page in CSV format. We don't need this data, it is merely a convenient way to trigger the certificate interaction.)
 
       For example, if your hub is located at `myhub.example.com:7340`:
       ```
-      "$CSONAR/codesonar/bin/codesonar" get https://myhub.example.com:7340/index.csv
+      "$CSONAR/codesonar/bin/codesonar" get -o - https://myhub.example.com:7340/index.csv
       ```
     1. If you are prompted with a warning that the hub certificate is self-signed, select the option to trust the certificate.
 
        (If you are not prompted, either the certificate is not self-signed or trust has already been established.)
-    1. Discard the downloaded file, unless you want to keep it.
-       ```
-       rm index.csv
-       ```
 1. Make sure there is a suitable launch daemon available to perform the CodeSonar analysis.
    * If you are using CodeSonar SaaS, launch daemons are provided as part of your SaaS deployment.
    * Otherwise, if you are planning to perform *remote-managed* analysis using a launch daemon running elsewhere, make sure that the launch daemon you want to use is available and connected to the hub.
@@ -191,11 +181,11 @@ extending the Pipeline's build stage as described in the following steps.
          ```
        * For CodeSonar SaaS, replace the `-foreground` flag with:
          ```
-         -remote /saas/*
+         -remote /saas/* -wait
          ```
        * For (non-SaaS) remote-managed analyses, replace the `-foreground` flag with:
          ```
-         -remote <analysis-launchd>
+         -remote <analysis-launchd> -wait
          ```
          Where `<analysis-launchd>` specifies a suitable launch daemon or launchd group that is connected to your hub and can perform the analysis.
        * If you want to specify any addition `codesonar` command line options, add them to this setting.
@@ -206,10 +196,10 @@ extending the Pipeline's build stage as described in the following steps.
 
        | Project Language | Editing the Build Steps |
        |------------------|---------------------------|
-       | **C, C++**       | For every existing build step that involves C/C++ compilation, edit the build step to incorporate the CodeSonar build/analysis command. If the current build step or steps contain one command that involves C/C++ compilation, this will involve constructing a single `codesonar analyze` command. Otherwise there are two possible approaches: <ul><li>Accumulate components into a CodeSonar project by constructing a `codesonar build` command for each software build command that involves C/C++ compilation, then add a final `codesonar analyze` command to analyze the project.<br><i>or</i></li><li>Replace the text of the build step or steps with an invocation of a shell script or batch file with equivalent contents, then construct a single `codesonar analyze` command based on that invocation. </li></ul><p>See [Example 1](#example-1-cc-project-jenkins-build-steps-include-one-command-that-involves-cc-compilation) and [Example 2](#example-2-cc-project-jenkins-build-steps-include-multiple-commands-that-involve-cc-compilation).</p> |
-       | **Java**         | Add a new, final build step that executes the CodeSonar Java build/analysis on the bytecode produced by the other build steps. <p>See [Example 3](#example-3-java-project).</p> <p> <b>MANUAL:</b> Using CodeSonar > Building and Analyzing Projects > Java > Build and Analysis for Java Projects |
+       | **C, C++**       | For every existing build step that involves C/C++ compilation, edit the build step to incorporate the CodeSonar build/analysis command. If the current build step or steps contain one command that involves C/C++ compilation, this will involve constructing a single `codesonar analyze` command. Otherwise there are two possible approaches: <ul><li>Accumulate components into a CodeSonar project by constructing a `codesonar build` command for each software build command that involves C/C++ compilation, then add a final `codesonar analyze` command to analyze the project.<br><i>or</i></li><li>Replace the text of the build step or steps with an invocation of a shell script or batch file with equivalent contents, then construct a single `codesonar analyze` command based on that invocation. </li></ul><p>See [Example 1](#ex1) and [Example 2](#ex2).</p> |
+       | **Java**         | Add a new, final build step that executes the CodeSonar Java build/analysis on the bytecode produced by the other build steps. <p>See [Example 3](#ex3).</p> <p> <b>MANUAL:</b> Using CodeSonar > Building and Analyzing Projects > Java > Build and Analysis for Java Projects |
        | **C#**         | Add a new, final build step that executes the CodeSonar C# build/analysis on the artifacts produced by the other build steps.  <p> <b>MANUAL:</b> Using CodeSonar > Building and Analyzing Projects > C# > Build and Analysis for C# Projects |
-       | **Mixed Java and C/C++** | Combine the approaches for Java-only and C/C++-only projects: <ol><li>Edit the build steps to incorporate a `codesonar build` command for each software build command that involves C/C++ compilation. </li><li>Add a new build step that executes `codesonar build` on any Java bytecode produced by earlier build steps. </li><li>Add a new, final build step that invokes `codesonar analyze` to analyze the project.</li></ol><p>See [Example 4](#example-4-mixed-cc-and-java-project-single-build-command) and [Example 5](#example-5-mixed-cc-and-java-project-multiple-build-commands).</p> |
+       | **Mixed Java and C/C++** | Combine the approaches for Java-only and C/C++-only projects: <ol><li>Edit the build steps to incorporate a `codesonar build` command for each software build command that involves C/C++ compilation. </li><li>Add a new build step that executes `codesonar build` on any Java bytecode produced by earlier build steps. </li><li>Add a new, final build step that invokes `codesonar analyze` to analyze the project.</li></ol><p>See [Example 4](#ex4) and [Example 5](#ex5).</p> |
 
     For example, suppose you have a simple Pipeline with a GitHub project that is built by invoking `make`.
     ```
@@ -301,7 +291,6 @@ You may wish to do one or more of the following.
      -name "$GIT_BRANCH/$GIT_COMMIT/agent/$NODE_NAME/exe/$EXECUTOR_NUMBER/build/$BUILD_NUMBER" \
      ```
 
-
 ### C. Apply the CodeSonar plugin to your Jenkins Pipeline
 
 Once your Jenkins Pipeline is correctly invoking the CodeSonar analysis, you can apply the CodeSonar plugin to collect
@@ -327,7 +316,6 @@ analysis information from the hub.
             conditions: [],
             credentialId: params.CSONAR_HUBUSERPASS,
             hubAddress: params.CSONAR_HUB_ADDRESS,
-            socketTimeoutMS: 300000,
             projectName: params.CSONAR_PROJECT_NAME,
             aid: analysisId,
             protocol: "http",
@@ -346,6 +334,16 @@ analysis information from the hub.
     * If your hub has a self-signed server certificate, *add* the following line after the `socketTimeoutMS` line.
       ```
       serverCertificateCredentialId: params.CSONAR_HUB_CACERT_ID,
+      ```
+
+    Optional:
+    * To specify a timeout of `<X>` milliseconds for hub communication, add the following line after the `hubAddress` line.
+      ```
+      socketTimeoutMS: <X>,
+      ```
+      For example, to specify a timeout of 5 minutes:
+      ```
+      socketTimeoutMS: 300000,
       ```
 
 1. Click **Save**.
@@ -381,7 +379,7 @@ analysis information from the hub.
 
 These examples all assume that the Pipeline has been configured as described above.
 
-
+<a name="ex1" id="ex1"></a>
 ### Example 1: C/C++ project; Pipeline build steps include one command that involves C/C++ compilation.
 
 Suppose that the Jenkins build step text is:
@@ -396,6 +394,7 @@ Then replace the build step text with:
 cd /myfiles/src/projX && codesonar analyze $CSONAR_CMD_ARGS make normal
 ```
 
+<a name="ex2" id="ex2"></a>
 ### Example 2: C/C++ project; Pipeline build steps include multiple commands that involve C/C++ compilation.
 
 Suppose that the Jenkins build step text is:
@@ -447,16 +446,19 @@ There are several possible approaches.
    codesonar analyze $CSONAR_CMD_ARGS path\to\dir\mybuildbat.bat
    ```
 
+<a name="ex3" id="ex3"></a>
 ### Example 3: Java project
 
-Suppose that the Jenkins build writes Java build output to `/myfiles/buildoutput/classes`.
+Suppose that the Jenkins build operates on Java source files in `/myfiles/ProjectX/sources`, and writes Java build output to `/myfiles/ProjectX/classes`.
 
 Then add a new "Execute shell" build step with the following contents.
 
 ```bash
-codesonar analyze $CSONAR_CMD_ARGS cs-java-scan /myfiles/buildoutput/classes
+codesonar analyze $CSONAR_CMD_ARGS cs-java-scan \
+   -include-artifacts /myfiles/ProjectX/classes -include-sources /myfiles/ProjectX/sources
 ```
 
+<a name="ex4" id="ex4"></a>
 ### Example 4: Mixed C/C++ and Java project; single build command
 
 Suppose that the Jenkins build step text is:
@@ -466,16 +468,19 @@ cd /myfiles/src/projX
 make all
 ```
 
-and that it writes Java build output to `/myfiles/buildoutput/classes`.
+and that it writes Java build output to `/myfiles/buildoutput/classes`, with Java source files located in `/myfiles/src/projX/sources`.
 
 Then replace the build step text with:
 
 ```bash
 cd /myfiles/src/projX
 codesonar build $CSONAR_CMD_ARGS make all
-codesonar build $CSONAR_CMD_ARGS cs-java-scan /myfiles/buildoutput/classes
+codesonar build $CSONAR_CMD_ARGS cs-java-scan \
+   -include-artifacts /myfiles/buildoutput/classes -include-sources /myfiles/src/projX/sources
 codesonar analyze $CSONAR_CMD_ARGS
 ```
+
+<a name="ex5" id="ex5"></a>
 ### Example 5: Mixed C/C++ and Java project; multiple build commands
 
 Suppose the Jenkins build step text is:
@@ -489,7 +494,7 @@ gcc -c B.c
 javac J.java
 ```
 
-and that it writes Java build output to `/myfiles/buildoutput/classes`.
+and that it writes Java build output to `/myfiles/buildoutput/classes`, with Java source files located in `/myfiles/src/projX/sources`.
 
 There are several possible approaches.
 
@@ -502,7 +507,8 @@ There are several possible approaches.
    codesonar build $CSONAR_CMD_ARGS gcc -c A.c
    codesonar build $CSONAR_CMD_ARGS gcc -c B.c
    javac J.java
-   codesonar build $CSONAR_CMD_ARGS cs-java-scan /myfiles/buildoutput/classes
+   codesonar build $CSONAR_CMD_ARGS cs-java-scan \
+      -include-artifacts /myfiles/buildoutput/classes -include-sources /myfiles/src/projX/sources
    codesonar analyze $CSONAR_CMD_ARGS
    ```
 
