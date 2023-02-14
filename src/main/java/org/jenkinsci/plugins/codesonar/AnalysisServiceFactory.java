@@ -16,7 +16,7 @@ public class AnalysisServiceFactory {
     
     public IAnalysisService getAnalysisService(HttpService httpService, XmlSerializationService xmlSerializationService) throws AbortException {
         if (version == null) {
-            throw new AbortException("[Codesonar] version could not be determined");
+            throw new AbortException("[CodeSonar] version could not be determined");
         }
         
         return new AnalysisService(httpService, xmlSerializationService,"0");
