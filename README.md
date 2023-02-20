@@ -72,7 +72,7 @@ Work through the following steps to make sure that CodeSonar is in a suitable st
 1. Make sure there is a suitable launch daemon available to perform the CodeSonar analysis.
    * If you are using CodeSonar SaaS, launch daemons are provided as part of your SaaS deployment.
    * Otherwise, if you are planning to perform *remote-managed* analysis using a launch daemon running elsewhere, make sure that the launch daemon you want to use is available and connected to the hub.
-   * Otherwise, run a launch daemon inside each agent where you installed CodeSonar  in the first step above:
+   * Otherwise, run a launch daemon inside each agent where you installed CodeSonar in the first step above:
       1. Sign into the agent as the same Jenkins user that will run the pipeline.
       1. Run the following command to start a launch daemon.
          ```
