@@ -4,13 +4,13 @@
         <j:set var="conditionNamesAndResults" value="${it.getConditionNamesAndResults()}"/>
         <j:choose>
             <j:when test="${it.getConditionNamesAndResults() == null || it.getConditionNamesAndResults().isEmpty()}">
-                <h3>Codesonar project <a href="${it.getUrlName()}">${it.projectName}</a></h3>
+                <h3>CodeSonar project <a href="${it.getUrlName()}">${it.projectName}</a></h3>
                 <ul>
                     <li>No conditions selected</li>
                 </ul>
             </j:when>
             <j:otherwise>
-                <h3>Codesonar project <a href="${it.getUrlName()}">${it.projectName}</a></h3>
+                <h3>CodeSonar project <a href="${it.getUrlName()}">${it.projectName}</a></h3>
                 <ul>
                     <j:forEach var="pair" items="${it.getConditionNamesAndResults()}">  
                         <li>"${pair.getValue0()}": <i>${pair.getValue1()}</i></li>

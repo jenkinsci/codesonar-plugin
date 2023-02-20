@@ -2,6 +2,21 @@
 
 === Master ===
 
+=== Version 3.2.1 (February 2022) ===
+
+* Revise documentation to correct errors and to focus on scripted pipeline.
+* Update CodeSonar display text and icon in various places.
+
+=== Version 3.2.0 (February 2022) ===
+
+* Support CodeSonar 7.2 hubs.
+* Fix another bug with Server Certificate post-build parameter selection list.
+
+=== Version 3.1.1 (January 2022) ===
+
+* Fix bug with Server Certificate post-build parameter selection list.
+* Update documentation and repository source URLs; README now visible on plugins.jenkins.io.
+
 === Version 3.1.0 (November 2022) ===
 
 * Introduced support for accepting custom Hub Server Certificate by providing the certificate in a Jenkins File Credential

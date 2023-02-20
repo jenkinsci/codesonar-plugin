@@ -91,7 +91,7 @@ CodeSonar hub should now be usable (thanks to Linux virtual network cards with f
 With Jenkins up and running and a CodeSonar Hub you can start running the the test jobs, that are created by the initial seed-job the Jenkins have already.
 
 * Default parameters in the jobs are all set to work for the complete setup.
-* You can see if Codesonar Hub uses many works automatically on the Analysis Cloud page in CodeSonar Hub: http://$PublicIp:7340/manage_launchd.html?filter=3&prj_filter=11
+* You can see if CodeSonar Hub uses many works automatically on the Analysis Cloud page in CodeSonar Hub: http://$PublicIp:7340/manage_launchd.html?filter=3&prj_filter=11
 * The projects are automatically created on CodeSonar hub - you don't have to do anything there.
 
 ### Job: build_and_analyze_codesonar_plugin_branch-master

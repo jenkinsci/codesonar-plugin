@@ -46,7 +46,7 @@ public class CodeSonarBuildAction implements Action {
 
     @Override
     public String getDisplayName() {
-        return "Codesonar (" +projectName + ")";
+        return "CodeSonar (" +projectName + ")";
     }
 
     @Override

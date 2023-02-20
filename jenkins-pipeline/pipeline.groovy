@@ -1,4 +1,4 @@
-multibranchPipelineJob("Codesonar Jenkins Plugin") {
+multibranchPipelineJob("CodeSonar Jenkins Plugin") {
 
     factory {
         workflowBranchProjectFactory {
