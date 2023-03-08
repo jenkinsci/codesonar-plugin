@@ -236,19 +236,22 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
         analysisService = analysisServiceFactory.getAnalysisService(httpService, xmlSerializationService);
         analysisService.setVisibilityFilter(getVisibilityFilter());
 
+        String analysisId = null;
         if(StringUtils.isBlank(aid)) {
             LOGGER.log(Level.INFO, "[CodeSonar] Determining analysis id...");
-            aid = workspace.act(new DetermineAid());
+            analysisId = workspace.act(new DetermineAid());
+            LOGGER.log(Level.INFO, "[CodeSonar] Found analysis id: {0}", analysisId);
         } else {
+            analysisId = aid;
             LOGGER.log(Level.INFO, "[CodeSonar] Using override analysis id: '" + aid + "'.");
         }
         
-        String analysisUrl = baseHubUri.toString() + "/analysis/" + aid + ".xml";
+        String analysisUrl = baseHubUri.toString() + "/analysis/" + analysisId + ".xml";
 
         Analysis analysisWarnings = analysisService.getAnalysisFromUrlWarningsByFilter(analysisUrl);
-        URI metricsUri = metricsService.getMetricsUriFromAnAnalysisId(baseHubUri, aid);
+        URI metricsUri = metricsService.getMetricsUriFromAnAnalysisId(baseHubUri, analysisId);
         Metrics metrics = metricsService.getMetricsFromUri(metricsUri);
-        URI proceduresUri = proceduresService.getProceduresUriFromAnAnalysisId(baseHubUri, aid);
+        URI proceduresUri = proceduresService.getProceduresUriFromAnAnalysisId(baseHubUri, analysisId);
         Procedures procedures = proceduresService.getProceduresFromUri(proceduresUri);
 
         Analysis analysisNewWarnings = analysisService.getAnalysisFromUrlWithNewWarnings(analysisUrl);
