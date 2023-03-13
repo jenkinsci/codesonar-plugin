@@ -10,11 +10,11 @@
        <f:textbox />
     </f:entry>
 
-    <f:entry field="hubAddress" title="Hub address">
+    <f:entry field="hubAddress" title="Hub Address">
         <f:textbox/>
     </f:entry>
     
-    <f:entry field="projectName" title="Project name">
+    <f:entry field="projectName" title="Project Name">
         <f:textbox default="$${JOB_NAME}" />
     </f:entry>
 
@@ -33,6 +33,10 @@
     <f:invisibleEntry field="aid" title="Analysis ID Override" >
         <f:textbox/>
     </f:invisibleEntry>
+    
+    <f:entry field="codesonarProjectFile" title="CodeSonar Project File">
+        <f:textbox/>
+    </f:entry>
 
     <f:section title="Configure build status conditions"> 
         <f:block>

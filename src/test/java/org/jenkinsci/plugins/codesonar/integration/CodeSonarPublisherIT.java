@@ -1,16 +1,11 @@
 package org.jenkinsci.plugins.codesonar.integration;
 
-import hudson.model.Cause;
-import hudson.model.FreeStyleBuild;
-import hudson.model.FreeStyleProject;
-import hudson.model.Result;
-import hudson.model.queue.QueueTaskFuture;
+import static org.hamcrest.CoreMatchers.is;
+import static org.junit.Assert.assertEquals;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-
-import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.*;
 
 import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.plugins.codesonar.CodeSonarPublisher;
@@ -23,6 +18,12 @@ import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
 import org.jvnet.hudson.test.JenkinsRule;
+
+import hudson.model.Cause;
+import hudson.model.FreeStyleBuild;
+import hudson.model.FreeStyleProject;
+import hudson.model.Result;
+import hudson.model.queue.QueueTaskFuture;
 
 /**
  *
@@ -46,11 +47,12 @@ public class CodeSonarPublisherIT {
 
         final String EMPTY_HUB_ADDRESS = "";
         final String VALID_PROJECT_NAME = "projectName";
+        final String VALID_CODESONAR_PROJECT_FILE = "projectName.prj";
 
         FreeStyleProject project = jenkinsRule.createFreeStyleProject();
 
         List<Condition> conditions = new ArrayList<>();
-        CodeSonarPublisher codeSonarPublisher = new CodeSonarPublisher(conditions, "http", EMPTY_HUB_ADDRESS, VALID_PROJECT_NAME, "", "2");
+        CodeSonarPublisher codeSonarPublisher = new CodeSonarPublisher(conditions, "http", EMPTY_HUB_ADDRESS, VALID_PROJECT_NAME, "", "2", VALID_CODESONAR_PROJECT_FILE);
         project.getPublishersList().add(codeSonarPublisher);
 
         // act
@@ -73,11 +75,12 @@ public class CodeSonarPublisherIT {
         
         final String VALID_HUB_ADDRESS = "10.10.10.10";
         final String EMPTY_PROJECT_NAME = "";
+        final String VALID_CODESONAR_PROJECT_FILE = "projectName.prj";
 
         FreeStyleProject project = jenkinsRule.createFreeStyleProject();
         
         List<Condition> conditions = new ArrayList<>();
-        project.getPublishersList().add(new CodeSonarPublisher(conditions, "http", VALID_HUB_ADDRESS, EMPTY_PROJECT_NAME,"", "2"));
+        project.getPublishersList().add(new CodeSonarPublisher(conditions, "http", VALID_HUB_ADDRESS, EMPTY_PROJECT_NAME,"", "2", VALID_CODESONAR_PROJECT_FILE));
         
         // act
         QueueTaskFuture<FreeStyleBuild> queueTaskFuture = project.scheduleBuild2(0, new Cause.UserIdCause());

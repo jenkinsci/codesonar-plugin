@@ -1,8 +1,13 @@
 package org.jenkinsci.plugins.codesonar;
 
 import java.io.File;
+import java.io.FileFilter;
 import java.io.IOException;
 import java.net.URI;
+import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.security.KeyStore;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
@@ -83,12 +88,16 @@ import jenkins.tasks.SimpleBuildStep;
 public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
     private static final Logger LOGGER = Logger.getLogger(CodeSonarPublisher.class.getName());
     
+    private static final String CS_PROJECT_FILE_EXTENSION = ".prj";
+    private static final String CS_PROJECT_DIR_EXTENSION = ".prj_files";
+    
     private String visibilityFilter = "2"; // active warnings
     private String hubAddress;
     private String projectName;
     private String protocol = "http";
     private String aid;
     private int socketTimeoutMS = -1;
+    private String codesonarProjectFile;
 
     private XmlSerializationService xmlSerializationService = null;
     private HttpService httpService = null;
@@ -111,7 +120,7 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
     @DataBoundConstructor
     public CodeSonarPublisher(
             List<Condition> conditions, String protocol, String hubAddress, String projectName, String credentialId,
-            String visibilityFilter
+            String visibilityFilter, String codesonarProjectFile
     ) {
         this.hubAddress = hubAddress;
         this.projectName = projectName;
@@ -121,9 +130,9 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
             conditions = ListUtils.EMPTY_LIST;
         }
         this.conditions = conditions;
-
         this.credentialId = credentialId;
         this.visibilityFilter = visibilityFilter;
+        this.codesonarProjectFile = codesonarProjectFile;
     }
 
     @DataBoundSetter
@@ -167,37 +176,134 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
         return this.visibilityFilter;
     }
     
-    private static final class DetermineAid implements FileCallable<String> {
+    public String getCodesonarProjectFile() {
+        return codesonarProjectFile;
+    }
+
+    public void setCodesonarProjectFile(String codesonarProjectFile) {
+        this.codesonarProjectFile = codesonarProjectFile;
+    }
+    
+
+    public static final class DetermineAid implements FileCallable<String> {
+        
+        private String codesonarProjectFile;
+        
+        public DetermineAid(String codesonarProjectFile) {
+            this.codesonarProjectFile = codesonarProjectFile;
+        }
+
+        private IOException createError(String msg) {
+            IOException e = new IOException(msg); 
+            LOGGER.log(Level.SEVERE, msg, e);
+            return e;
+        }
+        
+        /**
+         * Get CodeSonar project file base name, removing known extensions.
+         * @return Path representing CodeSonar project file base name
+         */
+        private String getCodesonarProjectFileBaseName(String fileName) {
+            String baseFileName = fileName;
+            //Remove extension if it is one of the known ones (.prj, .prj_files)
+            if(StringUtils.endsWith(baseFileName, CS_PROJECT_FILE_EXTENSION)) {
+                baseFileName = baseFileName.substring(0, baseFileName.lastIndexOf(CS_PROJECT_FILE_EXTENSION));
+            } else if(StringUtils.endsWith(baseFileName, CS_PROJECT_DIR_EXTENSION)) {
+                baseFileName = baseFileName.substring(0, baseFileName.lastIndexOf(CS_PROJECT_DIR_EXTENSION));
+            }
+            return baseFileName;
+        }
+        
+        private Path getPrjFilesDirectory(Path codesonarProjectFilePath) throws IOException {
+            Path originalFileName = codesonarProjectFilePath.getFileName();
+            if(originalFileName == null) {
+                throw createError(String.format("Specified CodeSonar Project File \"%s\" does not represent a file or a directory neither", codesonarProjectFilePath.toString()));
+            }
+            String projectFileBaseName = getCodesonarProjectFileBaseName(originalFileName.toString());
+            Path resultingPath = Paths.get(projectFileBaseName + CS_PROJECT_DIR_EXTENSION);
+            Path parentPath = codesonarProjectFilePath.getParent();
+            if(parentPath != null) {
+                resultingPath = parentPath.resolve(resultingPath);
+            }
+            return resultingPath;
+        }
+        
+        /**
+         * Determine the real file system location described by path.
+         * If path is absolute than there's nothing additional to do,
+         * whereas if it is relative, it will be resolved to its absolute form
+         * starting the resolution process from jenkin's current working directory.
+         * @param jenkinsPipelineCWD Jenkin's current working directory for a given pipeline
+         * @param path A path
+         * @return The absolute form for parameter path
+         */
+        private Path resolveRelativePath(File jenkinsPipelineCWD, Path path) {
+            if(!path.isAbsolute()) {
+                /* If path is expressed as relative, then it is always 
+                 * considered relative to pipeline's current working directory
+                 */
+                path = jenkinsPipelineCWD.toPath().resolve(path).normalize();
+            }
+            return path;
+        }
+        
         @Override
-        public String invoke(File file, VirtualChannel vc) throws IOException, InterruptedException {
-            LOGGER.log(Level.INFO, "Finding aid....");
-            if(file != null ) {
-                File[] files = file.listFiles();
-                if(files != null) {
-                    LOGGER.log(Level.INFO, "Enumerating files to find aid....");
-                    for(File f : files) {
-                        if (f.isDirectory() && f.getName().endsWith(".prj_files")) {
-                            //String foundAid = new String(Files.readAllBytes(), StandardCharsets.UTF_8);
-                            File aidPath = new File(f, "aid.txt");
-                            FilePath fp = new FilePath(aidPath);
-                            LOGGER.log(Level.INFO, "Found project aid: "+aidPath);
-                            return fp.readToString();
-                        }
-                    }
+        public String invoke(File jenkinsPipelineCWD, VirtualChannel vc) throws IOException, InterruptedException {
+            /*
+             * If it has been specified parameter "codesonarProjectFile" for this pipeline, then use it
+             * to determine where to search into in order to retrieve the prj_files directory
+             */
+            if(StringUtils.isNotBlank(codesonarProjectFile)) {
+                Path codesonarProjectFilePath = null;
+                try {
+                    codesonarProjectFilePath = Paths.get(codesonarProjectFile);
+                } catch(InvalidPathException e) {
+                    throw createError(String.format("Specified CodeSonar Project File \"%s\" does not represent a file path", codesonarProjectFile));
+                }
+                Path prjFilesDirectoryPath = getPrjFilesDirectory(codesonarProjectFilePath);
+                Path prjFilesDirectoryAbsolutePath = resolveRelativePath(jenkinsPipelineCWD, prjFilesDirectoryPath);
+                //Check that prj_files directory exists
+                if(Files.isDirectory(prjFilesDirectoryAbsolutePath)) {
+                    LOGGER.log(Level.INFO, "Finding aid into {0}....", prjFilesDirectoryAbsolutePath.toString());
+                    File aidPath = new File(prjFilesDirectoryAbsolutePath.toFile(), "aid.txt");
+                    FilePath fp = new FilePath(aidPath);
+                    LOGGER.log(Level.INFO, "Found project aid: "+aidPath);
+                    return fp.readToString();
                 } else {
-                    LOGGER.log(Level.SEVERE, "No files, this is not supposed to happen!");
+                    throw createError(String.format(".prj_files directory \"%s\" seems not to exist", prjFilesDirectoryAbsolutePath.toString()));
                 }
             } else {
-                LOGGER.log(Level.WARNING, "No workspace!");
+                LOGGER.log(Level.INFO, "Finding aid into {0}....", (jenkinsPipelineCWD != null ? jenkinsPipelineCWD.getAbsoluteFile().toString() : "NULL"));
+                
+                if(jenkinsPipelineCWD != null ) {
+                    File[] prjFilesDirectories = jenkinsPipelineCWD.listFiles(new FileFilter() {
+                        @Override
+                        public boolean accept(File pathname) {
+                            return pathname.isDirectory() && pathname.getName().endsWith(CS_PROJECT_DIR_EXTENSION);
+                        }
+                    });
+                    if(prjFilesDirectories != null && prjFilesDirectories.length > 0) {
+                        File prjFilesDir = prjFilesDirectories[0];
+                        if(prjFilesDirectories.length > 1) {
+                            LOGGER.log(Level.INFO, "Attention, more than one .prj_files directory found, going to take the first one: " + prjFilesDir);
+                        }
+                        File aidPath = new File(prjFilesDir, "aid.txt");
+                        FilePath fp = new FilePath(aidPath);
+                        LOGGER.log(Level.INFO, "Found project aid: "+aidPath);
+                        return fp.readToString();
+                    } else {
+                        LOGGER.log(Level.SEVERE, "No prj_files directory found!");
+                    }
+                } else {
+                    LOGGER.log(Level.WARNING, "No workspace!");
+                }
+                throw createError("Could not find a .prj_files folder for project");
             }
-            IOException ex = new IOException("Could not find a .prj files folder for project"); 
-            LOGGER.log(Level.SEVERE, "Could not find a .prj files folder for project", ex);
-            throw ex;
         }
 
         @Override
         public void checkRoles(RoleChecker rc) throws SecurityException { }
- 
+        
     }
        
     @Override
@@ -215,6 +321,10 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
 
         String expandedHubAddress = run.getEnvironment(listener).expand(Util.fixNull(hubAddress));
         String expandedProjectName = run.getEnvironment(listener).expand(Util.fixNull(projectName));
+        LOGGER.log(Level.INFO, "[CodeSonar] projectName: {0} expandedProjectName {1}", new String[] {projectName, expandedProjectName});
+        String expandedCodesonarProjectFile = run.getEnvironment(listener).expand(Util.fixNull(codesonarProjectFile));
+        LOGGER.log(Level.INFO, "[CodeSonar] codesonarProjectFile: {0} expandedCodesonarProjectFile {1}", new String[] {codesonarProjectFile, expandedCodesonarProjectFile});
+
 
         if (expandedHubAddress.isEmpty()) {
             throw new AbortException("[CodeSonar] Hub address not provided");
@@ -239,7 +349,7 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
         String analysisId = null;
         if(StringUtils.isBlank(aid)) {
             LOGGER.log(Level.INFO, "[CodeSonar] Determining analysis id...");
-            analysisId = workspace.act(new DetermineAid());
+            analysisId = workspace.act(new DetermineAid(expandedCodesonarProjectFile));
             LOGGER.log(Level.INFO, "[CodeSonar] Found analysis id: {0}", analysisId);
         } else {
             analysisId = aid;

@@ -1,17 +1,19 @@
 package org.jenkinsci.plugins.codesonar.integration.conditions;
 
-import hudson.model.Cause;
-import hudson.model.FreeStyleBuild;
-import hudson.model.FreeStyleProject;
-import hudson.model.Result;
-import hudson.model.queue.QueueTaskFuture;
 import java.util.ArrayList;
 import java.util.List;
+
 import org.jenkinsci.plugins.codesonar.CodeSonarPublisher;
 import org.jenkinsci.plugins.codesonar.conditions.Condition;
 import org.jenkinsci.plugins.codesonar.conditions.NewWarningsIncreasedByPercentageCondition;
 import org.junit.Assert;
 import org.junit.Test;
+
+import hudson.model.Cause;
+import hudson.model.FreeStyleBuild;
+import hudson.model.FreeStyleProject;
+import hudson.model.Result;
+import hudson.model.queue.QueueTaskFuture;
 
 public class NewWarningsIncreasedByPercentageConditionIT extends ConditionIntegrationTestBase {
 
@@ -32,7 +34,7 @@ public class NewWarningsIncreasedByPercentageConditionIT extends ConditionIntegr
         List<Condition> conditions = new ArrayList<>();
         conditions.add(condition);
 
-        CodeSonarPublisher codeSonarPublisher = new CodeSonarPublisher(conditions, "http", VALID_HUB_ADDRESS.toString(), VALID_PROJECT_NAME, "", "2");
+        CodeSonarPublisher codeSonarPublisher = new CodeSonarPublisher(conditions, "http", VALID_HUB_ADDRESS.toString(), VALID_PROJECT_NAME, "", "2", VALID_CODESONAR_PROJECT_FILE);
         codeSonarPublisher.setAnalysisService(mockedAnalysisService);
         codeSonarPublisher.setMetricsService(mockedMetricsService);
         codeSonarPublisher.setProceduresService(mockedProceduresService);
@@ -64,8 +66,7 @@ public class NewWarningsIncreasedByPercentageConditionIT extends ConditionIntegr
         List<Condition> conditions = new ArrayList<>();
         conditions.add(condition);
 
-        CodeSonarPublisher codeSonarPublisher = new CodeSonarPublisher(
-                conditions, "http", VALID_HUB_ADDRESS.toString(), VALID_PROJECT_NAME, "", this.VISIBILITY_FILTER);
+        CodeSonarPublisher codeSonarPublisher = new CodeSonarPublisher(conditions, "http", VALID_HUB_ADDRESS.toString(), VALID_PROJECT_NAME, "", this.VISIBILITY_FILTER, VALID_CODESONAR_PROJECT_FILE);
         codeSonarPublisher.setAnalysisService(mockedAnalysisService);
         codeSonarPublisher.setMetricsService(mockedMetricsService);
         codeSonarPublisher.setProceduresService(mockedProceduresService);

@@ -1,8 +1,13 @@
 package org.jenkinsci.plugins.codesonar.integration.conditions;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
+
 import org.jenkinsci.plugins.codesonar.AnalysisServiceFactory;
 import org.jenkinsci.plugins.codesonar.models.analysis.Analysis;
 import org.jenkinsci.plugins.codesonar.models.analysis.Warning;
@@ -17,9 +22,6 @@ import org.jenkinsci.plugins.codesonar.services.ProceduresService;
 import org.jenkinsci.plugins.codesonar.services.XmlSerializationService;
 import org.junit.Rule;
 import org.jvnet.hudson.test.JenkinsRule;
-import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 /**
  *
@@ -40,6 +42,7 @@ public abstract class ConditionIntegrationTestBase {
     
     protected final URI VALID_HUB_ADDRESS = URI.create("10.10.10.10");
     protected final String VALID_PROJECT_NAME = "projectName";
+    protected final String VALID_CODESONAR_PROJECT_FILE = "projectName.prj";
 
     public void setUp() throws Exception {
         mockedAnalysisService = mock(AnalysisService.class);
