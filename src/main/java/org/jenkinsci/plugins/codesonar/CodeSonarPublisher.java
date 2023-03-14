@@ -187,6 +187,7 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
 
     public static final class DetermineAid implements FileCallable<String> {
         
+        private static final String FILE_AID_TXT = "aid.txt";
         private String codesonarProjectFile;
         
         public DetermineAid(String codesonarProjectFile) {
@@ -247,6 +248,16 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
             return path;
         }
         
+        private String readAidFileContent(File aidFile) throws IOException, InterruptedException {
+            FilePath fp = new FilePath(aidFile);
+            LOGGER.log(Level.INFO, "Found aid.txt: " + aidFile);
+            String aid = fp.readToString();
+            if(StringUtils.isBlank(aid)) {
+                throw createError("File aid.txt is empty");
+            }
+            return aid;
+        }
+        
         @Override
         public String invoke(File jenkinsPipelineCWD, VirtualChannel vc) throws IOException, InterruptedException {
             /*
@@ -264,18 +275,16 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
                 Path prjFilesDirectoryAbsolutePath = resolveRelativePath(jenkinsPipelineCWD, prjFilesDirectoryPath);
                 //Check that prj_files directory exists
                 if(Files.isDirectory(prjFilesDirectoryAbsolutePath)) {
-                    LOGGER.log(Level.INFO, "Finding aid into {0}....", prjFilesDirectoryAbsolutePath.toString());
-                    File aidPath = new File(prjFilesDirectoryAbsolutePath.toFile(), "aid.txt");
-                    FilePath fp = new FilePath(aidPath);
-                    LOGGER.log(Level.INFO, "Found project aid: "+aidPath);
-                    return fp.readToString();
+                    LOGGER.log(Level.INFO, "Finding aid.txt into {0}....", prjFilesDirectoryAbsolutePath.toString());
+                    File aidFile = new File(prjFilesDirectoryAbsolutePath.toFile(), FILE_AID_TXT);
+                    return readAidFileContent(aidFile);
                 } else {
                     throw createError(String.format(".prj_files directory \"%s\" seems not to exist", prjFilesDirectoryAbsolutePath.toString()));
                 }
             } else {
-                LOGGER.log(Level.INFO, "Finding aid into {0}....", (jenkinsPipelineCWD != null ? jenkinsPipelineCWD.getAbsoluteFile().toString() : "NULL"));
                 
                 if(jenkinsPipelineCWD != null ) {
+                    LOGGER.log(Level.INFO, "Finding aid.txt into {0}....", jenkinsPipelineCWD.getAbsoluteFile());
                     File[] prjFilesDirectories = jenkinsPipelineCWD.listFiles(new FileFilter() {
                         @Override
                         public boolean accept(File pathname) {
@@ -285,17 +294,15 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
                     if(prjFilesDirectories != null && prjFilesDirectories.length > 0) {
                         File prjFilesDir = prjFilesDirectories[0];
                         if(prjFilesDirectories.length > 1) {
-                            LOGGER.log(Level.INFO, "Attention, more than one .prj_files directory found, going to take the first one: " + prjFilesDir);
+                            LOGGER.log(Level.WARNING, "More than one .prj_files directory found, going to take the first one: " + prjFilesDir);
                         }
-                        File aidPath = new File(prjFilesDir, "aid.txt");
-                        FilePath fp = new FilePath(aidPath);
-                        LOGGER.log(Level.INFO, "Found project aid: "+aidPath);
-                        return fp.readToString();
+                        File aidFile = new File(prjFilesDir, FILE_AID_TXT);
+                        return readAidFileContent(aidFile);
                     } else {
                         LOGGER.log(Level.SEVERE, "No prj_files directory found!");
                     }
                 } else {
-                    LOGGER.log(Level.WARNING, "No workspace!");
+                    LOGGER.log(Level.WARNING, "Could not determine Jenkins build working directory.");
                 }
                 throw createError("Could not find a .prj_files folder for project");
             }
