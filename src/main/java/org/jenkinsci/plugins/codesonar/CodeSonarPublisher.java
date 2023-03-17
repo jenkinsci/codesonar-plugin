@@ -362,7 +362,7 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
         authenticate(run, baseHubUri, hubInfo.isOpenAPISupported());
 
         analysisServiceFactory = getAnalysisServiceFactory();
-        analysisServiceFactory.setVersion(hubInfo.getVersion());
+        analysisServiceFactory.setHubInfo(hubInfo);
         analysisService = analysisServiceFactory.getAnalysisService(httpService, xmlSerializationService);
         analysisService.setVisibilityFilter(getVisibilityFilterOrDefault());
         analysisService.setVisibilityFilterNewWarnings(getVisibilityFilterNewWarningsOrDefault());

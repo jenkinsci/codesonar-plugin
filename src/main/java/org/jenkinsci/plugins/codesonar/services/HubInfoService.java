@@ -48,6 +48,7 @@ public class HubInfoService {
             //If this client is supposed to be able to talk to the hub
             if(checkClientOk(cci)) {
                 hubInfo.setOpenAPISupported(supportsOpenAPI(cci));
+                hubInfo.setStrictQueryParametersSupported(supportsStrictQueryParameters(cci));
             } else {
                 //In this case this client has been rejected by the hub
                 throw new AbortException(String.format("[CodeSonar] client rejected by the hub. %n[CodeSonar] clientOK=%s", cci.getClientOK().toString()));
@@ -77,7 +78,7 @@ public class HubInfoService {
         
         URI resolvedURI = baseHubUri;
         
-        resolvedURI = baseHubUri.resolve(String.format("/command/check_version/%s/?version=%d&capability=openapi", clientName, clientVersion));
+        resolvedURI = baseHubUri.resolve(String.format("/command/check_version/%s/?version=%d&capability=openapi&capability=strictQueryParameters", clientName, clientVersion));
         LOGGER.log(Level.INFO, "Calling " + resolvedURI.toString());
         
         HttpResponse resp;
@@ -147,6 +148,12 @@ public class HubInfoService {
         return cci.getCapabilities() != null
                 && cci.getCapabilities().getOpenapi() != null
                 && cci.getCapabilities().getOpenapi().booleanValue();
+    }
+    
+    private boolean supportsStrictQueryParameters(CodeSonarHubClientCompatibilityInfo cci) {
+        return cci.getCapabilities() != null
+                && cci.getCapabilities().getStrictQueryParameters() != null
+                && cci.getCapabilities().getStrictQueryParameters().booleanValue();
     }
 
     private boolean checkClientOk(CodeSonarHubClientCompatibilityInfo cci) {

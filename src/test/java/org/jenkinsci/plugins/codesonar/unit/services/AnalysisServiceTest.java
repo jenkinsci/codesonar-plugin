@@ -40,7 +40,7 @@ public class AnalysisServiceTest {
     public void setUp() {
         mockedXmlSerializationService = mock(XmlSerializationService.class);
         mockedHttpService = mock(HttpService.class);
-        analysisService = new AnalysisService(mockedHttpService, mockedXmlSerializationService, IAnalysisService.VISIBILITY_FILTER_ALL_WARNINGS_DEFAULT, IAnalysisService.VISIBILITY_FILTER_NEW_WARNINGS_DEFAULT);
+        analysisService = new AnalysisService(mockedHttpService, mockedXmlSerializationService, IAnalysisService.VISIBILITY_FILTER_ALL_WARNINGS_DEFAULT, IAnalysisService.VISIBILITY_FILTER_NEW_WARNINGS_DEFAULT, true);
     }
 
     @Test

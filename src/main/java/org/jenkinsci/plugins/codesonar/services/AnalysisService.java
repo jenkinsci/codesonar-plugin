@@ -30,13 +30,15 @@ public class AnalysisService implements IAnalysisService {
     final private XmlSerializationService xmlSerializationService;
     private String visibilityFilter;
     private String visibilityFilterNewWarnings;
+    private boolean strictQueryParameters;
 
 
-    public AnalysisService(HttpService httpService, XmlSerializationService xmlSerializationService, String visibilityFilter, String visibilityFilterNewWarnings) {
+    public AnalysisService(HttpService httpService, XmlSerializationService xmlSerializationService, String visibilityFilter, String visibilityFilterNewWarnings, boolean strictQueryParameters) {
         this.httpService = httpService;
         this.xmlSerializationService = xmlSerializationService;
         this.visibilityFilter = visibilityFilter;
         this.visibilityFilterNewWarnings = visibilityFilterNewWarnings;
+        this.strictQueryParameters = strictQueryParameters;
     }
 
     @Override
@@ -84,7 +86,7 @@ public class AnalysisService implements IAnalysisService {
         URIBuilder uriBuilder;
         try {
             uriBuilder = new URIBuilder(analysisUrl);
-            String visibilityFilterNewWarningsOrDefault = getVisibilityFilterNewWarningsOrDefault();
+            String visibilityFilterNewWarningsOrDefault = formatParameter(getVisibilityFilterNewWarningsOrDefault());
             LOGGER.log(Level.INFO, "Passing filter = {0}", visibilityFilterNewWarningsOrDefault);
             uriBuilder.addParameter("filter", visibilityFilterNewWarningsOrDefault);
         } catch (URISyntaxException ex) {
@@ -100,7 +102,7 @@ public class AnalysisService implements IAnalysisService {
         URIBuilder uriBuilder;
         try {
             uriBuilder = new URIBuilder(analysisUrl);
-            String visibilityFilterOrDefault = getVisibilityFilterOrDefault();
+            String visibilityFilterOrDefault = formatParameter(getVisibilityFilterOrDefault());
             LOGGER.log(Level.INFO, "Passing filter = {0}", visibilityFilterOrDefault);
             uriBuilder.addParameter("filter", visibilityFilterOrDefault);
         } catch (URISyntaxException ex) {
@@ -108,6 +110,13 @@ public class AnalysisService implements IAnalysisService {
         }
 
         return getAnalysisFromUrl(uriBuilder.toString());
+    }
+    
+    private String formatParameter(String parameter) {
+        if(strictQueryParameters) {
+            return String.format("\"%s\"", parameter);
+        }
+        return parameter;
     }
 
     @Override
