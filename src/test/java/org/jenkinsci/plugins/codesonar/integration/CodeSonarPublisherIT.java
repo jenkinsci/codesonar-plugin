@@ -52,7 +52,7 @@ public class CodeSonarPublisherIT {
         FreeStyleProject project = jenkinsRule.createFreeStyleProject();
 
         List<Condition> conditions = new ArrayList<>();
-        CodeSonarPublisher codeSonarPublisher = new CodeSonarPublisher(conditions, "http", EMPTY_HUB_ADDRESS, VALID_PROJECT_NAME, "", "2", VALID_CODESONAR_PROJECT_FILE);
+        CodeSonarPublisher codeSonarPublisher = new CodeSonarPublisher(conditions, "http", EMPTY_HUB_ADDRESS, VALID_PROJECT_NAME, "", "active", "all", VALID_CODESONAR_PROJECT_FILE);
         project.getPublishersList().add(codeSonarPublisher);
 
         // act
@@ -80,7 +80,7 @@ public class CodeSonarPublisherIT {
         FreeStyleProject project = jenkinsRule.createFreeStyleProject();
         
         List<Condition> conditions = new ArrayList<>();
-        project.getPublishersList().add(new CodeSonarPublisher(conditions, "http", VALID_HUB_ADDRESS, EMPTY_PROJECT_NAME,"", "2", VALID_CODESONAR_PROJECT_FILE));
+        project.getPublishersList().add(new CodeSonarPublisher(conditions, "http", VALID_HUB_ADDRESS, EMPTY_PROJECT_NAME,"", "active", "all", VALID_CODESONAR_PROJECT_FILE));
         
         // act
         QueueTaskFuture<FreeStyleBuild> queueTaskFuture = project.scheduleBuild2(0, new Cause.UserIdCause());

@@ -18,7 +18,11 @@
         <f:textbox default="$${JOB_NAME}" />
     </f:entry>
 
-    <f:entry field="visibilityFilter" title="Use this visibility filter for the conditions (not for new!)">
+    <f:entry field="visibilityFilter" title="Visibility Filter: All Warnings">
+        <f:textbox/>
+    </f:entry>
+    
+    <f:entry field="visibilityFilterNewWarnings" title="Visibility Filter: New Warnings">
         <f:textbox/>
     </f:entry>
 

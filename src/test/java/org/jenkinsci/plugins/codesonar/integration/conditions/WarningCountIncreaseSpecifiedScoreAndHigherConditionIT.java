@@ -26,7 +26,8 @@ public class WarningCountIncreaseSpecifiedScoreAndHigherConditionIT extends Cond
         // arrange
         final Result EXPECTED_RESULT = Result.FAILURE;
         final String WARRANTED_RESULT = Result.FAILURE.toString();
-        final String VISIBILITY_FILTER = "2"; // active warnings
+        final String VISIBILITY_FILTER = "active"; // active warnings
+        final String VISIBILITY_FILTER_NEW_WARNINGS = "all"; // all warnings
 
         final int RANK_OF_WARNINGS = 30;
         final float WARNING_PERCENTAGE = 50.0f;
@@ -38,7 +39,7 @@ public class WarningCountIncreaseSpecifiedScoreAndHigherConditionIT extends Cond
         List<Condition> conditions = new ArrayList<>();
         conditions.add(condition);
 
-        CodeSonarPublisher codeSonarPublisher = new CodeSonarPublisher(conditions, "http", VALID_HUB_ADDRESS.toString(), VALID_PROJECT_NAME, "", "2", VALID_CODESONAR_PROJECT_FILE);
+        CodeSonarPublisher codeSonarPublisher = new CodeSonarPublisher(conditions, "http", VALID_HUB_ADDRESS.toString(), VALID_PROJECT_NAME, "", VISIBILITY_FILTER, VISIBILITY_FILTER_NEW_WARNINGS, VALID_CODESONAR_PROJECT_FILE);
         codeSonarPublisher.setAnalysisService(mockedAnalysisService);
         codeSonarPublisher.setMetricsService(mockedMetricsService);
         codeSonarPublisher.setProceduresService(mockedProceduresService);
@@ -60,6 +61,8 @@ public class WarningCountIncreaseSpecifiedScoreAndHigherConditionIT extends Cond
         // arrange
         final Result EXPECTED_RESULT = Result.SUCCESS;
         final String WARRANTED_RESULT = Result.FAILURE.toString();
+        final String VISIBILITY_FILTER = "active"; // active warnings
+        final String VISIBILITY_FILTER_NEW_WARNINGS = "all"; // all warnings
 
         final int RANK_OF_WARNINGS = 30;
         final float WARNING_PERCENTAGE = 70.0f;
@@ -71,7 +74,7 @@ public class WarningCountIncreaseSpecifiedScoreAndHigherConditionIT extends Cond
         List<Condition> conditions = new ArrayList<>();
         conditions.add(condition);
 
-        CodeSonarPublisher codeSonarPublisher = new CodeSonarPublisher(conditions, "http", VALID_HUB_ADDRESS.toString(), VALID_PROJECT_NAME, "", "2", VALID_CODESONAR_PROJECT_FILE);
+        CodeSonarPublisher codeSonarPublisher = new CodeSonarPublisher(conditions, "http", VALID_HUB_ADDRESS.toString(), VALID_PROJECT_NAME, "", VISIBILITY_FILTER, VISIBILITY_FILTER_NEW_WARNINGS, VALID_CODESONAR_PROJECT_FILE);
         codeSonarPublisher.setAnalysisService(mockedAnalysisService);
         codeSonarPublisher.setMetricsService(mockedMetricsService);
         codeSonarPublisher.setProceduresService(mockedProceduresService);

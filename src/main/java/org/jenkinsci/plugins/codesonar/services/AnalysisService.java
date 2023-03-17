@@ -27,6 +27,8 @@ public class AnalysisService implements IAnalysisService {
     final private HttpService httpService;
     final private XmlSerializationService xmlSerializationService;
     private String visibilityFilter;
+    private String visibilityFilterNewWarnings;
+
 
     public AnalysisService(HttpService httpService, XmlSerializationService xmlSerializationService, String visibilityFilter) {
         this.httpService = httpService;
@@ -79,7 +81,8 @@ public class AnalysisService implements IAnalysisService {
         URIBuilder uriBuilder;
         try {
             uriBuilder = new URIBuilder(analysisUrl);
-            uriBuilder.addParameter("filter", "5");
+            LOGGER.log(Level.INFO, "Passing filter = {0}", this.visibilityFilterNewWarnings);
+            uriBuilder.addParameter("filter", this.visibilityFilterNewWarnings);
         } catch (URISyntaxException ex) {
             throw new AbortException("[CodeSonar] "+ ex.getMessage());
         }
@@ -93,6 +96,7 @@ public class AnalysisService implements IAnalysisService {
         URIBuilder uriBuilder;
         try {
             uriBuilder = new URIBuilder(analysisUrl);
+            LOGGER.log(Level.INFO, "Passing filter = {0}", this.visibilityFilter);
             uriBuilder.addParameter("filter", this.visibilityFilter);
         } catch (URISyntaxException ex) {
             throw new AbortException("[CodeSonar] "+ex.getMessage());
@@ -110,4 +114,14 @@ public class AnalysisService implements IAnalysisService {
     public String getVisibilityFilter() {
         return this.visibilityFilter;
     }
+
+	@Override
+	public void setVisibilityFilterNewWarnings(String visibilityFilter) {
+		this.visibilityFilterNewWarnings = visibilityFilter;
+	}
+
+	@Override
+	public String getVisibilityFilterNewWarnings() {
+		return this.visibilityFilterNewWarnings;
+	}
 }

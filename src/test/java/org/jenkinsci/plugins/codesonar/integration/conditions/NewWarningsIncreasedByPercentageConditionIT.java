@@ -17,7 +17,8 @@ import hudson.model.queue.QueueTaskFuture;
 
 public class NewWarningsIncreasedByPercentageConditionIT extends ConditionIntegrationTestBase {
 
-    private final String VISIBILITY_FILTER = "2";
+    private final String VISIBILITY_FILTER = "active";
+    private final String VISIBILITY_FILTER_NEW_WARNINGS = "new";
 
     @Test
     public void percentageOfBrandNewWarningsIsAboveTheThreshold_BuildIsSetToWarrantedResult() throws Exception {
@@ -34,7 +35,7 @@ public class NewWarningsIncreasedByPercentageConditionIT extends ConditionIntegr
         List<Condition> conditions = new ArrayList<>();
         conditions.add(condition);
 
-        CodeSonarPublisher codeSonarPublisher = new CodeSonarPublisher(conditions, "http", VALID_HUB_ADDRESS.toString(), VALID_PROJECT_NAME, "", "2", VALID_CODESONAR_PROJECT_FILE);
+        CodeSonarPublisher codeSonarPublisher = new CodeSonarPublisher(conditions, "http", VALID_HUB_ADDRESS.toString(), VALID_PROJECT_NAME, "", VISIBILITY_FILTER, VISIBILITY_FILTER_NEW_WARNINGS, VALID_CODESONAR_PROJECT_FILE);
         codeSonarPublisher.setAnalysisService(mockedAnalysisService);
         codeSonarPublisher.setMetricsService(mockedMetricsService);
         codeSonarPublisher.setProceduresService(mockedProceduresService);
@@ -66,7 +67,7 @@ public class NewWarningsIncreasedByPercentageConditionIT extends ConditionIntegr
         List<Condition> conditions = new ArrayList<>();
         conditions.add(condition);
 
-        CodeSonarPublisher codeSonarPublisher = new CodeSonarPublisher(conditions, "http", VALID_HUB_ADDRESS.toString(), VALID_PROJECT_NAME, "", this.VISIBILITY_FILTER, VALID_CODESONAR_PROJECT_FILE);
+        CodeSonarPublisher codeSonarPublisher = new CodeSonarPublisher(conditions, "http", VALID_HUB_ADDRESS.toString(), VALID_PROJECT_NAME, "", this.VISIBILITY_FILTER, this.VISIBILITY_FILTER_NEW_WARNINGS, VALID_CODESONAR_PROJECT_FILE);
         codeSonarPublisher.setAnalysisService(mockedAnalysisService);
         codeSonarPublisher.setMetricsService(mockedMetricsService);
         codeSonarPublisher.setProceduresService(mockedProceduresService);

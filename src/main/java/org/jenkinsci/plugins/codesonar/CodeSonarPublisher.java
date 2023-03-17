@@ -24,6 +24,7 @@ import javax.annotation.Nonnull;
 
 import org.apache.commons.collections.ListUtils;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.math.NumberUtils;
 import org.javatuples.Pair;
 import org.jenkinsci.Symbol;
 import org.jenkinsci.plugins.codesonar.conditions.Condition;
@@ -91,7 +92,11 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
     private static final String CS_PROJECT_FILE_EXTENSION = ".prj";
     private static final String CS_PROJECT_DIR_EXTENSION = ".prj_files";
     
-    private String visibilityFilter = "2"; // active warnings
+    private static final String VISIBILITY_FILTER_ALL_WARNINGS_DEFAULT = "active";
+    private static final String VISIBILITY_FILTER_NEW_WARNINGS_DEFAULT = "new";
+    
+    private String visibilityFilter;
+    private String visibilityFilterNewWarnings;
     private String hubAddress;
     private String projectName;
     private String protocol = "http";
@@ -120,7 +125,7 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
     @DataBoundConstructor
     public CodeSonarPublisher(
             List<Condition> conditions, String protocol, String hubAddress, String projectName, String credentialId,
-            String visibilityFilter, String codesonarProjectFile
+            String visibilityFilter, String visibilityFilterNewWarnings, String codesonarProjectFile
     ) {
         this.hubAddress = hubAddress;
         this.projectName = projectName;
@@ -132,6 +137,7 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
         this.conditions = conditions;
         this.credentialId = credentialId;
         this.visibilityFilter = visibilityFilter;
+        this.visibilityFilterNewWarnings = visibilityFilterNewWarnings;
         this.codesonarProjectFile = codesonarProjectFile;
     }
 
@@ -168,12 +174,11 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
     }
 
     public String getVisibilityFilter() {
-        // Backwards compatibility!
-        // Not pressed save after upgrade!
-        if(StringUtils.isBlank(this.visibilityFilter)){
-            return "2"; // Active warnings!
-        }
-        return this.visibilityFilter;
+        return visibilityFilter;
+    }
+    
+    public String getVisibilityFilterOrDefault() {
+        return StringUtils.isNotBlank(visibilityFilter) ? visibilityFilter : VISIBILITY_FILTER_ALL_WARNINGS_DEFAULT;
     }
     
     public String getCodesonarProjectFile() {
@@ -184,8 +189,19 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
         this.codesonarProjectFile = codesonarProjectFile;
     }
     
+    public String getVisibilityFilterNewWarnings() {
+		return visibilityFilterNewWarnings;
+	}
+    
+    public String getVisibilityFilterNewWarningsOrDefault() {
+        return StringUtils.isNotBlank(visibilityFilterNewWarnings) ? visibilityFilterNewWarnings : VISIBILITY_FILTER_NEW_WARNINGS_DEFAULT;
+    }
 
-    public static final class DetermineAid implements FileCallable<String> {
+	public void setVisibilityFilterNewWarnings(String visibilityFilterNewWarnings) {
+		this.visibilityFilterNewWarnings = visibilityFilterNewWarnings;
+	}
+
+	public static final class DetermineAid implements FileCallable<String> {
         
         private static final String FILE_AID_TXT = "aid.txt";
         private String codesonarProjectFile;
@@ -351,7 +367,8 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
         analysisServiceFactory = getAnalysisServiceFactory();
         analysisServiceFactory.setVersion(hubInfo.getVersion());
         analysisService = analysisServiceFactory.getAnalysisService(httpService, xmlSerializationService);
-        analysisService.setVisibilityFilter(getVisibilityFilter());
+        analysisService.setVisibilityFilter(getVisibilityFilterOrDefault());
+        analysisService.setVisibilityFilterNewWarnings(getVisibilityFilterNewWarningsOrDefault());
 
         String analysisId = null;
         if(StringUtils.isBlank(aid)) {
@@ -382,7 +399,7 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
         CodeSonarBuildActionDTO compareDTO = null;
         Run<?,?> previosSuccess = run.getPreviousSuccessfulBuild();
         if(previosSuccess != null) {
-            listener.getLogger().println("[CodeSonar] Found previous build to compare to");
+            listener.getLogger().println(String.format("[CodeSonar] Found previous build to compare to (%s)", previosSuccess.getDisplayName()));
             List<CodeSonarBuildAction> actions = previosSuccess.getActions(CodeSonarBuildAction.class).stream().filter(c -> c.getProjectName() != null && c.getProjectName().equals(expandedProjectName)).collect(Collectors.toList());
             if(actions != null && !actions.isEmpty() && actions.size() < 2) {
                 listener.getLogger().println("[CodeSonar] Found comparison data");
@@ -650,36 +667,51 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
         }
         
         public FormValidation doCheckHubAddress(@QueryParameter("hubAddress") String hubAddress) {
-            if (!StringUtils.isBlank(hubAddress)) {
-                return FormValidation.ok();
+            if (StringUtils.isBlank(hubAddress)) {
+            	return FormValidation.error("Hub address cannot be empty.");
             }
 
             if(hubAddress.startsWith("http://") || hubAddress.startsWith("https://")) {
                 return FormValidation.error("Protocol should not be part of the hub address, protocol is selected in seperate field");
             }
 
-            return FormValidation.error("Hub address cannot be empty.");
+            return FormValidation.ok();
         }
 
         public FormValidation doCheckProjectName(@QueryParameter("projectName") String projectName) {
-            if (!StringUtils.isBlank(projectName)) {
-                return FormValidation.ok();
+            if (StringUtils.isBlank(projectName)) {
+            	return FormValidation.error("Project name cannot be empty.");
             }
-            return FormValidation.error("Project name cannot be empty.");
+            return FormValidation.ok();
         }
 
         public FormValidation doCheckVisibilityFilter(@QueryParameter("visibilityFilter") String visibilityFilter){
-            if (!StringUtils.isBlank(visibilityFilter)) {
+            return validateVisibilityFilter(visibilityFilter);
+        }
+        
+        public FormValidation doCheckVisibilityFilterNewWarnings(@QueryParameter("visibilityFilterNewWarnings") String visibilityFilter){
+            return validateVisibilityFilter(visibilityFilter);
+        }
+
+		private FormValidation validateVisibilityFilter(String visibilityFilter) {
+			if (StringUtils.isBlank(visibilityFilter)) {
+				//When left blank, use predefined default filter
                 return FormValidation.ok();
             }
-            if(!StringUtils.isNumeric(visibilityFilter) && Integer.parseInt(visibilityFilter) < 0){
-                return FormValidation.error("The visibility filter must be a positive integer");
+            if(NumberUtils.isNumber(visibilityFilter)) {
+            	try {
+	            	if(Integer.parseInt(visibilityFilter) < 0) {
+	            		return FormValidation.error("The visibility filter must be a positive integer");
+	            	}
+            	} catch(NumberFormatException e) {
+            		return FormValidation.error("Invalid numeric value for visibility filter", visibilityFilter);
+            	}
             }
             // It's a bit tricky to check if the visibility filter number is actually defined,
             // as there's no URL to check this. The URLs contain the entire query string, which
             // we can't retrieve. So assume that
             return FormValidation.ok();
-        }
+		}
 
         public ListBoxModel doFillCredentialIdItems(final @AncestorInPath ItemGroup<?> context) {
             final List<StandardCredentials> credentials = CredentialsProvider.lookupCredentials(StandardCredentials.class, context, ACL.SYSTEM, Collections.<DomainRequirement>emptyList());
@@ -709,5 +741,5 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
             return items;
         }
     }
-
+    
 }

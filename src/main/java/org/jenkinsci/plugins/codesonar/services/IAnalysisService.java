@@ -19,4 +19,8 @@ public interface IAnalysisService {
     void setVisibilityFilter(String visibilityFilter);
 
     String getVisibilityFilter();
+    
+    void setVisibilityFilterNewWarnings(String visibilityFilter);
+    
+    String getVisibilityFilterNewWarnings();
 }
