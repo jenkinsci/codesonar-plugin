@@ -1,7 +1,21 @@
 package org.jenkinsci.plugins.codesonar.unit.services;
 
-import hudson.AbortException;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.isA;
+import static org.mockito.ArgumentMatchers.notNull;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.apache.commons.io.IOUtils;
 import org.jenkinsci.plugins.codesonar.models.SearchResults;
@@ -14,28 +28,19 @@ import org.jenkinsci.plugins.codesonar.services.XmlSerializationService;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.ArrayList;
-import java.util.List;
-
-import static org.junit.Assert.*;
-import static org.mockito.Mockito.*;
+import hudson.AbortException;
 
 public class AnalysisServiceTest {
 
     private XmlSerializationService mockedXmlSerializationService;
     private HttpService mockedHttpService;
     private IAnalysisService analysisService;
-    private final String ACTIVE_WARNING_FILTER = "2";
 
     @Before
     public void setUp() {
         mockedXmlSerializationService = mock(XmlSerializationService.class);
         mockedHttpService = mock(HttpService.class);
-        analysisService = new AnalysisService(mockedHttpService, mockedXmlSerializationService, this.ACTIVE_WARNING_FILTER);
+        analysisService = new AnalysisService(mockedHttpService, mockedXmlSerializationService, IAnalysisService.VISIBILITY_FILTER_ALL_WARNINGS_DEFAULT, IAnalysisService.VISIBILITY_FILTER_NEW_WARNINGS_DEFAULT);
     }
 
     @Test

@@ -92,9 +92,6 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
     private static final String CS_PROJECT_FILE_EXTENSION = ".prj";
     private static final String CS_PROJECT_DIR_EXTENSION = ".prj_files";
     
-    private static final String VISIBILITY_FILTER_ALL_WARNINGS_DEFAULT = "active";
-    private static final String VISIBILITY_FILTER_NEW_WARNINGS_DEFAULT = "new";
-    
     private String visibilityFilter;
     private String visibilityFilterNewWarnings;
     private String hubAddress;
@@ -178,7 +175,7 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
     }
     
     public String getVisibilityFilterOrDefault() {
-        return StringUtils.isNotBlank(visibilityFilter) ? visibilityFilter : VISIBILITY_FILTER_ALL_WARNINGS_DEFAULT;
+        return StringUtils.isNotBlank(visibilityFilter) ? visibilityFilter : IAnalysisService.VISIBILITY_FILTER_ALL_WARNINGS_DEFAULT;
     }
     
     public String getCodesonarProjectFile() {
@@ -190,18 +187,18 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
     }
     
     public String getVisibilityFilterNewWarnings() {
-		return visibilityFilterNewWarnings;
-	}
+        return visibilityFilterNewWarnings;
+    }
     
     public String getVisibilityFilterNewWarningsOrDefault() {
-        return StringUtils.isNotBlank(visibilityFilterNewWarnings) ? visibilityFilterNewWarnings : VISIBILITY_FILTER_NEW_WARNINGS_DEFAULT;
+        return StringUtils.isNotBlank(visibilityFilterNewWarnings) ? visibilityFilterNewWarnings : IAnalysisService.VISIBILITY_FILTER_NEW_WARNINGS_DEFAULT;
     }
 
-	public void setVisibilityFilterNewWarnings(String visibilityFilterNewWarnings) {
-		this.visibilityFilterNewWarnings = visibilityFilterNewWarnings;
-	}
+    public void setVisibilityFilterNewWarnings(String visibilityFilterNewWarnings) {
+        this.visibilityFilterNewWarnings = visibilityFilterNewWarnings;
+    }
 
-	public static final class DetermineAid implements FileCallable<String> {
+    public static final class DetermineAid implements FileCallable<String> {
         
         private static final String FILE_AID_TXT = "aid.txt";
         private String codesonarProjectFile;
@@ -668,7 +665,7 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
         
         public FormValidation doCheckHubAddress(@QueryParameter("hubAddress") String hubAddress) {
             if (StringUtils.isBlank(hubAddress)) {
-            	return FormValidation.error("Hub address cannot be empty.");
+                return FormValidation.error("Hub address cannot be empty.");
             }
 
             if(hubAddress.startsWith("http://") || hubAddress.startsWith("https://")) {
@@ -680,7 +677,7 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
 
         public FormValidation doCheckProjectName(@QueryParameter("projectName") String projectName) {
             if (StringUtils.isBlank(projectName)) {
-            	return FormValidation.error("Project name cannot be empty.");
+                return FormValidation.error("Project name cannot be empty.");
             }
             return FormValidation.ok();
         }
@@ -693,25 +690,25 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
             return validateVisibilityFilter(visibilityFilter);
         }
 
-		private FormValidation validateVisibilityFilter(String visibilityFilter) {
-			if (StringUtils.isBlank(visibilityFilter)) {
-				//When left blank, use predefined default filter
+        private FormValidation validateVisibilityFilter(String visibilityFilter) {
+            if (StringUtils.isBlank(visibilityFilter)) {
+                //When left blank, use predefined default filter
                 return FormValidation.ok();
             }
             if(NumberUtils.isNumber(visibilityFilter)) {
-            	try {
-	            	if(Integer.parseInt(visibilityFilter) < 0) {
-	            		return FormValidation.error("The visibility filter must be a positive integer");
-	            	}
-            	} catch(NumberFormatException e) {
-            		return FormValidation.error("Invalid numeric value for visibility filter", visibilityFilter);
-            	}
+                try {
+                    if(Integer.parseInt(visibilityFilter) < 0) {
+                        return FormValidation.error("The visibility filter must be a positive integer");
+                    }
+                } catch(NumberFormatException e) {
+                    return FormValidation.error("Invalid numeric value for visibility filter", visibilityFilter);
+                }
             }
             // It's a bit tricky to check if the visibility filter number is actually defined,
             // as there's no URL to check this. The URLs contain the entire query string, which
             // we can't retrieve. So assume that
             return FormValidation.ok();
-		}
+        }
 
         public ListBoxModel doFillCredentialIdItems(final @AncestorInPath ItemGroup<?> context) {
             final List<StandardCredentials> credentials = CredentialsProvider.lookupCredentials(StandardCredentials.class, context, ACL.SYSTEM, Collections.<DomainRequirement>emptyList());

@@ -19,7 +19,7 @@ public class AnalysisServiceFactory {
             throw new AbortException("[CodeSonar] version could not be determined");
         }
         
-        return new AnalysisService(httpService, xmlSerializationService,"0");
+        return new AnalysisService(httpService, xmlSerializationService, IAnalysisService.VISIBILITY_FILTER_ALL_WARNINGS_DEFAULT, IAnalysisService.VISIBILITY_FILTER_NEW_WARNINGS_DEFAULT);
     }
 
     public void setVersion(String version) {

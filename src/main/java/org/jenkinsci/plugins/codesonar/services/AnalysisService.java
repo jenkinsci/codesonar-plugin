@@ -1,6 +1,8 @@
 package org.jenkinsci.plugins.codesonar.services;
 
 import hudson.AbortException;
+
+import org.apache.commons.lang.StringUtils;
 import org.apache.http.client.utils.URIBuilder;
 import org.jenkinsci.plugins.codesonar.models.SearchResults;
 import org.jenkinsci.plugins.codesonar.models.analysis.Analysis;
@@ -23,17 +25,18 @@ import java.util.regex.Pattern;
  */
 public class AnalysisService implements IAnalysisService {
     private static final Logger LOGGER = Logger.getLogger(AnalysisService.class.getName());
-
+    
     final private HttpService httpService;
     final private XmlSerializationService xmlSerializationService;
     private String visibilityFilter;
     private String visibilityFilterNewWarnings;
 
 
-    public AnalysisService(HttpService httpService, XmlSerializationService xmlSerializationService, String visibilityFilter) {
+    public AnalysisService(HttpService httpService, XmlSerializationService xmlSerializationService, String visibilityFilter, String visibilityFilterNewWarnings) {
         this.httpService = httpService;
         this.xmlSerializationService = xmlSerializationService;
         this.visibilityFilter = visibilityFilter;
+        this.visibilityFilterNewWarnings = visibilityFilterNewWarnings;
     }
 
     @Override
@@ -81,8 +84,9 @@ public class AnalysisService implements IAnalysisService {
         URIBuilder uriBuilder;
         try {
             uriBuilder = new URIBuilder(analysisUrl);
-            LOGGER.log(Level.INFO, "Passing filter = {0}", this.visibilityFilterNewWarnings);
-            uriBuilder.addParameter("filter", this.visibilityFilterNewWarnings);
+            String visibilityFilterNewWarningsOrDefault = getVisibilityFilterNewWarningsOrDefault();
+            LOGGER.log(Level.INFO, "Passing filter = {0}", visibilityFilterNewWarningsOrDefault);
+            uriBuilder.addParameter("filter", visibilityFilterNewWarningsOrDefault);
         } catch (URISyntaxException ex) {
             throw new AbortException("[CodeSonar] "+ ex.getMessage());
         }
@@ -96,8 +100,9 @@ public class AnalysisService implements IAnalysisService {
         URIBuilder uriBuilder;
         try {
             uriBuilder = new URIBuilder(analysisUrl);
-            LOGGER.log(Level.INFO, "Passing filter = {0}", this.visibilityFilter);
-            uriBuilder.addParameter("filter", this.visibilityFilter);
+            String visibilityFilterOrDefault = getVisibilityFilterOrDefault();
+            LOGGER.log(Level.INFO, "Passing filter = {0}", visibilityFilterOrDefault);
+            uriBuilder.addParameter("filter", visibilityFilterOrDefault);
         } catch (URISyntaxException ex) {
             throw new AbortException("[CodeSonar] "+ex.getMessage());
         }
@@ -114,14 +119,22 @@ public class AnalysisService implements IAnalysisService {
     public String getVisibilityFilter() {
         return this.visibilityFilter;
     }
+    
+    public String getVisibilityFilterOrDefault() {
+        return StringUtils.isNotBlank(visibilityFilter) ? visibilityFilter : IAnalysisService.VISIBILITY_FILTER_ALL_WARNINGS_DEFAULT;
+    }
 
-	@Override
-	public void setVisibilityFilterNewWarnings(String visibilityFilter) {
-		this.visibilityFilterNewWarnings = visibilityFilter;
-	}
+    @Override
+    public void setVisibilityFilterNewWarnings(String visibilityFilter) {
+        this.visibilityFilterNewWarnings = visibilityFilter;
+    }
 
-	@Override
-	public String getVisibilityFilterNewWarnings() {
-		return this.visibilityFilterNewWarnings;
-	}
+    @Override
+    public String getVisibilityFilterNewWarnings() {
+        return this.visibilityFilterNewWarnings;
+    }
+    
+    public String getVisibilityFilterNewWarningsOrDefault() {
+        return StringUtils.isNotBlank(visibilityFilterNewWarnings) ? visibilityFilterNewWarnings : IAnalysisService.VISIBILITY_FILTER_NEW_WARNINGS_DEFAULT;
+    }
 }
