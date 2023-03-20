@@ -315,7 +315,7 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
                         LOGGER.log(Level.SEVERE, "No prj_files directory found!");
                     }
                 } else {
-                    LOGGER.log(Level.WARNING, "Could not determine Jenkins build working directory.");
+                    LOGGER.log(Level.WARNING, "[CodeSonar] Could not determine Jenkins build working directory.");
                 }
                 throw createError("Could not find a .prj_files folder for project");
             }

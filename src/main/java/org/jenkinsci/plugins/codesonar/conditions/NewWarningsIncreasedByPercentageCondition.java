@@ -22,7 +22,7 @@ import java.util.logging.Logger;
 import javax.annotation.Nonnull;
 
 public class NewWarningsIncreasedByPercentageCondition extends Condition {
-	private static final Logger LOGGER = Logger.getLogger(NewWarningsIncreasedByPercentageCondition.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(NewWarningsIncreasedByPercentageCondition.class.getName());
 
     private static final String NAME = "Warning count increase: new only";
     private String percentage = "5.0f";
@@ -66,13 +66,13 @@ public class NewWarningsIncreasedByPercentageCondition extends Condition {
         Analysis currentNewWarnings = current.getAnalysisNewWarnings();
 
         float activeWarningCount = (float) currentActiveWarnings.getWarnings().size();
-        LOGGER.log(Level.INFO, "activeWarningCount = {0}", activeWarningCount);
+        LOGGER.log(Level.INFO, "[CodeSonar] activeWarningCount = {0}", activeWarningCount);
         float newWarningCount = (float) currentNewWarnings.getWarnings().size();
-        LOGGER.log(Level.INFO, "newWarningCount = {0}", newWarningCount);
+        LOGGER.log(Level.INFO, "[CodeSonar] newWarningCount = {0}", newWarningCount);
 
         float result = (newWarningCount * 100.0f) / activeWarningCount;
-        LOGGER.log(Level.INFO, "resulting percentage = {0}", result);
-        LOGGER.log(Level.INFO, "threashold percentage = {0}", Float.parseFloat(percentage));
+        LOGGER.log(Level.INFO, "[CodeSonar] new warning percentage = {0}", result);
+        LOGGER.log(Level.INFO, "[CodeSonar] threshold percentage = {0}", Float.parseFloat(percentage));
         if (result > Float.parseFloat(percentage)) {
             return Result.fromString(warrantedResult);
         }

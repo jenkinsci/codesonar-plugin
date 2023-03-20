@@ -48,7 +48,7 @@ public class HubInfoService {
             //If this client is supposed to be able to talk to the hub
             if(checkClientOk(cci)) {
                 hubInfo.setOpenAPISupported(supportsOpenAPI(cci));
-                hubInfo.setStrictQueryParametersSupported(supportsStrictQueryParameters(cci));
+                hubInfo.setStrictQueryParametersEnforced(supportsStrictQueryParameters(cci));
             } else {
                 //In this case this client has been rejected by the hub
                 throw new AbortException(String.format("[CodeSonar] client rejected by the hub. %n[CodeSonar] clientOK=%s", cci.getClientOK().toString()));

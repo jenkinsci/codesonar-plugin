@@ -26,8 +26,8 @@ public class WarningCountIncreaseSpecifiedScoreAndHigherConditionIT extends Cond
         // arrange
         final Result EXPECTED_RESULT = Result.FAILURE;
         final String WARRANTED_RESULT = Result.FAILURE.toString();
-        final String VISIBILITY_FILTER = "active"; // active warnings
-        final String VISIBILITY_FILTER_NEW_WARNINGS = "all"; // all warnings
+        final String VISIBILITY_FILTER = "active";
+        final String VISIBILITY_FILTER_NEW_WARNINGS = "all";
 
         final int RANK_OF_WARNINGS = 30;
         final float WARNING_PERCENTAGE = 50.0f;
@@ -61,8 +61,8 @@ public class WarningCountIncreaseSpecifiedScoreAndHigherConditionIT extends Cond
         // arrange
         final Result EXPECTED_RESULT = Result.SUCCESS;
         final String WARRANTED_RESULT = Result.FAILURE.toString();
-        final String VISIBILITY_FILTER = "active"; // active warnings
-        final String VISIBILITY_FILTER_NEW_WARNINGS = "all"; // all warnings
+        final String VISIBILITY_FILTER = "active";
+        final String VISIBILITY_FILTER_NEW_WARNINGS = "all";
 
         final int RANK_OF_WARNINGS = 30;
         final float WARNING_PERCENTAGE = 70.0f;

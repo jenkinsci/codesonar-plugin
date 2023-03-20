@@ -22,7 +22,7 @@ public class CodeSonarHubCapabilityInfo {
 
     @Override
     public String toString() {
-        return "Capabilities [openapi=" + openapi + ", strictQueryParameters=" + strictQueryParameters +"]";
+        return "Hub Capabilities [openapi=" + openapi + ", strictQueryParameters=" + strictQueryParameters +"]";
     }
     
 }
