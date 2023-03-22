@@ -1,29 +1,32 @@
 package org.jenkinsci.plugins.codesonar.conditions;
 
-import hudson.AbortException;
-import hudson.Extension;
-import hudson.Launcher;
-import hudson.model.Result;
-import hudson.model.Run;
-import hudson.model.TaskListener;
-import hudson.util.FormValidation;
+import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import javax.annotation.Nonnull;
+
 import org.jenkinsci.Symbol;
-import org.jenkinsci.plugins.codesonar.CodeSonarBuildAction;
 import org.jenkinsci.plugins.codesonar.models.CodeSonarBuildActionDTO;
 import org.jenkinsci.plugins.codesonar.models.Metric;
 import org.jenkinsci.plugins.codesonar.models.procedures.ProcedureRow;
+import org.jenkinsci.plugins.codesonar.models.procedures.Procedures;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 
-import javax.annotation.Nonnull;
-import java.util.List;
+import hudson.Extension;
+import hudson.Launcher;
+import hudson.model.Result;
+import hudson.model.TaskListener;
+import hudson.util.FormValidation;
 
 /**
  *
  * @author Andrius
  */
 public class ProcedureCyclomaticComplexityExceededCondition extends Condition {
+    private static final Logger LOGGER = Logger.getLogger(ProcedureCyclomaticComplexityExceededCondition.class.getName());
 
     private static final String NAME = "Cyclomatic complexity";
 
@@ -59,7 +62,13 @@ public class ProcedureCyclomaticComplexityExceededCondition extends Condition {
             return Result.SUCCESS;
         }
 
-        List<ProcedureRow> procedureRows = current.getProcedures().getProcedureRows();
+        Procedures procedures = current.getProcedures();
+        // Going to produce build failure in the case of missing necessary information
+        if(procedures == null) {
+            LOGGER.log(Level.SEVERE, "[CodeSonar] \"procedures\" data not found in persisted build.");
+            return Result.FAILURE;
+        }
+        List<ProcedureRow> procedureRows = procedures.getProcedureRows();
         for (ProcedureRow procedureRow : procedureRows) {
             Metric cyclomaticComplexityMetric = procedureRow.getMetricByName("Cyclomatic Complexity");
 

@@ -387,8 +387,14 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
 
         Analysis analysisNewWarnings = analysisService.getAnalysisFromUrlWithNewWarnings(analysisUrl);
         List<Pair<String, String>> conditionNamesAndResults = new ArrayList<>();
-
-        CodeSonarBuildActionDTO buildActionDTO = new CodeSonarBuildActionDTO(analysisWarnings, analysisNewWarnings, metrics, procedures, baseHubUri);
+        
+        Long lAnalysisId = null;
+        try {
+            lAnalysisId = Long.valueOf(analysisId);
+        } catch(NumberFormatException e) {
+            LOGGER.log(Level.WARNING, "[CodeSonar] Unable to parse analysis id '" + analysisId + "' as long integer.");
+        }
+        CodeSonarBuildActionDTO buildActionDTO = new CodeSonarBuildActionDTO(lAnalysisId, analysisWarnings, analysisNewWarnings, metrics, procedures, baseHubUri);
         CodeSonarBuildAction csba = new CodeSonarBuildAction(buildActionDTO, run, expandedProjectName, analysisUrl);
         
         listener.getLogger().println("[CodeSonar] Finding previous builds for comparison");

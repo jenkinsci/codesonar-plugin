@@ -1,25 +1,23 @@
 package org.jenkinsci.plugins.codesonar.conditions;
 
-import hudson.Extension;
-import hudson.Launcher;
-import hudson.model.Result;
-import hudson.model.Run;
-import hudson.model.TaskListener;
-import hudson.util.FormValidation;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import javax.annotation.Nonnull;
+
 import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.Symbol;
-import org.jenkinsci.plugins.codesonar.CodeSonarBuildAction;
-import org.jenkinsci.plugins.codesonar.CodeSonarPublisher;
 import org.jenkinsci.plugins.codesonar.models.CodeSonarBuildActionDTO;
 import org.jenkinsci.plugins.codesonar.models.analysis.Analysis;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
-import javax.annotation.Nonnull;
+import hudson.Extension;
+import hudson.Launcher;
+import hudson.model.Result;
+import hudson.model.TaskListener;
+import hudson.util.FormValidation;
 
 public class NewWarningsIncreasedByPercentageCondition extends Condition {
     private static final Logger LOGGER = Logger.getLogger(NewWarningsIncreasedByPercentageCondition.class.getName());
@@ -64,6 +62,16 @@ public class NewWarningsIncreasedByPercentageCondition extends Condition {
         }
         Analysis currentActiveWarnings = current.getAnalysisActiveWarnings();
         Analysis currentNewWarnings = current.getAnalysisNewWarnings();
+        
+        // Going to produce build failures in the case of missing necessary information
+        if(currentActiveWarnings == null) {
+            LOGGER.log(Level.SEVERE, "[CodeSonar] \"analysisActiveWarnings\" data not found in persisted build.");
+            return Result.FAILURE;
+        }
+        if(currentNewWarnings == null) {
+            LOGGER.log(Level.SEVERE, "[CodeSonar] \"analysisNewWarnings\" data not found in persisted build.");
+            return Result.FAILURE;
+        }        
 
         float activeWarningCount = (float) currentActiveWarnings.getWarnings().size();
         LOGGER.log(Level.INFO, "[CodeSonar] activeWarningCount = {0}", activeWarningCount);
