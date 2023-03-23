@@ -8,6 +8,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.apache.commons.lang.StringUtils;
+import org.jenkinsci.plugins.codesonar.CodeSonarLogger;
 import org.jenkinsci.plugins.codesonar.CodeSonarPublisher;
 import org.jenkinsci.plugins.codesonar.conditions.Condition;
 import org.jenkinsci.plugins.codesonar.conditions.WarningCountIncreaseSpecifiedScoreAndHigherCondition;
@@ -110,7 +111,7 @@ public class CodeSonarPublisherIT {
         boolean valid = false;
         List<String> log = b.getLog(500);
         for (String line : log) {
-            if (line.equals("ERROR: [CodeSonar] Error on url: http://10/index.xml")) {
+            if (line.equals(String.format("ERROR: %s", CodeSonarLogger.formatMessage("Error on url: %s", "http://10/index.xml")))) {
                 valid = true;
                 break;
             }

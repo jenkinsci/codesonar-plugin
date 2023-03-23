@@ -27,6 +27,7 @@ import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.ssl.SSLContextBuilder;
 import org.apache.http.util.EntityUtils;
+import org.jenkinsci.plugins.codesonar.CodeSonarLogger;
 
 import com.google.common.base.Throwables;
 
@@ -62,7 +63,12 @@ public class HttpService {
                 try {
                     sslContextBuilder.loadTrustMaterial(new CertificateFileTrustStrategy(serverCertificates));
                 } catch (NoSuchAlgorithmException | KeyStoreException e) {
-                    throw new AbortException(String.format("[CodeSonar] Error setting up server certificates  %n[CodeSonar] %s: %s%n[CodeSonar] Stack Trace: %s", e.getClass().getName(), e.getMessage(), Throwables.getStackTraceAsString(e)));
+                	String message = CodeSonarLogger.formatMessageMultiLine(
+                			CodeSonarLogger.createLine("Error setting up server certificates"),
+                			CodeSonarLogger.createLine("%s: %s", e.getClass().getName(), e.getMessage()),
+                			CodeSonarLogger.createLine("Stack Trace: %s", Throwables.getStackTraceAsString(e))
+                			);
+                    throw new AbortException(message);
                 }
             }
             
@@ -72,7 +78,12 @@ public class HttpService {
                 try {
                     sslContextBuilder.loadKeyMaterial(clientCertificateKeyStore, clientCertificatePassword.getPlainText().toCharArray());
                 } catch (UnrecoverableKeyException | NoSuchAlgorithmException | KeyStoreException e) {
-                    throw new AbortException(String.format("[CodeSonar] Error setting up client certificate  %n[CodeSonar] %s: %s%n[CodeSonar] Stack Trace: %s", e.getClass().getName(), e.getMessage(), Throwables.getStackTraceAsString(e)));
+                	String message = CodeSonarLogger.formatMessageMultiLine(
+                			CodeSonarLogger.createLine("Error setting up client certificate"),
+                			CodeSonarLogger.createLine("%s: %s", e.getClass().getName(), e.getMessage()),
+                			CodeSonarLogger.createLine("Stack Trace: %s", Throwables.getStackTraceAsString(e))
+                			);
+                    throw new AbortException(message);
                 }
             }
             //Prepare the SSL context in order to let the HTTP client using specified certificates
@@ -83,7 +94,11 @@ public class HttpService {
                 httpClientBuilder.setSSLSocketFactory(csf);
                 LOGGER.log(Level.INFO, "SSL context initialized");
             } catch (KeyManagementException | NoSuchAlgorithmException e) {
-                throw new AbortException(String.format("[CodeSonar] Error initiating SSL context.%n[CodeSonar] Exception message: %s", e.getMessage()));
+            	String message = CodeSonarLogger.formatMessageMultiLine(
+            			CodeSonarLogger.createLine("Error initiating SSL context."),
+            			CodeSonarLogger.createLine("Exception message: %s", e.getMessage())
+            			);
+                throw new AbortException(message);
             }
         }
         
@@ -94,7 +109,7 @@ public class HttpService {
     }
 
     public void setSocketTimeoutMS(int socketTimeoutMS) {
-        LOGGER.log(Level.FINE, "[CodeSonar] HttpService - setSocketTimeoutMS to {0}", socketTimeoutMS);
+        LOGGER.log(Level.FINE, "HttpService - setSocketTimeoutMS to {0}", socketTimeoutMS);
         this.socketTimeoutMS = socketTimeoutMS;
     }
 
@@ -121,10 +136,20 @@ public class HttpService {
             reason = resp.getStatusLine().getReasonPhrase();
             body = EntityUtils.toString(resp.getEntity(), "UTF-8");
         } catch (Exception e) {
-            throw new AbortException(String.format("[CodeSonar] Error on url: %s%n[CodeSonar] Message is: %s", url, e.getMessage()));
+        	String message = CodeSonarLogger.formatMessageMultiLine(
+        			CodeSonarLogger.createLine("Error on url: %s", url),
+        			CodeSonarLogger.createLine("Message is: %s", e.getMessage())
+        			);
+            throw new AbortException(message);
         }
         if (status != 200) {
-            throw new AbortException(String.format("[CodeSonar] Error communicating with CodeSonar Hub. %n[CodeSonar] URI: %s%n[CodeSonar] HTTP status code: %s - %s %n[CodeSonar] HTTP Body: %s", url, status, reason, body));
+        	String message = CodeSonarLogger.formatMessageMultiLine(
+        			CodeSonarLogger.createLine("Error communicating with CodeSonar Hub."),
+        			CodeSonarLogger.createLine("URI: %s", url),
+        			CodeSonarLogger.createLine("HTTP status code: %s - %s", status, reason),
+        			CodeSonarLogger.createLine("HTTP Body: %s", body)
+        			);
+            throw new AbortException(message);
         }
         return body;
     }
@@ -154,10 +179,20 @@ public class HttpService {
             reason = resp.getStatusLine().getReasonPhrase();
             body = EntityUtils.toString(resp.getEntity(), "UTF-8");
         } catch (Exception e) {
-            throw new AbortException(String.format("[CodeSonar] Error on url: %s%n[CodeSonar] Message is: %s", url, e.getMessage()));
+        	String message = CodeSonarLogger.formatMessageMultiLine(
+        			CodeSonarLogger.createLine("Error on url: %s", url),
+        			CodeSonarLogger.createLine("Message is: %s", e.getMessage())
+        			);
+            throw new AbortException(message);
         }
         if (status != 200) {
-            throw new AbortException(String.format("[CodeSonar] Error communicating with CodeSonar Hub. %n[CodeSonar] URI: %s%n[CodeSonar] HTTP status code: %s - %s %n[CodeSonar] HTTP Body: %s", url, status, reason, body));
+        	String message = CodeSonarLogger.formatMessageMultiLine(
+        			CodeSonarLogger.createLine("Error communicating with CodeSonar Hub."),
+        			CodeSonarLogger.createLine("URI: %s", url),
+        			CodeSonarLogger.createLine("HTTP status code: %s - %s", status, reason),
+        			CodeSonarLogger.createLine("HTTP Body: %s", body)
+        			);
+            throw new AbortException(message);
         }
         return is;
     }

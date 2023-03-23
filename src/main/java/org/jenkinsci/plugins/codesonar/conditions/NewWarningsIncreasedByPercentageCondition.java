@@ -65,22 +65,22 @@ public class NewWarningsIncreasedByPercentageCondition extends Condition {
         
         // Going to produce build failures in the case of missing necessary information
         if(currentActiveWarnings == null) {
-            LOGGER.log(Level.SEVERE, "[CodeSonar] \"analysisActiveWarnings\" data not found in persisted build.");
+            LOGGER.log(Level.SEVERE, "\"analysisActiveWarnings\" data not found in persisted build.");
             return Result.FAILURE;
         }
         if(currentNewWarnings == null) {
-            LOGGER.log(Level.SEVERE, "[CodeSonar] \"analysisNewWarnings\" data not found in persisted build.");
+            LOGGER.log(Level.SEVERE, "\"analysisNewWarnings\" data not found in persisted build.");
             return Result.FAILURE;
         }        
 
         float activeWarningCount = (float) currentActiveWarnings.getWarnings().size();
-        LOGGER.log(Level.INFO, "[CodeSonar] activeWarningCount = {0}", activeWarningCount);
+        LOGGER.log(Level.INFO, "activeWarningCount = {0}", activeWarningCount);
         float newWarningCount = (float) currentNewWarnings.getWarnings().size();
-        LOGGER.log(Level.INFO, "[CodeSonar] newWarningCount = {0}", newWarningCount);
+        LOGGER.log(Level.INFO, "newWarningCount = {0}", newWarningCount);
 
         float result = (newWarningCount * 100.0f) / activeWarningCount;
-        LOGGER.log(Level.INFO, "[CodeSonar] new warning percentage = {0}", result);
-        LOGGER.log(Level.INFO, "[CodeSonar] threshold percentage = {0}", Float.parseFloat(percentage));
+        LOGGER.log(Level.INFO, "new warning percentage = {0}", result);
+        LOGGER.log(Level.INFO, "threshold percentage = {0}", Float.parseFloat(percentage));
         if (result > Float.parseFloat(percentage)) {
             return Result.fromString(warrantedResult);
         }

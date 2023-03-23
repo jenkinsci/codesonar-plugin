@@ -65,7 +65,7 @@ public class ProcedureCyclomaticComplexityExceededCondition extends Condition {
         Procedures procedures = current.getProcedures();
         // Going to produce build failure in the case of missing necessary information
         if(procedures == null) {
-            LOGGER.log(Level.SEVERE, "[CodeSonar] \"procedures\" data not found in persisted build.");
+            LOGGER.log(Level.SEVERE, "\"procedures\" data not found in persisted build.");
             return Result.FAILURE;
         }
         List<ProcedureRow> procedureRows = procedures.getProcedureRows();

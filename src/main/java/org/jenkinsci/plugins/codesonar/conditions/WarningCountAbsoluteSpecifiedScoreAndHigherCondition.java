@@ -73,7 +73,7 @@ public class WarningCountAbsoluteSpecifiedScoreAndHigherCondition extends Condit
         
         // Going to produce build failure in the case of missing necessary information
         if(analysis == null) {
-            LOGGER.log(Level.SEVERE, "[CodeSonar] \"analysisActiveWarnings\" data not found in persisted build.");
+            LOGGER.log(Level.SEVERE, "\"analysisActiveWarnings\" data not found in persisted build.");
             return Result.FAILURE;
         }
 

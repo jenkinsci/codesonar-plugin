@@ -17,7 +17,7 @@ public class AnalysisServiceFactory {
     
     public IAnalysisService getAnalysisService(HttpService httpService, XmlSerializationService xmlSerializationService) throws AbortException {
         if (hubInfo == null || hubInfo.getVersion() == null) {
-            throw new AbortException("[CodeSonar] version could not be determined");
+            throw new AbortException(CodeSonarLogger.formatMessage("Version could not be determined"));
         }
         
         return new AnalysisService(httpService, xmlSerializationService, IAnalysisService.VISIBILITY_FILTER_ALL_WARNINGS_DEFAULT, IAnalysisService.VISIBILITY_FILTER_NEW_WARNINGS_DEFAULT, hubInfo.isStrictQueryParametersEnforced());

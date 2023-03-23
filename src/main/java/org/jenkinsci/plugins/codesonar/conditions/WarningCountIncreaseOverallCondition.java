@@ -67,12 +67,12 @@ public class WarningCountIncreaseOverallCondition extends Condition {
         // Going to produce build failures in the case of missing necessary information
         Analysis previousAnalysisActiveWarnings = previous.getAnalysisActiveWarnings();
         if(previousAnalysisActiveWarnings == null) {
-            LOGGER.log(Level.SEVERE, "[CodeSonar] \"analysisActiveWarnings\" data not found in persisted build.");
+            LOGGER.log(Level.SEVERE, "\"analysisActiveWarnings\" data not found in persisted build.");
             return Result.FAILURE;
         }
         Analysis currentAnalysisActiveWarnings = current.getAnalysisActiveWarnings();
         if(currentAnalysisActiveWarnings == null) {
-            LOGGER.log(Level.SEVERE, "[CodeSonar] \"analysisNewWarnings\" data not found in persisted build.");
+            LOGGER.log(Level.SEVERE, "\"analysisNewWarnings\" data not found in persisted build.");
             return Result.FAILURE;
         }    
 

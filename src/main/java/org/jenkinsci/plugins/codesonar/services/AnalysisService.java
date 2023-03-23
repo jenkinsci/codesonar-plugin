@@ -1,13 +1,5 @@
 package org.jenkinsci.plugins.codesonar.services;
 
-import hudson.AbortException;
-
-import org.apache.commons.lang.StringUtils;
-import org.apache.http.client.utils.URIBuilder;
-import org.jenkinsci.plugins.codesonar.models.SearchResults;
-import org.jenkinsci.plugins.codesonar.models.analysis.Analysis;
-import org.jenkinsci.plugins.codesonar.models.projects.Project;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
@@ -18,6 +10,15 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import org.apache.commons.lang.StringUtils;
+import org.apache.http.client.utils.URIBuilder;
+import org.jenkinsci.plugins.codesonar.CodeSonarLogger;
+import org.jenkinsci.plugins.codesonar.models.SearchResults;
+import org.jenkinsci.plugins.codesonar.models.analysis.Analysis;
+import org.jenkinsci.plugins.codesonar.models.projects.Project;
+
+import hudson.AbortException;
 
 /**
  *
@@ -90,7 +91,7 @@ public class AnalysisService implements IAnalysisService {
             LOGGER.log(Level.INFO, "Passing filter = {0}", visibilityFilterNewWarningsOrDefault);
             uriBuilder.addParameter("filter", visibilityFilterNewWarningsOrDefault);
         } catch (URISyntaxException ex) {
-            throw new AbortException("[CodeSonar] "+ ex.getMessage());
+            throw new AbortException(CodeSonarLogger.formatMessage(ex.getMessage()));
         }
 
         return getAnalysisFromUrl(uriBuilder.toString());
@@ -106,7 +107,7 @@ public class AnalysisService implements IAnalysisService {
             LOGGER.log(Level.INFO, "Passing filter = {0}", visibilityFilterOrDefault);
             uriBuilder.addParameter("filter", visibilityFilterOrDefault);
         } catch (URISyntaxException ex) {
-            throw new AbortException("[CodeSonar] "+ex.getMessage());
+            throw new AbortException(CodeSonarLogger.formatMessage(ex.getMessage()));
         }
 
         return getAnalysisFromUrl(uriBuilder.toString());
@@ -153,5 +154,5 @@ public class AnalysisService implements IAnalysisService {
     public String getVisibilityFilterNewWarningsOrDefault() {
         return StringUtils.isNotBlank(visibilityFilterNewWarnings) ? visibilityFilterNewWarnings : IAnalysisService.VISIBILITY_FILTER_NEW_WARNINGS_DEFAULT;
     }
-    
+
 }

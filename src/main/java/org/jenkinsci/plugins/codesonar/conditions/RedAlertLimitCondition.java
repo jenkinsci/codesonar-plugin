@@ -65,7 +65,7 @@ public class RedAlertLimitCondition extends Condition {
         
         // Going to produce build failure in the case of missing necessary information
         if(analysisActiveWarnings == null) {
-            LOGGER.log(Level.SEVERE, "[CodeSonar] \"analysisActiveWarnings\" data not found in persisted build.");
+            LOGGER.log(Level.SEVERE, "\"analysisActiveWarnings\" data not found in persisted build.");
             return Result.FAILURE;
         }
         

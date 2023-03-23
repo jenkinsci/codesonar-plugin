@@ -61,12 +61,12 @@ public class CodeSonarBuildAction implements Action {
     public String getUrlName() {
         URI baseHubUri = buildActionDTO.getBaseHubUri();
         if(baseHubUri == null) {
-            LOGGER.log(Level.WARNING, "[CodeSonar] \"baseHubUri\" not found in persisted build, returning empty URL name");
+            LOGGER.log(Level.WARNING, "\"baseHubUri\" not found in persisted build, returning empty URL name");
             return StringUtils.EMPTY;
         }
         Analysis analysisActiveWarnings = buildActionDTO.getAnalysisActiveWarnings();
         if(analysisActiveWarnings == null) {
-            LOGGER.log(Level.WARNING, "[CodeSonar] \"analysisActiveWarnings\" data not found in persisted build, returning empty URL name");
+            LOGGER.log(Level.WARNING, "\"analysisActiveWarnings\" data not found in persisted build, returning empty URL name");
             return StringUtils.EMPTY;
         }
         String analysisId = analysisActiveWarnings.getAnalysisId();
