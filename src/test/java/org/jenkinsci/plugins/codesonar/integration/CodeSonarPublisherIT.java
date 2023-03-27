@@ -111,7 +111,7 @@ public class CodeSonarPublisherIT {
         boolean valid = false;
         List<String> log = b.getLog(500);
         for (String line : log) {
-            if (line.equals(String.format("ERROR: %s", CodeSonarLogger.formatMessage("Error on url: %s", "http://10/index.xml")))) {
+            if (line.equals(String.format("ERROR: %s", CodeSonarLogger.formatMessage("Error on url: {0}", "http://10/index.xml")))) {
                 valid = true;
                 break;
             }

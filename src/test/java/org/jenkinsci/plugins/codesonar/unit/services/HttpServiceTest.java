@@ -2,6 +2,7 @@ package org.jenkinsci.plugins.codesonar.unit.services;
 
 import java.util.logging.Logger;
 
+import org.jenkinsci.plugins.codesonar.CodeSonarPluginException;
 import org.jenkinsci.plugins.codesonar.services.HttpService;
 import org.junit.Before;
 import org.junit.Test;
@@ -17,7 +18,7 @@ public class HttpServiceTest {
     private static final Logger log = Logger.getLogger(HttpServiceTest.class.toString());
 
     @Before
-    public void setUp() throws AbortException {
+    public void setUp() throws CodeSonarPluginException {
         httpService = new HttpService(null, null, null, -1);
     }
 

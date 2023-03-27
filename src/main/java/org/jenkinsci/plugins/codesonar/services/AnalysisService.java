@@ -13,12 +13,10 @@ import java.util.regex.Pattern;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.http.client.utils.URIBuilder;
-import org.jenkinsci.plugins.codesonar.CodeSonarLogger;
+import org.jenkinsci.plugins.codesonar.CodeSonarPluginException;
 import org.jenkinsci.plugins.codesonar.models.SearchResults;
 import org.jenkinsci.plugins.codesonar.models.analysis.Analysis;
 import org.jenkinsci.plugins.codesonar.models.projects.Project;
-
-import hudson.AbortException;
 
 /**
  *
@@ -40,6 +38,10 @@ public class AnalysisService implements IAnalysisService {
         this.visibilityFilter = visibilityFilter;
         this.visibilityFilterNewWarnings = visibilityFilterNewWarnings;
         this.strictQueryParameters = strictQueryParameters;
+    }
+    
+    private CodeSonarPluginException createError(String msg, Object...args) {
+        return new CodeSonarPluginException(msg, args);
     }
 
     @Override
@@ -75,14 +77,14 @@ public class AnalysisService implements IAnalysisService {
     }
 
     @Override
-    public Analysis getAnalysisFromUrl(String analysisUrl) throws IOException {
+    public Analysis getAnalysisFromUrl(String analysisUrl) throws CodeSonarPluginException {
         InputStream xmlContent = httpService.getContentFromUrlAsInputStream(analysisUrl);
 
         return xmlSerializationService.deserialize(xmlContent, Analysis.class);
     }
 
     @Override
-    public Analysis getAnalysisFromUrlWithNewWarnings(String analysisUrl) throws IOException {
+    public Analysis getAnalysisFromUrlWithNewWarnings(String analysisUrl) throws CodeSonarPluginException {
         LOGGER.log(Level.INFO, String.format("Calling getAnalysisFromUrlWithNewWarnings"));
         URIBuilder uriBuilder;
         try {
@@ -91,14 +93,14 @@ public class AnalysisService implements IAnalysisService {
             LOGGER.log(Level.INFO, "Passing filter = {0}", visibilityFilterNewWarningsOrDefault);
             uriBuilder.addParameter("filter", visibilityFilterNewWarningsOrDefault);
         } catch (URISyntaxException ex) {
-            throw new AbortException(CodeSonarLogger.formatMessage(ex.getMessage()));
+            throw createError(ex.getMessage());
         }
 
         return getAnalysisFromUrl(uriBuilder.toString());
     }
 
     @Override
-    public Analysis getAnalysisFromUrlWarningsByFilter(String analysisUrl) throws IOException {
+    public Analysis getAnalysisFromUrlWarningsByFilter(String analysisUrl) throws CodeSonarPluginException {
         LOGGER.log(Level.INFO, String.format("Calling getAnalysisFromUrlWarningsByFilter"));
         URIBuilder uriBuilder;
         try {
@@ -107,7 +109,7 @@ public class AnalysisService implements IAnalysisService {
             LOGGER.log(Level.INFO, "Passing filter = {0}", visibilityFilterOrDefault);
             uriBuilder.addParameter("filter", visibilityFilterOrDefault);
         } catch (URISyntaxException ex) {
-            throw new AbortException(CodeSonarLogger.formatMessage(ex.getMessage()));
+            throw createError(ex.getMessage());
         }
 
         return getAnalysisFromUrl(uriBuilder.toString());

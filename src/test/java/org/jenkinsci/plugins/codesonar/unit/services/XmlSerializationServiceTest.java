@@ -1,15 +1,18 @@
 package org.jenkinsci.plugins.codesonar.unit.services;
 
-import hudson.AbortException;
+import static org.junit.Assert.assertEquals;
+
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+
+import org.jenkinsci.plugins.codesonar.CodeSonarPluginException;
 import org.jenkinsci.plugins.codesonar.models.Metric;
 import org.jenkinsci.plugins.codesonar.models.projects.Project;
 import org.jenkinsci.plugins.codesonar.services.XmlSerializationService;
 import org.junit.Before;
 import org.junit.Test;
 
-import static org.junit.Assert.assertEquals;
+import hudson.AbortException;
 
 /**
  *
@@ -25,7 +28,7 @@ public class XmlSerializationServiceTest {
     }
     
     @Test
-    public void providedValidXML_deserializesTheXml() throws Exception {
+    public void providedValidXML_deserializesTheXml() throws CodeSonarPluginException {
         final InputStream VALID_XML_CONTENT = new ByteArrayInputStream((
                 "<project url=\"/analysis/8.xml?filter=2&amp;prj_filter=10\">\n"
                 + "<name>coverity</name>\n"
@@ -47,7 +50,7 @@ public class XmlSerializationServiceTest {
     }
 
     @Test(expected = AbortException.class)
-    public void providedInvalidXML_throwsAbortException() throws AbortException {
+    public void providedInvalidXML_throwsAbortException() throws CodeSonarPluginException {
         final InputStream INVALID_XML_CONTENT = new ByteArrayInputStream((
                 "project url=\"/analysis/8.xml?filter=2&prj_filter=10\">\n"
                 + "<name>coverity</name>\n"

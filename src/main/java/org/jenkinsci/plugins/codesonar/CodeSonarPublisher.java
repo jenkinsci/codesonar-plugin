@@ -12,6 +12,7 @@ import java.security.KeyStore;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -59,7 +60,6 @@ import com.cloudbees.plugins.credentials.common.UsernamePasswordCredentials;
 import com.cloudbees.plugins.credentials.domains.DomainRequirement;
 import com.google.common.base.Throwables;
 
-import hudson.AbortException;
 import hudson.DescriptorExtensionList;
 import hudson.Extension;
 import hudson.FilePath;
@@ -136,6 +136,10 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
         this.visibilityFilter = visibilityFilter;
         this.visibilityFilterNewWarnings = visibilityFilterNewWarnings;
         this.codesonarProjectFile = codesonarProjectFile;
+    }
+    
+    private CodeSonarPluginException createError(String msg, Object...args) {
+        return new CodeSonarPluginException(msg, args);
     }
 
     @DataBoundSetter
@@ -231,7 +235,7 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
         private Path getPrjFilesDirectory(Path codesonarProjectFilePath) throws IOException {
             Path originalFileName = codesonarProjectFilePath.getFileName();
             if(originalFileName == null) {
-                throw createError(String.format("Specified CodeSonar Project File \"%s\" does not represent a file or a directory neither", codesonarProjectFilePath.toString()));
+                throw createError(MessageFormat.format("Specified CodeSonar Project File \"{0}\" does not represent a file or a directory neither", codesonarProjectFilePath.toString()));
             }
             String projectFileBaseName = getCodesonarProjectFileBaseName(originalFileName.toString());
             Path resultingPath = Paths.get(projectFileBaseName + CS_PROJECT_DIR_EXTENSION);
@@ -282,7 +286,7 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
                 try {
                     codesonarProjectFilePath = Paths.get(codesonarProjectFile);
                 } catch(InvalidPathException e) {
-                    throw createError(String.format("Specified CodeSonar Project File \"%s\" does not represent a file path", codesonarProjectFile));
+                    throw createError(MessageFormat.format("Specified CodeSonar Project File \"{0}\" does not represent a file path", codesonarProjectFile));
                 }
                 Path prjFilesDirectoryPath = getPrjFilesDirectory(codesonarProjectFilePath);
                 Path prjFilesDirectoryAbsolutePath = resolveRelativePath(jenkinsPipelineCWD, prjFilesDirectoryPath);
@@ -292,7 +296,7 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
                     File aidFile = new File(prjFilesDirectoryAbsolutePath.toFile(), FILE_AID_TXT);
                     return readAidFileContent(aidFile);
                 } else {
-                    throw createError(String.format(".prj_files directory \"%s\" seems not to exist", prjFilesDirectoryAbsolutePath.toString()));
+                    throw createError(MessageFormat.format(".prj_files directory \"{0}\" seems not to exist", prjFilesDirectoryAbsolutePath.toString()));
                 }
             } else {
                 
@@ -347,16 +351,16 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
 
 
         if (expandedHubAddress.isEmpty()) {
-            throw new AbortException(CodeSonarLogger.formatMessage("Hub address not provided"));
+            throw createError("Hub address not provided");
         }
         if (expandedProjectName.isEmpty()) {
-            throw new AbortException(CodeSonarLogger.formatMessage("Project name not provided"));
+            throw createError("Project name not provided");
         }
         
         CodeSonarLogger csLogger = new CodeSonarLogger(listener.getLogger());
 
         URI baseHubUri = URI.create(String.format("%s://%s", getProtocol(), expandedHubAddress));
-        csLogger.writeInfo("Using hub URI: %s", baseHubUri);
+        csLogger.writeInfo("Using hub URI: {0}", baseHubUri);
 
         CodeSonarHubInfo hubInfo = hubInfoService.fetchHubInfo(baseHubUri);
         LOGGER.log(Level.FINE, "hub version: {0}", hubInfo.getVersion());
@@ -376,7 +380,7 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
             LOGGER.log(Level.INFO, "Found analysis id: {0}", analysisId);
         } else {
             analysisId = aid;
-            LOGGER.log(Level.INFO, "Using override analysis id: '" + aid + "'.");
+            LOGGER.log(Level.INFO, "Using override analysis id: \"" + aid + "\".");
         }
         
         String analysisUrl = baseHubUri.toString() + "/analysis/" + analysisId + ".xml";
@@ -394,7 +398,7 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
         try {
             lAnalysisId = Long.valueOf(analysisId);
         } catch(NumberFormatException e) {
-            LOGGER.log(Level.WARNING, "Unable to parse analysis id '" + analysisId + "' as long integer.");
+            LOGGER.log(Level.WARNING, "Unable to parse analysis id \"" + analysisId + "\" as long integer.");
         }
         CodeSonarBuildActionDTO buildActionDTO = new CodeSonarBuildActionDTO(lAnalysisId, analysisWarnings, analysisNewWarnings, metrics, procedures, baseHubUri);
         CodeSonarBuildAction csba = new CodeSonarBuildAction(buildActionDTO, run, expandedProjectName, analysisUrl);
@@ -404,7 +408,7 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
         CodeSonarBuildActionDTO compareDTO = null;
         Run<?,?> previosSuccess = run.getPreviousSuccessfulBuild();
         if(previosSuccess != null) {
-            csLogger.writeInfo("Found previous build to compare to (%s)", previosSuccess.getDisplayName());
+            csLogger.writeInfo("Found previous build to compare to ({0})", previosSuccess.getDisplayName());
             List<CodeSonarBuildAction> actions = previosSuccess.getActions(CodeSonarBuildAction.class).stream().filter(c -> c.getProjectName() != null && c.getProjectName().equals(expandedProjectName)).collect(Collectors.toList());
             if(actions != null && !actions.isEmpty() && actions.size() < 2) {
                 csLogger.writeInfo("Found comparison data");
@@ -419,7 +423,7 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
             Pair<String, String> pair = Pair.with(condition.getDescriptor().getDisplayName(), validationResult.toString());
             conditionNamesAndResults.add(pair);
             run.setResult(validationResult);
-            csLogger.writeInfo("'%s' marked the build as %s", condition.getDescriptor().getDisplayName(), validationResult.toString());
+            csLogger.writeInfo("\"{0}\" marked the build as {1}", condition.getDescriptor().getDisplayName(), validationResult.toString());
         }
         
         csLogger.writeInfo("Done evaluating conditions");
@@ -431,7 +435,7 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
         csLogger.writeInfo("Done performing codesonar actions");
     }
 
-    private void authenticate(Run<?, ?> run, URI baseHubUri, boolean supportsOpenAPI) throws AbortException {
+    private void authenticate(Run<?, ?> run, URI baseHubUri, boolean supportsOpenAPI) throws CodeSonarPluginException {
         //If clientCertificateCredentials is null, then authenticate as anonymous
         if(clientCertificateCredentials != null) {
             if (clientCertificateCredentials instanceof StandardUsernamePasswordCredentials) {
@@ -445,7 +449,7 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
             } else if (clientCertificateCredentials instanceof StandardCertificateCredentials) {
                 LOGGER.log(Level.INFO, "Authenticating using SSL certificate");
                 if (protocol.equals("http")) {
-                    throw new AbortException(CodeSonarLogger.formatMessage("Authentication using a certificate is only available while SSL is enabled."));
+                    throw createError("Authentication using a certificate is only available while SSL is enabled.");
                 }
     
                 authenticationService.authenticate(baseHubUri,
@@ -556,7 +560,7 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
         return xmlSerializationService;
     }
 
-    public HttpService getHttpService(@Nonnull Run<?, ?> run) throws AbortException {
+    public HttpService getHttpService(@Nonnull Run<?, ?> run) throws CodeSonarPluginException {
         if (httpService == null) {
             Collection<? extends Certificate> serverCertificates = null;
             if(StringUtils.isNotEmpty(serverCertificateCredentialId)) {
@@ -572,15 +576,15 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
                         serverCertificates = cf.generateCertificates(f.getContent());
                         LOGGER.log(Level.INFO, "X509Certificate initialized");
                     } catch (IOException | CertificateException e ) {
-                        throw new AbortException(String.format("[CodeSonar] Failed to create X509Certificate from Secret File Credential. %n[CodeSonar] %s: %s%n[CodeSonar] Stack Trace: %s", e.getClass().getName(), e.getMessage(), Throwables.getStackTraceAsString(e)));
+                        throw createError("Failed to create X509Certificate from Secret File Credential. %n{0}: {1}%nStack Trace: {2}", e.getClass().getName(), e.getMessage(), Throwables.getStackTraceAsString(e));
                     }
                 } else {
                     if(serverCertificateCredentials != null) {
                         LOGGER.log(Level.INFO, "Found {0} provided as Hub HTTPS certificate", serverCertificateCredentials.getClass().getName());
-                        throw new AbortException(String.format("[CodeSonar] The Jenkins Credentials provided as Hub HTTPS certificate is of type %s.%n[CodeSonar] Please provide a credential of type FileCredentials", serverCertificateCredentials.getClass().getName()));
+                        throw createError("The Jenkins Credentials provided as Hub HTTPS certificate is of type {0}.%nPlease provide a credential of type FileCredentials", serverCertificateCredentials.getClass().getName());
                     }
-                    LOGGER.log(Level.INFO, "Credentials with id '{0}' not found", getServerCertificateCredentialId());
-                    throw new AbortException(CodeSonarLogger.formatMessage("Credentials with id '%s' not found", getServerCertificateCredentialId()));
+                    LOGGER.log(Level.INFO, "Credentials with id \"{0}\" not found", getServerCertificateCredentialId());
+                    throw createError(CodeSonarLogger.formatMessage("Credentials with id \"{0}\" not found", getServerCertificateCredentialId()));
                 }
             }
             
@@ -595,7 +599,7 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
 
                 if (clientCertificateCredentials instanceof StandardCertificateCredentials) {
                     if (protocol.equals("http")) {
-                        throw new AbortException(CodeSonarLogger.formatMessage("Authentication using a certificate is only available while SSL is enabled."));
+                        throw createError(CodeSonarLogger.formatMessage("Authentication using a certificate is only available while SSL is enabled."));
                     }
         
                     LOGGER.log(Level.INFO, "Configuring HttpClient with certificate authentication");
@@ -612,28 +616,28 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
         return httpService;
     }
 
-    public AuthenticationService getAuthenticationService(@Nonnull Run<?, ?> run) throws AbortException {
+    public AuthenticationService getAuthenticationService(@Nonnull Run<?, ?> run) throws CodeSonarPluginException {
         if (authenticationService == null) {
             authenticationService = new AuthenticationService(getHttpService(run));
         }
         return authenticationService;
     }
 
-    public MetricsService getMetricsService(@Nonnull Run<?, ?> run) throws AbortException {
+    public MetricsService getMetricsService(@Nonnull Run<?, ?> run) throws CodeSonarPluginException {
         if (metricsService == null) {
             metricsService = new MetricsService(getHttpService(run), getXmlSerializationService());
         }
         return metricsService;
     }
 
-    public ProceduresService getProceduresService(@Nonnull Run<?, ?> run) throws AbortException {
+    public ProceduresService getProceduresService(@Nonnull Run<?, ?> run) throws CodeSonarPluginException {
         if (proceduresService == null) {
             proceduresService = new ProceduresService(getHttpService(run), getXmlSerializationService());
         }
         return proceduresService;
     }
     
-    public HubInfoService getHubInfoService(@Nonnull Run<?, ?> run) throws AbortException {
+    public HubInfoService getHubInfoService(@Nonnull Run<?, ?> run) throws CodeSonarPluginException {
         if (hubInfoService == null) {
             hubInfoService = new HubInfoService(getHttpService(run));
         }
@@ -746,5 +750,5 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
             return items;
         }
     }
-    
+
 }

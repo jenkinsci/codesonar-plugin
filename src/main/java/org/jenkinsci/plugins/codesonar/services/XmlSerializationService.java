@@ -1,20 +1,26 @@
 package org.jenkinsci.plugins.codesonar.services;
 
-import hudson.AbortException;
 import java.io.BufferedInputStream;
 import java.io.InputStream;
+import java.io.Serializable;
+
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
-import java.io.Serializable;
+
+import org.jenkinsci.plugins.codesonar.CodeSonarPluginException;
 
 /**
  *
  * @author andrius
  */
 public class XmlSerializationService implements Serializable {
+    
+    private CodeSonarPluginException createError(String msg, Object...args) {
+        return new CodeSonarPluginException(msg, args);
+    }
 
-    public <T extends Serializable> T deserialize(InputStream content, Class<T> t) throws AbortException {
+    public <T extends Serializable> T deserialize(InputStream content, Class<T> t) throws CodeSonarPluginException {
         ClassLoader originalClassLoader = Thread.currentThread().getContextClassLoader();
         try {
             Thread.currentThread().setContextClassLoader(getClass().getClassLoader());
@@ -24,7 +30,7 @@ public class XmlSerializationService implements Serializable {
 
             return (T) un.unmarshal(bis);
         } catch (JAXBException ex) {
-            throw new AbortException(ex.getMessage());
+            throw createError(ex.getMessage());
         } finally {
             Thread.currentThread().setContextClassLoader(originalClassLoader);
         }

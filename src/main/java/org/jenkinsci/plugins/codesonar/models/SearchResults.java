@@ -1,23 +1,28 @@
 package org.jenkinsci.plugins.codesonar.models;
 
-import hudson.AbortException;
-import org.jenkinsci.plugins.codesonar.models.projects.Project;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.List;
+
+import org.jenkinsci.plugins.codesonar.CodeSonarPluginException;
+import org.jenkinsci.plugins.codesonar.models.projects.Project;
 
 @XmlRootElement(name = "search_results")
 @XmlAccessorType(XmlAccessType.FIELD)
 public class SearchResults implements Serializable {
     @XmlElement(name = "project")
     private List<Project> projects;
+    
+    private CodeSonarPluginException createError(String msg, Object...args) {
+        return new CodeSonarPluginException(msg, args);
+    }
 
-    public Project getProjectByName(String projectName) throws AbortException {
+    public Project getProjectByName(String projectName) throws CodeSonarPluginException {
         List<Project> duplicates = new ArrayList<>();
         for (Project project : getProjects()) {
             if (project.getName().equals(projectName)) {
@@ -25,9 +30,9 @@ public class SearchResults implements Serializable {
             }
         }
         if (duplicates.size() > 1) {
-            throw new AbortException("Multiple projects found with name: " + projectName + "\nMake sure projects do not share the same name.");
+            throw createError("Multiple projects found with name: {0}%nMake sure projects do not share the same name.", projectName);
         } else if (duplicates.size() == 0) {
-            throw new AbortException(String.format("Project by the name %s was not found on the hub", projectName));
+            throw createError("Project by the name {0} was not found on the hub", projectName);
         }
 
         return duplicates.get(0);

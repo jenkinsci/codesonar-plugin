@@ -1,16 +1,15 @@
 package org.jenkinsci.plugins.codesonar.conditions;
 
-import hudson.AbortException;
+import org.jenkinsci.plugins.codesonar.models.CodeSonarBuildActionDTO;
+
 import hudson.DescriptorExtensionList;
 import hudson.ExtensionPoint;
 import hudson.Launcher;
-import hudson.model.Run;
 import hudson.model.Describable;
 import hudson.model.Descriptor;
 import hudson.model.Result;
 import hudson.model.TaskListener;
 import jenkins.model.Jenkins;
-import org.jenkinsci.plugins.codesonar.models.CodeSonarBuildActionDTO;
 
 /**
  *
