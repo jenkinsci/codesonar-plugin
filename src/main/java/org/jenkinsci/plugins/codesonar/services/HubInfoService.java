@@ -52,11 +52,7 @@ public class HubInfoService {
                 hubInfo.setStrictQueryParametersEnforced(supportsStrictQueryParameters(cci));
             } else {
                 //In this case this client has been rejected by the hub
-            	String message = CodeSonarLogger.formatMessageMultiLine(
-            			CodeSonarLogger.createLine("Client rejected by the hub."),
-            			CodeSonarLogger.createLine("clientOK=%s", cci.getClientOK().toString())
-            			);
-                throw new AbortException(message);
+                throw new AbortException(String.format("[CodeSonar] client rejected by the hub. %n[CodeSonar] clientOK=%s", cci.getClientOK().toString()));
             }
         } else {
             /*
@@ -91,12 +87,7 @@ public class HubInfoService {
             resp = httpService.execute(Request.Get(resolvedURI))
                     .returnResponse();
         } catch (IOException e) {
-        	String message = CodeSonarLogger.formatMessageMultiLine(
-        			CodeSonarLogger.createLine("Failed to get a response."),
-        			CodeSonarLogger.createLine("IOException: %s", e.getMessage()),
-        			CodeSonarLogger.createLine("Stack Trace: %s", Throwables.getStackTraceAsString(e))
-        			);
-            LOGGER.log(Level.WARNING, message);
+            LOGGER.log(Level.WARNING, String.format("[CodeSonar] failed to get a response. %n[CodeSonar] IOException: %s%n[CodeSonar] Stack Trace: %s", e.getMessage(), Throwables.getStackTraceAsString(e)));
             return null;
         }
         
@@ -107,21 +98,12 @@ public class HubInfoService {
         
         if(resp.getStatusLine().getStatusCode() == 404) {
             //Hub might respond with an HTTP 404, we want to keep track this special case
-        	String message = CodeSonarLogger.formatMessageMultiLine(
-        			CodeSonarLogger.createLine("Specified endpoint seems not to exist on the hub."),
-        			CodeSonarLogger.createLine("response is \"%d, %s\"", resp.getStatusLine().getStatusCode() , resp.getStatusLine().getReasonPhrase())
-        			);
-            LOGGER.log(Level.INFO, message);
+            LOGGER.log(Level.INFO, String.format("[CodeSonar] specified endpoint seems not to exist on the hub. %n[CodeSonar] response is \"%d, %s\"", resp.getStatusLine().getStatusCode() , resp.getStatusLine().getReasonPhrase()));
             return null;
         } else if(resp.getStatusLine().getStatusCode() != 200) {
             //Hub returned an unexpected response
             String responseBody = readResponseBody(resp);
-        	String message = CodeSonarLogger.formatMessageMultiLine(
-        			CodeSonarLogger.createLine("Response is not successfull."),
-        			CodeSonarLogger.createLine("Response is \"%d, %s\"", resp.getStatusLine().getStatusCode() , resp.getStatusLine().getReasonPhrase()),
-        			CodeSonarLogger.createLine("Respose body: \"%s\"", responseBody)
-        			);
-            throw new AbortException(message);
+            throw new AbortException(String.format("[CodeSonar] response is not successfull. %n[CodeSonar] response is \"%d, %s\" %n[CodeSonar] respose body: \"%s\"", resp.getStatusLine().getStatusCode() , resp.getStatusLine().getReasonPhrase(), responseBody));
         }
         
         String responseBody = readResponseBody(resp);
@@ -131,11 +113,7 @@ public class HubInfoService {
         
         //We cannot parse the JSON response if "responseBody" is null or if it's empty
         if(StringUtils.isEmpty(responseBody)) {
-        	String message = CodeSonarLogger.formatMessageMultiLine(
-        			CodeSonarLogger.createLine("Response is empty."),
-        			CodeSonarLogger.createLine("Response is \"%s\"", responseBody)
-        			);
-            LOGGER.log(Level.INFO, message);
+            LOGGER.log(Level.INFO, String.format("[CodeSonar] response is empty. %n[CodeSonar] response is \"%s\"", responseBody));
             return null;
         }
         
@@ -145,12 +123,7 @@ public class HubInfoService {
             cci = gson.fromJson(responseBody, CodeSonarHubClientCompatibilityInfo.class);
             LOGGER.log(Level.INFO, CodeSonarLogger.formatMessage(cci.toString()));
         } catch(JsonSyntaxException e) {
-        	String message = CodeSonarLogger.formatMessageMultiLine(
-        			CodeSonarLogger.createLine("Failed to parse JSON response."),
-        			CodeSonarLogger.createLine("Exception: %s", e.getMessage()),
-        			CodeSonarLogger.createLine("Stack Trace: %s", Throwables.getStackTraceAsString(e))
-        			);
-            LOGGER.log(Level.WARNING, message);
+            LOGGER.log(Level.WARNING, String.format("[CodeSonar] failed to parse JSON response. %n[CodeSonar] Exception: %s%n[CodeSonar] Stack Trace: %s", e.getMessage(), Throwables.getStackTraceAsString(e)));
             return null;
         }
         
@@ -160,23 +133,14 @@ public class HubInfoService {
     private String readResponseBody(HttpResponse resp) {
         HttpEntity entity = resp.getEntity();
         if(entity == null) {
-        	String message = CodeSonarLogger.formatMessageMultiLine(
-        			CodeSonarLogger.createLine("Hub compatibility info cannot be read."),
-        			CodeSonarLogger.createLine("Entity is null")
-        			);
-            LOGGER.log(Level.INFO, message);
+            LOGGER.log(Level.INFO, "[CodeSonar] hub compatibility info cannot be read. %n[CodeSonar] entity is null");
             return null;
         }
         
         try {
             return EntityUtils.toString(entity, Consts.UTF_8);
         } catch (ParseException | IOException e) {
-        	String message = CodeSonarLogger.formatMessageMultiLine(
-        			CodeSonarLogger.createLine("Failed to read the response."),
-        			CodeSonarLogger.createLine("Exception: %s", e.getMessage()),
-        			CodeSonarLogger.createLine("Stack Trace: %s", Throwables.getStackTraceAsString(e))
-        			);
-            LOGGER.log(Level.WARNING, message);
+            LOGGER.log(Level.WARNING, String.format("[CodeSonar] failed to read the response. %n[CodeSonar] Exception: %s%n[CodeSonar] Stack Trace: %s", e.getMessage(), Throwables.getStackTraceAsString(e)));
             return null;
         }
     }

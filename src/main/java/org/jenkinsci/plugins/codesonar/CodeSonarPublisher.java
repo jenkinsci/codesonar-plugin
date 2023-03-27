@@ -404,10 +404,10 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
         CodeSonarBuildActionDTO compareDTO = null;
         Run<?,?> previosSuccess = run.getPreviousSuccessfulBuild();
         if(previosSuccess != null) {
-        	csLogger.writeInfo("Found previous build to compare to (%s)", previosSuccess.getDisplayName());
+            csLogger.writeInfo("Found previous build to compare to (%s)", previosSuccess.getDisplayName());
             List<CodeSonarBuildAction> actions = previosSuccess.getActions(CodeSonarBuildAction.class).stream().filter(c -> c.getProjectName() != null && c.getProjectName().equals(expandedProjectName)).collect(Collectors.toList());
             if(actions != null && !actions.isEmpty() && actions.size() < 2) {
-            	csLogger.writeInfo("Found comparison data");
+                csLogger.writeInfo("Found comparison data");
                 compareDTO = actions.get(0).getBuildActionDTO();
             }
         }
@@ -572,21 +572,12 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
                         serverCertificates = cf.generateCertificates(f.getContent());
                         LOGGER.log(Level.INFO, "X509Certificate initialized");
                     } catch (IOException | CertificateException e ) {
-                    	String message = CodeSonarLogger.formatMessageMultiLine(
-                    			CodeSonarLogger.createLine("Failed to create X509Certificate from Secret File Credential."),
-                    			CodeSonarLogger.createLine("%s: %s", e.getClass().getName(), e.getMessage()),
-                    			CodeSonarLogger.createLine("Stack Trace: %s", Throwables.getStackTraceAsString(e))
-                    			);
-                    	throw new AbortException(message);
+                        throw new AbortException(String.format("[CodeSonar] Failed to create X509Certificate from Secret File Credential. %n[CodeSonar] %s: %s%n[CodeSonar] Stack Trace: %s", e.getClass().getName(), e.getMessage(), Throwables.getStackTraceAsString(e)));
                     }
                 } else {
                     if(serverCertificateCredentials != null) {
                         LOGGER.log(Level.INFO, "Found {0} provided as Hub HTTPS certificate", serverCertificateCredentials.getClass().getName());
-                    	String message = CodeSonarLogger.formatMessageMultiLine(
-                    			CodeSonarLogger.createLine("The Jenkins Credentials provided as Hub HTTPS certificate is of type %s.", serverCertificateCredentials.getClass().getName()),
-                    			CodeSonarLogger.createLine("Please provide a credential of type FileCredentials")
-                    			);
-                        throw new AbortException(message);
+                        throw new AbortException(String.format("[CodeSonar] The Jenkins Credentials provided as Hub HTTPS certificate is of type %s.%n[CodeSonar] Please provide a credential of type FileCredentials", serverCertificateCredentials.getClass().getName()));
                     }
                     LOGGER.log(Level.INFO, "Credentials with id '{0}' not found", getServerCertificateCredentialId());
                     throw new AbortException(CodeSonarLogger.formatMessage("Credentials with id '%s' not found", getServerCertificateCredentialId()));

@@ -13,7 +13,6 @@ import org.apache.http.NameValuePair;
 import org.apache.http.client.fluent.Form;
 import org.apache.http.client.fluent.Request;
 import org.apache.http.util.EntityUtils;
-import org.jenkinsci.plugins.codesonar.CodeSonarLogger;
 
 import com.google.common.base.Throwables;
 
@@ -70,32 +69,17 @@ public class AuthenticationService {
             reason = resp.getStatusLine().getReasonPhrase();
             body = EntityUtils.toString(resp.getEntity(), "UTF-8");
         } catch (IOException e) {
-        	String message = CodeSonarLogger.formatMessageMultiLine(
-        			CodeSonarLogger.createLine("Failed to authenticate."),
-        			CodeSonarLogger.createLine("IOException: %s", e.getMessage()),
-        			CodeSonarLogger.createLine("Stack Trace: %s", Throwables.getStackTraceAsString(e))
-        			);
-            throw new AbortException(message);
+            throw new AbortException(String.format("[CodeSonar] failed to authenticate. %n[CodeSonar] IOException: %s%n[CodeSonar] Stack Trace: %s", e.getMessage(), Throwables.getStackTraceAsString(e)));
         }
 
         if(status == 301) { //HTTP 301 - MOVED PERMANENTLY
             if(baseHubUri.getScheme().equalsIgnoreCase("http")) {
-            	String message = CodeSonarLogger.formatMessageMultiLine(
-            			CodeSonarLogger.createLine("Failed to authenticate. Possible reason could be the CodeSonar hub running on https, while protocol http was specified."),
-            			CodeSonarLogger.createLine("HTTP status code: %s - %s", status, reason),
-            			CodeSonarLogger.createLine("HTTP Body: %s", body)
-            			);
-                throw new AbortException(message);
+                throw new AbortException(String.format("[CodeSonar] failed to authenticate. Possible reason could be the CodeSonar hub running on https, while protocol http was specified.%n[CodeSonar] HTTP status code: %s - %s %n[CodeSonar] HTTP Body: %s", status, reason, body));
             }
         }
 
         if (status != 200) {
-        	String message = CodeSonarLogger.formatMessageMultiLine(
-        			CodeSonarLogger.createLine("Failed to authenticate."),
-        			CodeSonarLogger.createLine("HTTP status code: %s - %s", status, reason),
-        			CodeSonarLogger.createLine("HTTP Body: %s", body)
-        			);
-            throw new AbortException(message);
+            throw new AbortException(String.format("[CodeSonar] failed to authenticate. %n[CodeSonar] HTTP status code: %s - %s %n[CodeSonar] HTTP Body: %s", status, reason, body));
         }
     }
 
@@ -125,32 +109,17 @@ public class AuthenticationService {
             reason = resp.getStatusLine().getReasonPhrase();
             body = EntityUtils.toString(resp.getEntity(), "UTF-8");
         } catch (IOException e) {
-        	String message = CodeSonarLogger.formatMessageMultiLine(
-        			CodeSonarLogger.createLine("Failed to authenticate."),
-        			CodeSonarLogger.createLine("IOException: %s", e.getMessage()),
-        			CodeSonarLogger.createLine("Stack Trace: %s", Throwables.getStackTraceAsString(e))
-        			);
-            throw new AbortException(message);
+            throw new AbortException(String.format("[CodeSonar] failed to authenticate. %n[CodeSonar] IOException: %s%n[CodeSonar] Stack Trace: %s", e.getMessage(), Throwables.getStackTraceAsString(e)));
         }
 
         if(status == 301) { //HTTP 301 - MOVED PERMANENTLY
             if(baseHubUri.getScheme().equalsIgnoreCase("http")) {
-            	String message = CodeSonarLogger.formatMessageMultiLine(
-            			CodeSonarLogger.createLine("Failed to authenticate. Possible reason could be the CodeSonar hub running on https, while protocol http was specified."),
-            			CodeSonarLogger.createLine("HTTP status code: %s - %s", status, reason),
-            			CodeSonarLogger.createLine("HTTP Body: %s", body)
-            			);
-                throw new AbortException(message);
+                throw new AbortException(String.format("[CodeSonar] failed to authenticate. Possible reason could be the CodeSonar hub running on https, while protocol http was specified.%n[CodeSonar] HTTP status code: %s - %s %n[CodeSonar] HTTP Body: %s", status, reason, body));
             }
         }
 
         if (status != 200) {
-        	String message = CodeSonarLogger.formatMessageMultiLine(
-        			CodeSonarLogger.createLine("Failed to authenticate."),
-        			CodeSonarLogger.createLine("HTTP status code: %s - %s", status, reason),
-        			CodeSonarLogger.createLine("HTTP Body: %s", body)
-        			);
-            throw new AbortException(message);
+            throw new AbortException(String.format("[CodeSonar] failed to authenticate. %n[CodeSonar] HTTP status code: %s - %s %n[CodeSonar] HTTP Body: %s", status, reason, body));
         }
     }
     
@@ -198,32 +167,17 @@ public class AuthenticationService {
 //            }
             body = EntityUtils.toString(resp.getEntity(), "UTF-8");
         } catch (IOException e) {
-        	String message = CodeSonarLogger.formatMessageMultiLine(
-        			CodeSonarLogger.createLine("Failed to authenticate."),
-        			CodeSonarLogger.createLine("IOException: %s", e.getMessage()),
-        			CodeSonarLogger.createLine("Stack Trace: %s", Throwables.getStackTraceAsString(e))
-        			);
-            throw new AbortException(message);
+            throw new AbortException(String.format("[CodeSonar] failed to authenticate. %n[CodeSonar] IOException: %s%n[CodeSonar] Stack Trace: %s", e.getMessage(), Throwables.getStackTraceAsString(e)));
         }
 
         if(status == 301) { //HTTP 301 - MOVED PERMANENTLY
             if(baseHubUri.getScheme().equalsIgnoreCase("http")) {
-            	String message = CodeSonarLogger.formatMessageMultiLine(
-            			CodeSonarLogger.createLine("Failed to authenticate. Possible reason could be the CodeSonar hub running on https, while protocol http was specified."),
-            			CodeSonarLogger.createLine("HTTP status code: %s - %s", status, reason),
-            			CodeSonarLogger.createLine("HTTP Body: %s", body)
-            			);
-                throw new AbortException(message);
+                throw new AbortException(String.format("[CodeSonar] failed to authenticate. Possible reason could be the CodeSonar hub running on https, while protocol http was specified.%n[CodeSonar] HTTP status code: %s - %s %n[CodeSonar] HTTP Body: %s", status, reason, body));
             }
         }
 
         if (status != 200) {
-        	String message = CodeSonarLogger.formatMessageMultiLine(
-        			CodeSonarLogger.createLine("Failed to authenticate."),
-        			CodeSonarLogger.createLine("HTTP status code: %s - %s", status, reason),
-        			CodeSonarLogger.createLine("HTTP Body: %s", body)
-        			);
-            throw new AbortException(message);
+            throw new AbortException(String.format("[CodeSonar] failed to authenticate. %n[CodeSonar] HTTP status code: %s - %s %n[CodeSonar] HTTP Body: %s", status, reason, body));
         }
     }
 
@@ -256,32 +210,17 @@ public class AuthenticationService {
 //            }
             body = EntityUtils.toString(resp.getEntity(), "UTF-8");
         } catch (IOException e) {
-        	String message = CodeSonarLogger.formatMessageMultiLine(
-        			CodeSonarLogger.createLine("Failed to authenticate."),
-        			CodeSonarLogger.createLine("IOException: %s", e.getMessage()),
-        			CodeSonarLogger.createLine("Stack Trace: %s", Throwables.getStackTraceAsString(e))
-        			);
-            throw new AbortException(message);
+            throw new AbortException(String.format("[CodeSonar] failed to authenticate. %n[CodeSonar] IOException: %s%n[CodeSonar] Stack Trace: %s", e.getMessage(), Throwables.getStackTraceAsString(e)));
         }
 
         if(status == 301) { //HTTP 301 - MOVED PERMANENTLY
             if(baseHubUri.getScheme().equalsIgnoreCase("http")) {
-            	String message = CodeSonarLogger.formatMessageMultiLine(
-            			CodeSonarLogger.createLine("Failed to authenticate. Possible reason could be the CodeSonar hub running on https, while protocol http was specified."),
-            			CodeSonarLogger.createLine("HTTP status code: %s - %s", status, reason),
-            			CodeSonarLogger.createLine("HTTP Body: %s", body)
-            			);
-                throw new AbortException(message);
+                throw new AbortException(String.format("[CodeSonar] failed to authenticate. Possible reason could be the CodeSonar hub running on https, while protocol http was specified.%n[CodeSonar] HTTP status code: %s - %s %n[CodeSonar] HTTP Body: %s", status, reason, body));
             }
         }
 
         if (status != 200) {
-        	String message = CodeSonarLogger.formatMessageMultiLine(
-        			CodeSonarLogger.createLine("Failed to authenticate."),
-        			CodeSonarLogger.createLine("HTTP status code: %s - %s", status, reason),
-        			CodeSonarLogger.createLine("HTTP Body: %s", body)
-        			);
-            throw new AbortException(message);
+            throw new AbortException(String.format("[CodeSonar] failed to authenticate. %n[CodeSonar] HTTP status code: %s - %s %n[CodeSonar] HTTP Body: %s", status, reason, body));
         }
     }
 
@@ -302,19 +241,10 @@ public class AuthenticationService {
             if (statusCode != 200) {
                 String reason = resp.getStatusLine().getReasonPhrase();;
                 String body = EntityUtils.toString(resp.getEntity(), "UTF-8");
-            	String message = CodeSonarLogger.formatMessageMultiLine(
-            			CodeSonarLogger.createLine("Failed to sign out."),
-            			CodeSonarLogger.createLine("HTTP status code: %s - %s", statusCode, reason),
-            			CodeSonarLogger.createLine("HTTP Body: %s", body)
-            			);
-                throw new AbortException(message);
+                throw new AbortException(String.format("[CodeSonar] failed to sign out. %n[CodeSonar] HTTP status code: %s - %s %n[CodeSonar] HTTP Body: %s", statusCode, reason, body));
             }
         } catch (IOException ex) {
-        	String message = CodeSonarLogger.formatMessageMultiLine(
-        			CodeSonarLogger.createLine("Failed to sign out."),
-        			CodeSonarLogger.createLine("Message is: %s", ex.getMessage())
-        			);
-            throw new AbortException(message);
+            throw new AbortException(String.format("[CodeSonar] Failed to sign out.%n[CodeSonar] Message is: %s", ex.getMessage()));
         }
     }
 }
