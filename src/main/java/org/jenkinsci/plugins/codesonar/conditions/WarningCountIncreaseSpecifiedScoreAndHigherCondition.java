@@ -8,6 +8,7 @@ import javax.annotation.Nonnull;
 
 import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.Symbol;
+import org.jenkinsci.plugins.codesonar.CodeSonarLogger;
 import org.jenkinsci.plugins.codesonar.models.CodeSonarBuildActionDTO;
 import org.jenkinsci.plugins.codesonar.models.analysis.Analysis;
 import org.jenkinsci.plugins.codesonar.models.analysis.Warning;
@@ -65,8 +66,9 @@ public class WarningCountIncreaseSpecifiedScoreAndHigherCondition extends Condit
     }
 
     @Override
-    public Result validate(CodeSonarBuildActionDTO current, CodeSonarBuildActionDTO previous, Launcher launcher, TaskListener listener) {
+    public Result validate(CodeSonarBuildActionDTO current, CodeSonarBuildActionDTO previous, Launcher launcher, TaskListener listener, CodeSonarLogger csLogger) {
         if (current == null) {
+            registerResult(csLogger, CURRENT_BUILD_DATA_NOT_AVAILABLE);
             return Result.SUCCESS;
         }
         
@@ -80,20 +82,31 @@ public class WarningCountIncreaseSpecifiedScoreAndHigherCondition extends Condit
 
         int totalNumberOfWarnings = analysis.getWarnings().size();
 
-        float severeWarnings = 0.0f;
+        int severeWarnings = 0;
         List<Warning> warnings = analysis.getWarnings();
         for (Warning warning : warnings) {
             if (warning.getScore() > rankOfWarnings) {
                 severeWarnings++;
             }
         }
-
-        float calculatedWarningPercentage = (severeWarnings / totalNumberOfWarnings) * 100;
-
-        if (calculatedWarningPercentage > Float.parseFloat(warningPercentage)) {
-            return Result.fromString(warrantedResult);
+        
+        float calculatedWarningPercentage;
+        //If there are no warnings, redefine percentage of new warnings
+        if(totalNumberOfWarnings == 0) {
+            calculatedWarningPercentage = severeWarnings > 0 ? 100f : 0f;
+            LOGGER.log(Level.INFO, "no warnings found, forcing severe warning percentage to {0,number,0.00}%", calculatedWarningPercentage);
+        } else {
+            calculatedWarningPercentage = ((float) severeWarnings / totalNumberOfWarnings) * 100;
+            LOGGER.log(Level.INFO, "severe warnings percentage = {0,number,0.00}%", calculatedWarningPercentage);
         }
 
+        float thresholdPercentage = Float.parseFloat(warningPercentage);
+        if (calculatedWarningPercentage > thresholdPercentage) {
+            registerResult(csLogger, "More than {0,number,0.00}% warnings with score more than {1,number,0} ({2,number,0.00}%, {3,number,0} out of {4,number,0})", thresholdPercentage, rankOfWarnings, calculatedWarningPercentage, severeWarnings, totalNumberOfWarnings);
+            return Result.fromString(warrantedResult);
+        }
+        
+        registerResult(csLogger, "More than {0,number,0.00}% warnings with score more than {1,number,0} ({2,number,0.00}%, {3,number,0} out of {4,number,0})", thresholdPercentage, rankOfWarnings, calculatedWarningPercentage, severeWarnings, totalNumberOfWarnings);
         return Result.SUCCESS;
     }
 
@@ -128,4 +141,5 @@ public class WarningCountIncreaseSpecifiedScoreAndHigherCondition extends Condit
             return FormValidation.ok();
         }
     }
+    
 }

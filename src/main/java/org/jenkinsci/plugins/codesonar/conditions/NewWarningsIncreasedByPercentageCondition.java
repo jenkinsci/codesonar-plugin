@@ -7,6 +7,7 @@ import javax.annotation.Nonnull;
 
 import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.Symbol;
+import org.jenkinsci.plugins.codesonar.CodeSonarLogger;
 import org.jenkinsci.plugins.codesonar.models.CodeSonarBuildActionDTO;
 import org.jenkinsci.plugins.codesonar.models.analysis.Analysis;
 import org.kohsuke.stapler.DataBoundConstructor;
@@ -56,8 +57,9 @@ public class NewWarningsIncreasedByPercentageCondition extends Condition {
     }
 
     @Override
-    public Result validate(CodeSonarBuildActionDTO current, CodeSonarBuildActionDTO previous, Launcher launcher, TaskListener listener) {
+    public Result validate(CodeSonarBuildActionDTO current, CodeSonarBuildActionDTO previous, Launcher launcher, TaskListener listener, CodeSonarLogger csLogger) {
         if (current == null) {
+            registerResult(csLogger, CURRENT_BUILD_DATA_NOT_AVAILABLE);
             return Result.SUCCESS;
         }
         Analysis currentActiveWarnings = current.getAnalysisActiveWarnings();
@@ -73,21 +75,31 @@ public class NewWarningsIncreasedByPercentageCondition extends Condition {
             return Result.FAILURE;
         }        
 
-        float activeWarningCount = (float) currentActiveWarnings.getWarnings().size();
-        LOGGER.log(Level.INFO, "activeWarningCount = {0}", activeWarningCount);
-        float newWarningCount = (float) currentNewWarnings.getWarnings().size();
-        LOGGER.log(Level.INFO, "newWarningCount = {0}", newWarningCount);
-
-        float result = (newWarningCount * 100.0f) / activeWarningCount;
-        LOGGER.log(Level.INFO, "new warning percentage = {0}", result);
-        LOGGER.log(Level.INFO, "threshold percentage = {0}", Float.parseFloat(percentage));
-        if (result > Float.parseFloat(percentage)) {
+        float activeWarningCount = currentActiveWarnings.getWarnings().size();
+        float newWarningCount = currentNewWarnings.getWarnings().size();
+        
+        float result;
+        //If there are no active warnings, redefine percentage of new warnings
+        if(activeWarningCount == 0f) {
+            result = newWarningCount > 0 ? 100f : 0f;
+            LOGGER.log(Level.INFO, "no active warnings found, forcing new warning percentage to {0,number,0.00}%", result);
+        } else {
+            result = (newWarningCount * 100f) / activeWarningCount;
+            LOGGER.log(Level.INFO, "new warning percentage = {0,number,0.00}%", result);
+        }
+        
+        float thresholdPercentage = Float.parseFloat(percentage);
+        LOGGER.log(Level.INFO, "threshold percentage = {0,number,0.00}%", thresholdPercentage);
+        if (result > thresholdPercentage) {
+            registerResult(csLogger, "More than {0,number,0.00}% new warnings ({1,number,0.00}%, {2,number,0} out of {3,number,0})", thresholdPercentage, result, newWarningCount, activeWarningCount);
             return Result.fromString(warrantedResult);
         }
+        
+        registerResult(csLogger, "At most {0,number,0.00}% new warnings ({1,number,0.00}%, {2,number,0} out of {3,number,0})", thresholdPercentage, result, newWarningCount, activeWarningCount);
 
         return Result.SUCCESS;
     }
-
+    
     @Symbol("warningCountIncreaseNewOnly")
     @Extension
     public static final class DescriptorImpl extends ConditionDescriptor<NewWarningsIncreasedByPercentageCondition> {

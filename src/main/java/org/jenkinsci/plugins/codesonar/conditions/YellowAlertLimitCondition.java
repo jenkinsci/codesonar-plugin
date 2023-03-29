@@ -7,6 +7,7 @@ import java.util.logging.Logger;
 import javax.annotation.Nonnull;
 
 import org.jenkinsci.Symbol;
+import org.jenkinsci.plugins.codesonar.CodeSonarLogger;
 import org.jenkinsci.plugins.codesonar.models.CodeSonarBuildActionDTO;
 import org.jenkinsci.plugins.codesonar.models.analysis.Alert;
 import org.jenkinsci.plugins.codesonar.models.analysis.Analysis;
@@ -56,8 +57,9 @@ public class YellowAlertLimitCondition extends Condition {
     }
 
     @Override
-    public Result validate(CodeSonarBuildActionDTO current, CodeSonarBuildActionDTO previous, Launcher launcher, TaskListener listener) {
+    public Result validate(CodeSonarBuildActionDTO current, CodeSonarBuildActionDTO previous, Launcher launcher, TaskListener listener, CodeSonarLogger csLogger) {
         if (current == null) {
+            registerResult(csLogger, CURRENT_BUILD_DATA_NOT_AVAILABLE);
             return Result.SUCCESS;
         }
         
@@ -71,9 +73,11 @@ public class YellowAlertLimitCondition extends Condition {
         
         List<Alert> yellowAlerts = analysisActiveWarnings.getYellowAlerts();
         if (yellowAlerts.size() > alertLimit) {
+            registerResult(csLogger, "More than {0,number,0} yellow alerts ({1,number,0})", alertLimit, yellowAlerts.size());
             return Result.fromString(warrantedResult);
         }
 
+        registerResult(csLogger, "At most {0,number,0} yellow alerts ({1,number,0})", alertLimit, yellowAlerts.size());
         return Result.SUCCESS;
     }
 

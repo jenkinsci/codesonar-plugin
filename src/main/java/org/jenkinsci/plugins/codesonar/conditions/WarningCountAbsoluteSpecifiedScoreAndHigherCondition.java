@@ -7,6 +7,7 @@ import java.util.logging.Logger;
 import javax.annotation.Nonnull;
 
 import org.jenkinsci.Symbol;
+import org.jenkinsci.plugins.codesonar.CodeSonarLogger;
 import org.jenkinsci.plugins.codesonar.models.CodeSonarBuildActionDTO;
 import org.jenkinsci.plugins.codesonar.models.analysis.Analysis;
 import org.jenkinsci.plugins.codesonar.models.analysis.Warning;
@@ -64,8 +65,9 @@ public class WarningCountAbsoluteSpecifiedScoreAndHigherCondition extends Condit
     }
 
     @Override
-    public Result validate(CodeSonarBuildActionDTO current, CodeSonarBuildActionDTO previous, Launcher launcher, TaskListener listener) {
+    public Result validate(CodeSonarBuildActionDTO current, CodeSonarBuildActionDTO previous, Launcher launcher, TaskListener listener, CodeSonarLogger csLogger) {
         if (current == null) {
+            registerResult(csLogger, CURRENT_BUILD_DATA_NOT_AVAILABLE);
             return Result.SUCCESS;
         }
 
@@ -86,9 +88,11 @@ public class WarningCountAbsoluteSpecifiedScoreAndHigherCondition extends Condit
         }
 
         if (severeWarnings > warningCountThreshold) {
+            registerResult(csLogger, "More than {0,number,0} warnings with a score of at least {1,number,0} ({2,number,0})", warningCountThreshold, rankOfWarnings, severeWarnings);
             return Result.fromString(warrantedResult);
         }
 
+        registerResult(csLogger, "At most {0,number,0} warnings with a score of at least {1,number,0} ({2,number,0})", warningCountThreshold, rankOfWarnings, severeWarnings);
         return Result.SUCCESS;
     }
 

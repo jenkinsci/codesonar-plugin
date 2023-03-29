@@ -419,8 +419,8 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
         csLogger.writeInfo("Evaluating conditions");
 
         for (Condition condition : conditions) {
-            Result validationResult = condition.validate(buildActionDTO, compareDTO, launcher, listener);
-            Pair<String, String> pair = Pair.with(condition.getDescriptor().getDisplayName(), validationResult.toString());
+            Result validationResult = condition.validate(buildActionDTO, compareDTO, launcher, listener, csLogger);
+            Pair<String, String> pair = Pair.with(condition.describeResult(), validationResult.toString());
             conditionNamesAndResults.add(pair);
             run.setResult(validationResult);
             csLogger.writeInfo("\"{0}\" marked the build as {1}", condition.getDescriptor().getDisplayName(), validationResult.toString());

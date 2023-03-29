@@ -7,6 +7,7 @@ import java.util.logging.Logger;
 import javax.annotation.Nonnull;
 
 import org.jenkinsci.Symbol;
+import org.jenkinsci.plugins.codesonar.CodeSonarLogger;
 import org.jenkinsci.plugins.codesonar.models.CodeSonarBuildActionDTO;
 import org.jenkinsci.plugins.codesonar.models.Metric;
 import org.jenkinsci.plugins.codesonar.models.procedures.ProcedureRow;
@@ -57,8 +58,9 @@ public class ProcedureCyclomaticComplexityExceededCondition extends Condition {
     }
 
     @Override
-    public Result validate(CodeSonarBuildActionDTO current, CodeSonarBuildActionDTO previous, Launcher launcher, TaskListener listener) {       
+    public Result validate(CodeSonarBuildActionDTO current, CodeSonarBuildActionDTO previous, Launcher launcher, TaskListener listener, CodeSonarLogger csLogger) {       
         if (current == null) {
+            registerResult(csLogger, CURRENT_BUILD_DATA_NOT_AVAILABLE);
             return Result.SUCCESS;
         }
 
@@ -72,11 +74,13 @@ public class ProcedureCyclomaticComplexityExceededCondition extends Condition {
         for (ProcedureRow procedureRow : procedureRows) {
             Metric cyclomaticComplexityMetric = procedureRow.getMetricByName("Cyclomatic Complexity");
 
-            String value = cyclomaticComplexityMetric.getValue();
-            if (Integer.parseInt(value) > maxCyclomaticComplexity) {
+            int value = Integer.parseInt(cyclomaticComplexityMetric.getValue());
+            if (value > maxCyclomaticComplexity) {
+                registerResult(csLogger, "Cyclomatic complexity {0,number,0} of procedure {1} exceeded limit {2,number,0}", value, procedureRow.getProcedure(), maxCyclomaticComplexity);
                 return Result.fromString(warrantedResult);
             }
         }
+        registerResult(csLogger, "Cyclomatic complexity is at most {0,number,0}", maxCyclomaticComplexity);
         return Result.SUCCESS;
     }
     

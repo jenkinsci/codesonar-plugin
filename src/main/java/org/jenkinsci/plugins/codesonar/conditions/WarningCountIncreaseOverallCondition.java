@@ -7,6 +7,7 @@ import javax.annotation.Nonnull;
 
 import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.Symbol;
+import org.jenkinsci.plugins.codesonar.CodeSonarLogger;
 import org.jenkinsci.plugins.codesonar.models.CodeSonarBuildActionDTO;
 import org.jenkinsci.plugins.codesonar.models.analysis.Analysis;
 import org.kohsuke.stapler.DataBoundConstructor;
@@ -55,12 +56,14 @@ public class WarningCountIncreaseOverallCondition extends Condition {
     }
 
     @Override
-    public Result validate(CodeSonarBuildActionDTO current, CodeSonarBuildActionDTO previous, Launcher launcher, TaskListener listener) {
+    public Result validate(CodeSonarBuildActionDTO current, CodeSonarBuildActionDTO previous, Launcher launcher, TaskListener listener, CodeSonarLogger csLogger) {
         if (current == null) {
+            registerResult(csLogger, CURRENT_BUILD_DATA_NOT_AVAILABLE);
             return Result.SUCCESS;
         }        
 
         if (previous == null) {
+            registerResult(csLogger, PREVIOUS_BUILD_DATA_NOT_AVAILABLE);
             return Result.SUCCESS;
         }
         
@@ -76,14 +79,26 @@ public class WarningCountIncreaseOverallCondition extends Condition {
             return Result.FAILURE;
         }    
 
-        float previousCount = (float) previousAnalysisActiveWarnings.getWarnings().size();
-        float currentCount = (float) currentAnalysisActiveWarnings.getWarnings().size();
-        float diff = currentCount - previousCount;
-
-        if ((diff / previousCount) * 100 > Float.parseFloat(percentage)) {
+        int previousCount = previous.getAnalysisActiveWarnings().getWarnings().size();
+        int currentCount = current.getAnalysisActiveWarnings().getWarnings().size();
+        int diff = currentCount - previousCount;
+        float thresholdPercentage = Float.parseFloat(percentage);
+        
+        float result;
+        //If there are no warnings, redefine percentage of new warnings
+        if(previousCount == 0) {
+            result = diff > 0 ? 100f : 0f;
+            LOGGER.log(Level.INFO, "no active warnings found, forcing warning percentage to {0,number,0.00}%", result);
+        } else {
+            result = (((float) diff) / previousCount) * 100;
+            LOGGER.log(Level.INFO, "warnings increment percentage = {0,number,0.00}%", result);
+        }
+        
+        if (result > thresholdPercentage) {
+            registerResult(csLogger, "More than {0,number,0.00}% increase in warnings ({1,number,0.00}%, {2,number,0} out of {3,number,0})", thresholdPercentage, result, diff, previousCount);
             return Result.fromString(warrantedResult);
         }
-
+        registerResult(csLogger, "At most {0,number,0.00}% increase in warnings ({1,number,0.00}%, {2,number,0} out of {3,number,0})", thresholdPercentage, result, diff, previousCount);
         return Result.SUCCESS;
     }
 
