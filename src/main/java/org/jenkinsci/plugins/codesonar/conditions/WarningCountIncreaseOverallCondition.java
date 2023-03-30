@@ -24,6 +24,7 @@ public class WarningCountIncreaseOverallCondition extends Condition {
     private static final Logger LOGGER = Logger.getLogger(WarningCountIncreaseOverallCondition.class.getName());
 
     private static final String NAME = "Warning count increase: overall";
+    private static final String RESULT_DESCRIPTION_MESSAGE_FORMAT = "threshold={0,number,0.00}%, increase={1,number,0.00}% (count: new={2,number,0}, total={3,number,0})";
     private String percentage = String.valueOf(5.0f);
     private String warrantedResult = Result.UNSTABLE.toString();
 
@@ -71,11 +72,13 @@ public class WarningCountIncreaseOverallCondition extends Condition {
         Analysis previousAnalysisActiveWarnings = previous.getAnalysisActiveWarnings();
         if(previousAnalysisActiveWarnings == null) {
             LOGGER.log(Level.SEVERE, "\"analysisActiveWarnings\" data not found in persisted build.");
+            registerResult(csLogger, CURRENT_BUILD_DATA_NOT_AVAILABLE);
             return Result.FAILURE;
         }
         Analysis currentAnalysisActiveWarnings = current.getAnalysisActiveWarnings();
         if(currentAnalysisActiveWarnings == null) {
             LOGGER.log(Level.SEVERE, "\"analysisNewWarnings\" data not found in persisted build.");
+            registerResult(csLogger, CURRENT_BUILD_DATA_NOT_AVAILABLE);
             return Result.FAILURE;
         }    
 
@@ -95,10 +98,10 @@ public class WarningCountIncreaseOverallCondition extends Condition {
         }
         
         if (result > thresholdPercentage) {
-            registerResult(csLogger, "More than {0,number,0.00}% increase in warnings ({1,number,0.00}%, {2,number,0} out of {3,number,0})", thresholdPercentage, result, diff, previousCount);
+            registerResult(csLogger, RESULT_DESCRIPTION_MESSAGE_FORMAT, thresholdPercentage, result, diff, previousCount);
             return Result.fromString(warrantedResult);
         }
-        registerResult(csLogger, "At most {0,number,0.00}% increase in warnings ({1,number,0.00}%, {2,number,0} out of {3,number,0})", thresholdPercentage, result, diff, previousCount);
+        registerResult(csLogger, RESULT_DESCRIPTION_MESSAGE_FORMAT, thresholdPercentage, result, diff, previousCount);
         return Result.SUCCESS;
     }
 

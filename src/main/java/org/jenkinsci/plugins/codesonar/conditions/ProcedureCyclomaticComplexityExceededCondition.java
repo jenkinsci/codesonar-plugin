@@ -30,6 +30,7 @@ public class ProcedureCyclomaticComplexityExceededCondition extends Condition {
     private static final Logger LOGGER = Logger.getLogger(ProcedureCyclomaticComplexityExceededCondition.class.getName());
 
     private static final String NAME = "Cyclomatic complexity";
+    private static final String RESULT_DESCRIPTION_MESSAGE_FORMAT = "cyclomatic complexity threshold={0,number,0} (count: cyclomatic complexity={1,number,0}, procedure: {2})";
 
     private int maxCyclomaticComplexity = 30;
     private String warrantedResult = Result.UNSTABLE.toString();
@@ -68,6 +69,7 @@ public class ProcedureCyclomaticComplexityExceededCondition extends Condition {
         // Going to produce build failure in the case of missing necessary information
         if(procedures == null) {
             LOGGER.log(Level.SEVERE, "\"procedures\" data not found in persisted build.");
+            registerResult(csLogger, CURRENT_BUILD_DATA_NOT_AVAILABLE);
             return Result.FAILURE;
         }
         List<ProcedureRow> procedureRows = procedures.getProcedureRows();
@@ -76,11 +78,11 @@ public class ProcedureCyclomaticComplexityExceededCondition extends Condition {
 
             int value = Integer.parseInt(cyclomaticComplexityMetric.getValue());
             if (value > maxCyclomaticComplexity) {
-                registerResult(csLogger, "Cyclomatic complexity {0,number,0} of procedure {1} exceeded limit {2,number,0}", value, procedureRow.getProcedure(), maxCyclomaticComplexity);
+                registerResult(csLogger, RESULT_DESCRIPTION_MESSAGE_FORMAT, maxCyclomaticComplexity, value, procedureRow.getProcedure());
                 return Result.fromString(warrantedResult);
             }
         }
-        registerResult(csLogger, "Cyclomatic complexity is at most {0,number,0}", maxCyclomaticComplexity);
+        registerResult(csLogger, "All cyclomatic complexity values within threshold {0,number,0}", maxCyclomaticComplexity);
         return Result.SUCCESS;
     }
     

@@ -29,6 +29,7 @@ public class WarningCountIncreaseSpecifiedScoreAndHigherCondition extends Condit
     private static final Logger LOGGER = Logger.getLogger(WarningCountIncreaseSpecifiedScoreAndHigherCondition.class.getName());
 
     private static final String NAME = "Warning count increase: specified score and higher";
+    private static final String RESULT_DESCRIPTION_MESSAGE_FORMAT = "increase threshold={0,number,0.00}%, rank threshold={1,number,0} increase={2,number,0.00}% (count: greater than rank={3,number,0}, total={4,number,0})";
 
     private int rankOfWarnings = 30;
     private String warningPercentage = String.valueOf(5.0f);
@@ -77,6 +78,7 @@ public class WarningCountIncreaseSpecifiedScoreAndHigherCondition extends Condit
         // Going to produce build failure in the case of missing necessary information
         if(analysis == null) {
             LOGGER.log(Level.SEVERE, "\"analysisActiveWarnings\" data not found in persisted build.");
+            registerResult(csLogger, CURRENT_BUILD_DATA_NOT_AVAILABLE);
             return Result.FAILURE;
         }
 
@@ -102,11 +104,11 @@ public class WarningCountIncreaseSpecifiedScoreAndHigherCondition extends Condit
 
         float thresholdPercentage = Float.parseFloat(warningPercentage);
         if (calculatedWarningPercentage > thresholdPercentage) {
-            registerResult(csLogger, "More than {0,number,0.00}% warnings with score more than {1,number,0} ({2,number,0.00}%, {3,number,0} out of {4,number,0})", thresholdPercentage, rankOfWarnings, calculatedWarningPercentage, severeWarnings, totalNumberOfWarnings);
+            registerResult(csLogger, RESULT_DESCRIPTION_MESSAGE_FORMAT, thresholdPercentage, rankOfWarnings, calculatedWarningPercentage, severeWarnings, totalNumberOfWarnings);
             return Result.fromString(warrantedResult);
         }
         
-        registerResult(csLogger, "More than {0,number,0.00}% warnings with score more than {1,number,0} ({2,number,0.00}%, {3,number,0} out of {4,number,0})", thresholdPercentage, rankOfWarnings, calculatedWarningPercentage, severeWarnings, totalNumberOfWarnings);
+        registerResult(csLogger, RESULT_DESCRIPTION_MESSAGE_FORMAT, thresholdPercentage, rankOfWarnings, calculatedWarningPercentage, severeWarnings, totalNumberOfWarnings);
         return Result.SUCCESS;
     }
 

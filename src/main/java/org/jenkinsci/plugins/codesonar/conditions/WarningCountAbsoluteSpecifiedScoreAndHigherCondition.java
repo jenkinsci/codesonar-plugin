@@ -28,6 +28,7 @@ public class WarningCountAbsoluteSpecifiedScoreAndHigherCondition extends Condit
     private static final Logger LOGGER = Logger.getLogger(WarningCountAbsoluteSpecifiedScoreAndHigherCondition.class.getName());
 
     private static final String NAME = "Warning count absolute: specified score and higher";
+    private static final String RESULT_DESCRIPTION_MESSAGE_FORMAT = "increase threshold={0,number,0}, rank threshold={1,number,0} (count: greater than rank={2,number,0})";
 
     private int rankOfWarnings = 30;
     private int warningCountThreshold = 20;
@@ -76,6 +77,7 @@ public class WarningCountAbsoluteSpecifiedScoreAndHigherCondition extends Condit
         // Going to produce build failure in the case of missing necessary information
         if(analysis == null) {
             LOGGER.log(Level.SEVERE, "\"analysisActiveWarnings\" data not found in persisted build.");
+            registerResult(csLogger, CURRENT_BUILD_DATA_NOT_AVAILABLE);
             return Result.FAILURE;
         }
 
@@ -88,11 +90,11 @@ public class WarningCountAbsoluteSpecifiedScoreAndHigherCondition extends Condit
         }
 
         if (severeWarnings > warningCountThreshold) {
-            registerResult(csLogger, "More than {0,number,0} warnings with a score of at least {1,number,0} ({2,number,0})", warningCountThreshold, rankOfWarnings, severeWarnings);
+            registerResult(csLogger, RESULT_DESCRIPTION_MESSAGE_FORMAT, warningCountThreshold, rankOfWarnings, severeWarnings);
             return Result.fromString(warrantedResult);
         }
 
-        registerResult(csLogger, "At most {0,number,0} warnings with a score of at least {1,number,0} ({2,number,0})", warningCountThreshold, rankOfWarnings, severeWarnings);
+        registerResult(csLogger, RESULT_DESCRIPTION_MESSAGE_FORMAT, warningCountThreshold, rankOfWarnings, severeWarnings);
         return Result.SUCCESS;
     }
 

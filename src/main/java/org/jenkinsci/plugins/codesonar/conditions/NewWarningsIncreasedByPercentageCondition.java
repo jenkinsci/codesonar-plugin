@@ -24,6 +24,7 @@ public class NewWarningsIncreasedByPercentageCondition extends Condition {
     private static final Logger LOGGER = Logger.getLogger(NewWarningsIncreasedByPercentageCondition.class.getName());
 
     private static final String NAME = "Warning count increase: new only";
+    private static final String RESULT_DESCRIPTION_MESSAGE_FORMAT = "threshold={0,number,0.00}%, increase={1,number,0.00}% (count: new={2,number,0}, total={3,number,0})";
     private String percentage = "5.0f";
     private String warrantedResult = Result.UNSTABLE.toString();
     
@@ -68,10 +69,12 @@ public class NewWarningsIncreasedByPercentageCondition extends Condition {
         // Going to produce build failures in the case of missing necessary information
         if(currentActiveWarnings == null) {
             LOGGER.log(Level.SEVERE, "\"analysisActiveWarnings\" data not found in persisted build.");
+            registerResult(csLogger, CURRENT_BUILD_DATA_NOT_AVAILABLE);
             return Result.FAILURE;
         }
         if(currentNewWarnings == null) {
             LOGGER.log(Level.SEVERE, "\"analysisNewWarnings\" data not found in persisted build.");
+            registerResult(csLogger, CURRENT_BUILD_DATA_NOT_AVAILABLE);
             return Result.FAILURE;
         }        
 
@@ -91,11 +94,11 @@ public class NewWarningsIncreasedByPercentageCondition extends Condition {
         float thresholdPercentage = Float.parseFloat(percentage);
         LOGGER.log(Level.INFO, "threshold percentage = {0,number,0.00}%", thresholdPercentage);
         if (result > thresholdPercentage) {
-            registerResult(csLogger, "More than {0,number,0.00}% new warnings ({1,number,0.00}%, {2,number,0} out of {3,number,0})", thresholdPercentage, result, newWarningCount, activeWarningCount);
+            registerResult(csLogger, RESULT_DESCRIPTION_MESSAGE_FORMAT, thresholdPercentage, result, newWarningCount, activeWarningCount);
             return Result.fromString(warrantedResult);
         }
         
-        registerResult(csLogger, "At most {0,number,0.00}% new warnings ({1,number,0.00}%, {2,number,0} out of {3,number,0})", thresholdPercentage, result, newWarningCount, activeWarningCount);
+        registerResult(csLogger, RESULT_DESCRIPTION_MESSAGE_FORMAT, thresholdPercentage, result, newWarningCount, activeWarningCount);
 
         return Result.SUCCESS;
     }

@@ -29,6 +29,7 @@ public class YellowAlertLimitCondition extends Condition {
     private static final Logger LOGGER = Logger.getLogger(YellowAlertLimitCondition.class.getName());
     
     private static final String NAME = "Yellow alerts";
+    private static final String RESULT_DESCRIPTION_MESSAGE_FORMAT = "threshold={0,number,0} (count: yellow alerts={1,number,0})";
    
     private int alertLimit = 1;
     private String warrantedResult = Result.UNSTABLE.toString();
@@ -68,16 +69,17 @@ public class YellowAlertLimitCondition extends Condition {
         // Going to produce build failure in the case of missing necessary information
         if(analysisActiveWarnings == null) {
             LOGGER.log(Level.SEVERE, "\"analysisActiveWarnings\" data not found in persisted build.");
+            registerResult(csLogger, CURRENT_BUILD_DATA_NOT_AVAILABLE);
             return Result.FAILURE;
         }
         
         List<Alert> yellowAlerts = analysisActiveWarnings.getYellowAlerts();
         if (yellowAlerts.size() > alertLimit) {
-            registerResult(csLogger, "More than {0,number,0} yellow alerts ({1,number,0})", alertLimit, yellowAlerts.size());
+            registerResult(csLogger, RESULT_DESCRIPTION_MESSAGE_FORMAT, alertLimit, yellowAlerts.size());
             return Result.fromString(warrantedResult);
         }
 
-        registerResult(csLogger, "At most {0,number,0} yellow alerts ({1,number,0})", alertLimit, yellowAlerts.size());
+        registerResult(csLogger, RESULT_DESCRIPTION_MESSAGE_FORMAT, alertLimit, yellowAlerts.size());
         return Result.SUCCESS;
     }
 
