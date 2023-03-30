@@ -34,7 +34,7 @@
         <c:select/>
     </f:entry>
 
-    <f:invisibleEntry field="aid" title="Analysis ID Override" >
+    <f:invisibleEntry field="aid" title="Analysis ID" >
         <f:textbox/>
     </f:invisibleEntry>
     
