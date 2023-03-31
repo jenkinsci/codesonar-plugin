@@ -410,9 +410,9 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
         if(previousSuccess != null) {
             csLogger.writeInfo("Found previous build to compare to ({0})", previousSuccess.getDisplayName());
             List<CodeSonarBuildAction> actionsList = previousSuccess.getActions(CodeSonarBuildAction.class);
-			List<CodeSonarBuildAction> filteredActions = actionsList.stream()
-					.filter(c -> c.getProjectName() != null && c.getProjectName().equals(expandedProjectName))
-					.collect(Collectors.toList());
+            List<CodeSonarBuildAction> filteredActions = actionsList.stream()
+                    .filter(c -> c.getProjectName() != null && c.getProjectName().equals(expandedProjectName))
+                    .collect(Collectors.toList());
             if(filteredActions != null && !filteredActions.isEmpty() && filteredActions.size() < 2) {
                 csLogger.writeInfo("Found comparison data");
                 compareDTO = filteredActions.get(0).getBuildActionDTO();
