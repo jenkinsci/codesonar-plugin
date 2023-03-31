@@ -29,7 +29,7 @@ public class WarningCountIncreaseSpecifiedScoreAndHigherCondition extends Condit
     private static final Logger LOGGER = Logger.getLogger(WarningCountIncreaseSpecifiedScoreAndHigherCondition.class.getName());
 
     private static final String NAME = "Warning count increase: specified score and higher";
-    private static final String RESULT_DESCRIPTION_MESSAGE_FORMAT = "increase threshold={0,number,0.00}%, rank threshold={1,number,0} increase={2,number,0.00}% (count: greater than rank={3,number,0}, total={4,number,0})";
+    private static final String RESULT_DESCRIPTION_MESSAGE_FORMAT = "score={0,number,0} threshold={1,number,0.00}% increase={2,number,0.00}%";
 
     private int rankOfWarnings = 30;
     private String warningPercentage = String.valueOf(5.0f);
@@ -104,11 +104,11 @@ public class WarningCountIncreaseSpecifiedScoreAndHigherCondition extends Condit
 
         float thresholdPercentage = Float.parseFloat(warningPercentage);
         if (calculatedWarningPercentage > thresholdPercentage) {
-            registerResult(csLogger, RESULT_DESCRIPTION_MESSAGE_FORMAT, thresholdPercentage, rankOfWarnings, calculatedWarningPercentage, severeWarnings, totalNumberOfWarnings);
+            registerResult(csLogger, RESULT_DESCRIPTION_MESSAGE_FORMAT, rankOfWarnings, thresholdPercentage, calculatedWarningPercentage);
             return Result.fromString(warrantedResult);
         }
         
-        registerResult(csLogger, RESULT_DESCRIPTION_MESSAGE_FORMAT, thresholdPercentage, rankOfWarnings, calculatedWarningPercentage, severeWarnings, totalNumberOfWarnings);
+        registerResult(csLogger, RESULT_DESCRIPTION_MESSAGE_FORMAT, rankOfWarnings, thresholdPercentage, calculatedWarningPercentage);
         return Result.SUCCESS;
     }
 

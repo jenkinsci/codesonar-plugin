@@ -20,8 +20,8 @@ import jenkins.model.Jenkins;
  * @author andrius
  */
 public abstract class Condition implements Describable<Condition>, ExtensionPoint {
-    protected static final String CURRENT_BUILD_DATA_NOT_AVAILABLE = "Unavailable data for current build";
-    protected static final String PREVIOUS_BUILD_DATA_NOT_AVAILABLE = "Unavailable data for previous successful build";
+    protected static final String CURRENT_BUILD_DATA_NOT_AVAILABLE = "current build not found";
+    protected static final String PREVIOUS_BUILD_DATA_NOT_AVAILABLE = "previous successful build not found";
     private String resultDescription;
     
     public abstract Result validate(CodeSonarBuildActionDTO current, CodeSonarBuildActionDTO previous, Launcher launcher, TaskListener listener, CodeSonarLogger logger);

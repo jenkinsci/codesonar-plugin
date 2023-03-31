@@ -13,7 +13,7 @@
                 <h3>CodeSonar project <a href="${it.getUrlName()}">${it.projectName}</a></h3>
                 <ul>
                     <j:forEach var="pair" items="${it.getConditionNamesAndResults()}">  
-                        <li>"${pair.getValue0()}": <i>${pair.getValue1()}</i></li>
+                        <li>${pair.getValue0()}: <i>${pair.getValue1()}</i></li>
                     </j:forEach> 
                 </ul>
             </j:otherwise>

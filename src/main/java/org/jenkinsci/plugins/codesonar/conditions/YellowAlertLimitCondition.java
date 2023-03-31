@@ -29,7 +29,7 @@ public class YellowAlertLimitCondition extends Condition {
     private static final Logger LOGGER = Logger.getLogger(YellowAlertLimitCondition.class.getName());
     
     private static final String NAME = "Yellow alerts";
-    private static final String RESULT_DESCRIPTION_MESSAGE_FORMAT = "threshold={0,number,0} (count: yellow alerts={1,number,0})";
+    private static final String RESULT_DESCRIPTION_MESSAGE_FORMAT = "threshold={0,number,0}, count: {1,number,0}";
    
     private int alertLimit = 1;
     private String warrantedResult = Result.UNSTABLE.toString();

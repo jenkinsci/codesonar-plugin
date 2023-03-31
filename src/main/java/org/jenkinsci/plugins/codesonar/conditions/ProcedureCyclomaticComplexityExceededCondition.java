@@ -30,7 +30,7 @@ public class ProcedureCyclomaticComplexityExceededCondition extends Condition {
     private static final Logger LOGGER = Logger.getLogger(ProcedureCyclomaticComplexityExceededCondition.class.getName());
 
     private static final String NAME = "Cyclomatic complexity";
-    private static final String RESULT_DESCRIPTION_MESSAGE_FORMAT = "cyclomatic complexity threshold={0,number,0} (count: cyclomatic complexity={1,number,0}, procedure: {2})";
+    private static final String RESULT_DESCRIPTION_MESSAGE_FORMAT = "threshold={0,number,0}, complexity={1,number,0} (procedure: ''{2}'')";
 
     private int maxCyclomaticComplexity = 30;
     private String warrantedResult = Result.UNSTABLE.toString();

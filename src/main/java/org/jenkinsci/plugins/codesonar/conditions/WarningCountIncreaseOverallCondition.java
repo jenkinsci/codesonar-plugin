@@ -24,7 +24,7 @@ public class WarningCountIncreaseOverallCondition extends Condition {
     private static final Logger LOGGER = Logger.getLogger(WarningCountIncreaseOverallCondition.class.getName());
 
     private static final String NAME = "Warning count increase: overall";
-    private static final String RESULT_DESCRIPTION_MESSAGE_FORMAT = "threshold={0,number,0.00}%, increase={1,number,0.00}% (count: new={2,number,0}, total={3,number,0})";
+    private static final String RESULT_DESCRIPTION_MESSAGE_FORMAT = "threshold={0,number,0.00}%, increase={1,number,0.00}% (count: current={2,number,0}, previous={3,number,0})";
     private String percentage = String.valueOf(5.0f);
     private String warrantedResult = Result.UNSTABLE.toString();
 

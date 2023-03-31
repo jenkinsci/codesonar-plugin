@@ -28,7 +28,7 @@ public class WarningCountAbsoluteSpecifiedScoreAndHigherCondition extends Condit
     private static final Logger LOGGER = Logger.getLogger(WarningCountAbsoluteSpecifiedScoreAndHigherCondition.class.getName());
 
     private static final String NAME = "Warning count absolute: specified score and higher";
-    private static final String RESULT_DESCRIPTION_MESSAGE_FORMAT = "increase threshold={0,number,0}, rank threshold={1,number,0} (count: greater than rank={2,number,0})";
+    private static final String RESULT_DESCRIPTION_MESSAGE_FORMAT = "rank={0,number,0}, threshold={1,number,0}, count={2,number,0}";
 
     private int rankOfWarnings = 30;
     private int warningCountThreshold = 20;
@@ -90,11 +90,11 @@ public class WarningCountAbsoluteSpecifiedScoreAndHigherCondition extends Condit
         }
 
         if (severeWarnings > warningCountThreshold) {
-            registerResult(csLogger, RESULT_DESCRIPTION_MESSAGE_FORMAT, warningCountThreshold, rankOfWarnings, severeWarnings);
+            registerResult(csLogger, RESULT_DESCRIPTION_MESSAGE_FORMAT, rankOfWarnings, warningCountThreshold, severeWarnings);
             return Result.fromString(warrantedResult);
         }
 
-        registerResult(csLogger, RESULT_DESCRIPTION_MESSAGE_FORMAT, warningCountThreshold, rankOfWarnings, severeWarnings);
+        registerResult(csLogger, RESULT_DESCRIPTION_MESSAGE_FORMAT, rankOfWarnings, warningCountThreshold, severeWarnings);
         return Result.SUCCESS;
     }
 
