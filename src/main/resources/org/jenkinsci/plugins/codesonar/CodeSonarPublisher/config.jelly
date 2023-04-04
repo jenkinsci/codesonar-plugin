@@ -14,7 +14,7 @@
         <f:textbox/>
     </f:entry>
     
-    <f:entry field="projectName" title="CodeSonar hub project path">
+    <f:entry field="projectName" title="Project Name">
         <f:textbox default="$${JOB_NAME}" />
     </f:entry>
 
