@@ -309,15 +309,12 @@ analysis information from the hub.
 1. Add the following step to your Pipeline after all your build steps.
    ```
    script {
-        def analysisId = sh(
-            script: 'cat "$CSONAR_WORKDIR/$CSONAR_PROJECT_NAME.prj_files/aid.txt"',
-            returnStdout: true).trim()
         codesonar(
             conditions: [],
             credentialId: params.CSONAR_HUBUSERPASS,
             hubAddress: params.CSONAR_HUB_ADDRESS,
             projectName: params.CSONAR_PROJECT_NAME,
-            aid: analysisId,
+            projectFile: "${env.CSONAR_WORKDIR}/${params.CSONAR_PROJECT_NAME}",
             protocol: "http",
             visibilityFilter: "active")
     }
@@ -345,6 +342,25 @@ analysis information from the hub.
       ```
       socketTimeoutMS: 300000,
       ```
+    * To specify a CodeSonar analysis ID of `<X>` which the CodeSonar plugin should use for evaluating analysis results, replace the `projectFile` line with the following.
+      ```
+      aid: <X>,
+      ```
+      For example, to specify an analysis ID of 81:
+      ```
+      aid: 81,
+      ```
+    * To specify a custom warning filter <X> for identifying new warnings, edit the last lines of the `codesonar` plugin invocation as follows.
+      ```
+      visibilityFilter: "active",
+      newWarningsFilter: <X>)
+      ```
+      For example, to specify a saved search named "new":
+      ```
+      visibilityFilter: "active",
+      newWarningsFilter: "new")
+      ```
+      See the [note on visibility filters](#note-on-visibility-filters) below.
 
 1. Click **Save**.
 1. Check that everything is working properly.
@@ -562,7 +578,9 @@ cyclomaticComplexity(maxCyclomaticComplexity:'8', warrantedResult:'UNSTABLE'),
 
 ### Note on visibility filters
 
-The CodeSonar warning visibility filter allows you to specify exactly which warnings you are interested in: for example, you might be interested in all warnings, or only in new warnings (that is, those that were issued for the first time in the current analysis). 
+The CodeSonar warning *visibility filter* allows you to specify exactly which warnings you are interested in: for example, you might be interested in all warnings, or only in active warnings (that is, those that are not marked as "suppressed", "fixed", "invalid", etc.).
+
+The CodeSonar *new warnings filter* allows you to specify exactly what warnings will be considered new.  By default, the plugin will attempt to use the filter named "new", which is initially defined to include only warnings that were issued for the first time in the current analysis.
 
 * You can specify a warning visibility filter by *name* or by numeric *ID*.
 * The available warning visibility filters for a given hub user account are those for which the account has `NAMEDSEARCH_READ` permission. The exception is the **all** filter, which is always available to all users.
