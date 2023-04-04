@@ -38,7 +38,7 @@
         <f:textbox/>
     </f:invisibleEntry>
     
-    <f:entry field="codesonarProjectFile" title="CodeSonar Project File">
+    <f:entry field="projectFile" title="Project File">
         <f:textbox/>
     </f:entry>
 

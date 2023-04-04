@@ -99,7 +99,7 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
     private String protocol = "http";
     private String aid;
     private int socketTimeoutMS = -1;
-    private String codesonarProjectFile;
+    private String projectFile;
 
     private XmlSerializationService xmlSerializationService = null;
     private HttpService httpService = null;
@@ -122,7 +122,7 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
     @DataBoundConstructor
     public CodeSonarPublisher(
             List<Condition> conditions, String protocol, String hubAddress, String projectName, String credentialId,
-            String visibilityFilter, String visibilityFilterNewWarnings, String codesonarProjectFile
+            String visibilityFilter, String visibilityFilterNewWarnings, String projectFile
     ) {
         this.hubAddress = hubAddress;
         this.projectName = projectName;
@@ -135,7 +135,7 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
         this.credentialId = credentialId;
         this.visibilityFilter = visibilityFilter;
         this.visibilityFilterNewWarnings = visibilityFilterNewWarnings;
-        this.codesonarProjectFile = codesonarProjectFile;
+        this.projectFile = projectFile;
     }
     
     private CodeSonarPluginException createError(String msg, Object...args) {
@@ -182,12 +182,12 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
         return StringUtils.isNotBlank(visibilityFilter) ? visibilityFilter : IAnalysisService.VISIBILITY_FILTER_ALL_WARNINGS_DEFAULT;
     }
     
-    public String getCodesonarProjectFile() {
-        return codesonarProjectFile;
+    public String getProjectFile() {
+        return projectFile;
     }
 
-    public void setCodesonarProjectFile(String codesonarProjectFile) {
-        this.codesonarProjectFile = codesonarProjectFile;
+    public void setProjectFile(String projectFile) {
+        this.projectFile = projectFile;
     }
     
     public String getVisibilityFilterNewWarnings() {
@@ -205,10 +205,10 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
     public static final class DetermineAid implements FileCallable<String> {
         
         private static final String FILE_AID_TXT = "aid.txt";
-        private String codesonarProjectFile;
+        private String projectFile;
         
-        public DetermineAid(String codesonarProjectFile) {
-            this.codesonarProjectFile = codesonarProjectFile;
+        public DetermineAid(String projectFile) {
+            this.projectFile = projectFile;
         }
 
         private IOException createError(String msg) {
@@ -218,10 +218,10 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
         }
         
         /**
-         * Get CodeSonar project file base name, removing known extensions.
-         * @return Path representing CodeSonar project file base name
+         * Get CodeSonar Project File base name, removing known extensions.
+         * @return Path representing CodeSonar Project File base name
          */
-        private String getCodesonarProjectFileBaseName(String fileName) {
+        private String getProjectFileBaseName(String fileName) {
             String baseFileName = fileName;
             //Remove extension if it is one of the known ones (.prj, .prj_files)
             if(StringUtils.endsWith(baseFileName, CS_PROJECT_FILE_EXTENSION)) {
@@ -232,14 +232,14 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
             return baseFileName;
         }
         
-        private Path getPrjFilesDirectory(Path codesonarProjectFilePath) throws IOException {
-            Path originalFileName = codesonarProjectFilePath.getFileName();
+        private Path getPrjFilesDirectory(Path projectFilePath) throws IOException {
+            Path originalFileName = projectFilePath.getFileName();
             if(originalFileName == null) {
-                throw createError(MessageFormat.format("Specified CodeSonar Project File \"{0}\" does not represent a file or a directory neither", codesonarProjectFilePath.toString()));
+                throw createError(MessageFormat.format("Specified CodeSonar Project File \"{0}\" does not represent a file or a directory neither", projectFilePath.toString()));
             }
-            String projectFileBaseName = getCodesonarProjectFileBaseName(originalFileName.toString());
+            String projectFileBaseName = getProjectFileBaseName(originalFileName.toString());
             Path resultingPath = Paths.get(projectFileBaseName + CS_PROJECT_DIR_EXTENSION);
-            Path parentPath = codesonarProjectFilePath.getParent();
+            Path parentPath = projectFilePath.getParent();
             if(parentPath != null) {
                 resultingPath = parentPath.resolve(resultingPath);
             }
@@ -278,17 +278,17 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
         @Override
         public String invoke(File jenkinsPipelineCWD, VirtualChannel vc) throws IOException, InterruptedException {
             /*
-             * If it has been specified parameter "codesonarProjectFile" for this pipeline, then use it
+             * If it has been specified parameter "projectFile" for this pipeline, then use it
              * to determine where to search into in order to retrieve the prj_files directory
              */
-            if(StringUtils.isNotBlank(codesonarProjectFile)) {
-                Path codesonarProjectFilePath = null;
+            if(StringUtils.isNotBlank(projectFile)) {
+                Path projectFilePath = null;
                 try {
-                    codesonarProjectFilePath = Paths.get(codesonarProjectFile);
+                    projectFilePath = Paths.get(projectFile);
                 } catch(InvalidPathException e) {
-                    throw createError(MessageFormat.format("Specified CodeSonar Project File \"{0}\" does not represent a file path", codesonarProjectFile));
+                    throw createError(MessageFormat.format("Specified CodeSonar Project File \"{0}\" does not represent a file path", projectFile));
                 }
-                Path prjFilesDirectoryPath = getPrjFilesDirectory(codesonarProjectFilePath);
+                Path prjFilesDirectoryPath = getPrjFilesDirectory(projectFilePath);
                 Path prjFilesDirectoryAbsolutePath = resolveRelativePath(jenkinsPipelineCWD, prjFilesDirectoryPath);
                 //Check that prj_files directory exists
                 if(Files.isDirectory(prjFilesDirectoryAbsolutePath)) {
@@ -346,8 +346,8 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
         String expandedHubAddress = run.getEnvironment(listener).expand(Util.fixNull(hubAddress));
         String expandedProjectName = run.getEnvironment(listener).expand(Util.fixNull(projectName));
         LOGGER.log(Level.INFO, "projectName: {0} expandedProjectName {1}", new String[] {projectName, expandedProjectName});
-        String expandedCodesonarProjectFile = run.getEnvironment(listener).expand(Util.fixNull(codesonarProjectFile));
-        LOGGER.log(Level.INFO, "codesonarProjectFile: {0} expandedCodesonarProjectFile {1}", new String[] {codesonarProjectFile, expandedCodesonarProjectFile});
+        String expandedProjectFile = run.getEnvironment(listener).expand(Util.fixNull(projectFile));
+        LOGGER.log(Level.INFO, "projectFile: {0} expandedProjectFile {1}", new String[] {projectFile, expandedProjectFile});
 
 
         if (expandedHubAddress.isEmpty()) {
@@ -376,7 +376,7 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
         String analysisId = null;
         if(StringUtils.isBlank(aid)) {
             LOGGER.log(Level.INFO, "Determining analysis id...");
-            analysisId = workspace.act(new DetermineAid(expandedCodesonarProjectFile));
+            analysisId = workspace.act(new DetermineAid(expandedProjectFile));
             LOGGER.log(Level.INFO, "Found analysis id: {0}", analysisId);
         } else {
             analysisId = aid;

@@ -43,19 +43,19 @@ public class CodeSonarJobDslExtension extends ContextExtensionPoint {
     @RequiresPlugin(id = "codesonar", minimumVersion = "2.0.0")
     @DslExtensionMethod(context = PublisherContext.class)
     public Object codesonar(
-            String protocol, int socketTimeoutMS, String hubAddress, String projectName, String credentialId, String sslCertificateCredentialId, String visibilityFilter, String visibilityFilterNewWarnings, String codesonarProjectFile,
+            String protocol, int socketTimeoutMS, String hubAddress, String projectName, String credentialId, String sslCertificateCredentialId, String visibilityFilter, String visibilityFilterNewWarnings, String projectFile,
             Runnable closure
     ) {
         CodeSonarJobDslContext context = new CodeSonarJobDslContext();
         executeInContext(closure, context);
 
-        CodeSonarPublisher publisher = new CodeSonarPublisher(context.conditions, protocol, hubAddress, projectName, credentialId, visibilityFilter, visibilityFilterNewWarnings, codesonarProjectFile);
+        CodeSonarPublisher publisher = new CodeSonarPublisher(context.conditions, protocol, hubAddress, projectName, credentialId, visibilityFilter, visibilityFilterNewWarnings, projectFile);
         publisher.setSocketTimeoutMS(socketTimeoutMS);
         publisher.setServerCertificateCredentialId(sslCertificateCredentialId);
         return publisher;
     }
 
-    public Object codesonar(String protocol, String hubAddress, String projectName, String codesonarProjectFile, Runnable closure) {
-        return codesonar(protocol, -1, hubAddress, projectName, null, "", "active", "all", codesonarProjectFile, closure);
+    public Object codesonar(String protocol, String hubAddress, String projectName, String projectFile, Runnable closure) {
+        return codesonar(protocol, -1, hubAddress, projectName, null, "", "active", "all", projectFile, closure);
     }
 }
