@@ -93,7 +93,7 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
     private static final String CS_PROJECT_DIR_EXTENSION = ".prj_files";
     
     private String visibilityFilter;
-    private String visibilityFilterNewWarnings;
+    private String newWarningsFilter;
     private String hubAddress;
     private String projectName;
     private String protocol = "http";
@@ -122,7 +122,7 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
     @DataBoundConstructor
     public CodeSonarPublisher(
             List<Condition> conditions, String protocol, String hubAddress, String projectName, String credentialId,
-            String visibilityFilter, String visibilityFilterNewWarnings, String projectFile
+            String visibilityFilter, String newWarningsFilter, String projectFile
     ) {
         this.hubAddress = hubAddress;
         this.projectName = projectName;
@@ -134,7 +134,7 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
         this.conditions = conditions;
         this.credentialId = credentialId;
         this.visibilityFilter = visibilityFilter;
-        this.visibilityFilterNewWarnings = visibilityFilterNewWarnings;
+        this.newWarningsFilter = newWarningsFilter;
         this.projectFile = projectFile;
     }
     
@@ -190,16 +190,16 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
         this.projectFile = projectFile;
     }
     
-    public String getVisibilityFilterNewWarnings() {
-        return visibilityFilterNewWarnings;
+    public String getNewWarningsFilter() {
+        return newWarningsFilter;
     }
     
-    public String getVisibilityFilterNewWarningsOrDefault() {
-        return StringUtils.isNotBlank(visibilityFilterNewWarnings) ? visibilityFilterNewWarnings : IAnalysisService.VISIBILITY_FILTER_NEW_WARNINGS_DEFAULT;
+    public String getNewWarningsFilterOrDefault() {
+        return StringUtils.isNotBlank(newWarningsFilter) ? newWarningsFilter : IAnalysisService.VISIBILITY_FILTER_NEW_WARNINGS_DEFAULT;
     }
 
-    public void setVisibilityFilterNewWarnings(String visibilityFilterNewWarnings) {
-        this.visibilityFilterNewWarnings = visibilityFilterNewWarnings;
+    public void setNewWarningsFilter(String newWarningsFilter) {
+        this.newWarningsFilter = newWarningsFilter;
     }
 
     public static final class DetermineAid implements FileCallable<String> {
@@ -371,7 +371,7 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
         analysisServiceFactory.setHubInfo(hubInfo);
         analysisService = analysisServiceFactory.getAnalysisService(httpService, xmlSerializationService);
         analysisService.setVisibilityFilter(getVisibilityFilterOrDefault());
-        analysisService.setVisibilityFilterNewWarnings(getVisibilityFilterNewWarningsOrDefault());
+        analysisService.setNewWarningsFilter(getNewWarningsFilterOrDefault());
 
         String analysisId = null;
         if(StringUtils.isBlank(aid)) {
@@ -701,7 +701,7 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
             return validateVisibilityFilter(visibilityFilter);
         }
         
-        public FormValidation doCheckVisibilityFilterNewWarnings(@QueryParameter("visibilityFilterNewWarnings") String visibilityFilter){
+        public FormValidation doCheckNewWarningsFilter(@QueryParameter("newWarningsFilter") String visibilityFilter){
             return validateVisibilityFilter(visibilityFilter);
         }
 

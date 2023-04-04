@@ -22,7 +22,7 @@
         <f:textbox/>
     </f:entry>
     
-    <f:entry field="visibilityFilterNewWarnings" title="Visibility Filter: New Warnings">
+    <f:entry field="newWarningsFilter" title="Visibility Filter: New Warnings">
         <f:textbox/>
     </f:entry>
 

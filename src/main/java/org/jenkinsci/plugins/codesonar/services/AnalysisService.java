@@ -28,15 +28,15 @@ public class AnalysisService implements IAnalysisService {
     final private HttpService httpService;
     final private XmlSerializationService xmlSerializationService;
     private String visibilityFilter;
-    private String visibilityFilterNewWarnings;
+    private String newWarningsFilter;
     private boolean strictQueryParameters;
 
 
-    public AnalysisService(HttpService httpService, XmlSerializationService xmlSerializationService, String visibilityFilter, String visibilityFilterNewWarnings, boolean strictQueryParameters) {
+    public AnalysisService(HttpService httpService, XmlSerializationService xmlSerializationService, String visibilityFilter, String newWarningsFilter, boolean strictQueryParameters) {
         this.httpService = httpService;
         this.xmlSerializationService = xmlSerializationService;
         this.visibilityFilter = visibilityFilter;
-        this.visibilityFilterNewWarnings = visibilityFilterNewWarnings;
+        this.newWarningsFilter = newWarningsFilter;
         this.strictQueryParameters = strictQueryParameters;
     }
     
@@ -89,9 +89,9 @@ public class AnalysisService implements IAnalysisService {
         URIBuilder uriBuilder;
         try {
             uriBuilder = new URIBuilder(analysisUrl);
-            String visibilityFilterNewWarningsOrDefault = formatParameter(getVisibilityFilterNewWarningsOrDefault());
-            LOGGER.log(Level.INFO, "Passing filter = {0}", visibilityFilterNewWarningsOrDefault);
-            uriBuilder.addParameter("filter", visibilityFilterNewWarningsOrDefault);
+            String newWarningsFilterOrDefault = formatParameter(getNewWarningsFilterOrDefault());
+            LOGGER.log(Level.INFO, "Passing filter = {0}", newWarningsFilterOrDefault);
+            uriBuilder.addParameter("filter", newWarningsFilterOrDefault);
         } catch (URISyntaxException ex) {
             throw createError(ex.getMessage());
         }
@@ -144,17 +144,17 @@ public class AnalysisService implements IAnalysisService {
     }
 
     @Override
-    public void setVisibilityFilterNewWarnings(String visibilityFilter) {
-        this.visibilityFilterNewWarnings = visibilityFilter;
+    public void setNewWarningsFilter(String visibilityFilter) {
+        this.newWarningsFilter = visibilityFilter;
     }
 
     @Override
-    public String getVisibilityFilterNewWarnings() {
-        return this.visibilityFilterNewWarnings;
+    public String getNewWarningsFilter() {
+        return this.newWarningsFilter;
     }
     
-    public String getVisibilityFilterNewWarningsOrDefault() {
-        return StringUtils.isNotBlank(visibilityFilterNewWarnings) ? visibilityFilterNewWarnings : IAnalysisService.VISIBILITY_FILTER_NEW_WARNINGS_DEFAULT;
+    public String getNewWarningsFilterOrDefault() {
+        return StringUtils.isNotBlank(newWarningsFilter) ? newWarningsFilter : IAnalysisService.VISIBILITY_FILTER_NEW_WARNINGS_DEFAULT;
     }
 
 }
