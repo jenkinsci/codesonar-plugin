@@ -580,7 +580,7 @@ cyclomaticComplexity(maxCyclomaticComplexity:'8', warrantedResult:'UNSTABLE'),
 
 ### Note on visibility filters
 
-The CodeSonar warning *visibility filter* allows you to specify exactly which warnings you are interested in: for example, you might be interested in all warnings, or only in active warnings (that is, those that are not marked as "suppressed", "fixed", "invalid", etc.).
+The CodeSonar warning *visibility filter* allows you to specify exactly which warnings you are interested in: for example, you might be interested in all warnings, or only in active warnings (that is, those that are not marked as "suppressed", "fixed", "invalid", etc.).  Defaults to "active".
 
 The CodeSonar *new warnings filter* allows you to specify exactly what warnings will be considered new.  By default, the plugin will attempt to use the filter named "new".  With CodeSonar factory settings, the "new" filter includes only warnings that were issued for the first time in the current analysis.
 
