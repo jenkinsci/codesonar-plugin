@@ -580,9 +580,9 @@ cyclomaticComplexity(maxCyclomaticComplexity:'8', warrantedResult:'UNSTABLE'),
 
 ### Note on visibility filters
 
-The CodeSonar warning *visibility filter* allows you to specify exactly which warnings you are interested in: for example, you might be interested in all warnings, or only in active warnings (that is, those that are not marked as "suppressed", "fixed", "invalid", etc.).  Defaults to "active".
+The CodeSonar warning *visibility filter* allows you to specify exactly which warnings you are interested in: for example, you might be interested in all warnings, or only in active warnings.  Defaults to "active".  With factory settings, the "active" filter includes only warnings that are not marked as "suppressed", "fixed", "invalid", etc.
 
-The CodeSonar *new warnings filter* allows you to specify exactly what warnings will be considered new.  By default, the plugin will attempt to use the filter named "new".  With CodeSonar factory settings, the "new" filter includes only warnings that were issued for the first time in the current analysis.
+The CodeSonar *new warnings filter* allows you to specify exactly what warnings will be considered new.  Defaults to "new".  With CodeSonar factory settings, the "new" filter includes only warnings that were issued for the first time in the current analysis.
 
 * You can specify a warning visibility filter by *name* or by numeric *ID*.
 * The available warning visibility filters for a given hub user account are those for which the account has `NAMEDSEARCH_READ` permission. The exception is the **all** filter, which is always available to all users.
