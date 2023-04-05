@@ -35,7 +35,9 @@ public class NewWarningsIncreasedByPercentageConditionIT extends ConditionIntegr
         List<Condition> conditions = new ArrayList<>();
         conditions.add(condition);
 
-        CodeSonarPublisher codeSonarPublisher = new CodeSonarPublisher(conditions, "http", VALID_HUB_ADDRESS.toString(), VALID_PROJECT_NAME, "", VISIBILITY_FILTER, VISIBILITY_FILTER_NEW_WARNINGS, VALID_CODESONAR_PROJECT_FILE);
+        CodeSonarPublisher codeSonarPublisher = new CodeSonarPublisher(conditions, "http", VALID_HUB_ADDRESS.toString(), VALID_PROJECT_NAME, "", VISIBILITY_FILTER);
+        codeSonarPublisher.setNewWarningsFilter(VISIBILITY_FILTER_NEW_WARNINGS);
+        codeSonarPublisher.setProjectFile(VALID_CODESONAR_PROJECT_FILE);
         codeSonarPublisher.setAnalysisService(mockedAnalysisService);
         codeSonarPublisher.setMetricsService(mockedMetricsService);
         codeSonarPublisher.setProceduresService(mockedProceduresService);
@@ -67,7 +69,9 @@ public class NewWarningsIncreasedByPercentageConditionIT extends ConditionIntegr
         List<Condition> conditions = new ArrayList<>();
         conditions.add(condition);
 
-        CodeSonarPublisher codeSonarPublisher = new CodeSonarPublisher(conditions, "http", VALID_HUB_ADDRESS.toString(), VALID_PROJECT_NAME, "", this.VISIBILITY_FILTER, this.VISIBILITY_FILTER_NEW_WARNINGS, VALID_CODESONAR_PROJECT_FILE);
+        CodeSonarPublisher codeSonarPublisher = new CodeSonarPublisher(conditions, "http", VALID_HUB_ADDRESS.toString(), VALID_PROJECT_NAME, "", this.VISIBILITY_FILTER);
+        codeSonarPublisher.setNewWarningsFilter(VISIBILITY_FILTER_NEW_WARNINGS);
+        codeSonarPublisher.setProjectFile(VALID_CODESONAR_PROJECT_FILE);
         codeSonarPublisher.setAnalysisService(mockedAnalysisService);
         codeSonarPublisher.setMetricsService(mockedMetricsService);
         codeSonarPublisher.setProceduresService(mockedProceduresService);

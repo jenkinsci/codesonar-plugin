@@ -122,7 +122,7 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
     @DataBoundConstructor
     public CodeSonarPublisher(
             List<Condition> conditions, String protocol, String hubAddress, String projectName, String credentialId,
-            String visibilityFilter, String newWarningsFilter, String projectFile
+            String visibilityFilter
     ) {
         this.hubAddress = hubAddress;
         this.projectName = projectName;
@@ -134,8 +134,6 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
         this.conditions = conditions;
         this.credentialId = credentialId;
         this.visibilityFilter = visibilityFilter;
-        this.newWarningsFilter = newWarningsFilter;
-        this.projectFile = projectFile;
     }
     
     private CodeSonarPluginException createError(String msg, Object...args) {
@@ -186,6 +184,7 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
         return projectFile;
     }
 
+    @DataBoundSetter
     public void setProjectFile(String projectFile) {
         this.projectFile = projectFile;
     }
@@ -198,6 +197,7 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
         return StringUtils.isNotBlank(newWarningsFilter) ? newWarningsFilter : IAnalysisService.VISIBILITY_FILTER_NEW_WARNINGS_DEFAULT;
     }
 
+    @DataBoundSetter
     public void setNewWarningsFilter(String newWarningsFilter) {
         this.newWarningsFilter = newWarningsFilter;
     }
