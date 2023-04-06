@@ -10,7 +10,7 @@
     <url>https://github.com/jenkinsci/codesonar-plugin</url>
     <name>CodeSonar Plugin</name>
     <artifactId>codesonar</artifactId>
-    <version>3.3.1-SNAPSHOT</version>
+    <version>3.3.1</version>
     <packaging>hpi</packaging>
 
     <properties>
@@ -57,7 +57,7 @@
         <connection>scm:git:ssh://github.com/jenkinsci/codesonar-plugin.git</connection>
         <developerConnection>scm:git:ssh://git@github.com/jenkinsci/codesonar-plugin.git</developerConnection>
         <url>https://github.com/jenkinsci/codesonar-plugin</url>
-        <tag>HEAD</tag>
+        <tag>codesonar-3.3.1</tag>
     </scm>
 
     <build>
