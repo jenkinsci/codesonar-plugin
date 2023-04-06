@@ -8,8 +8,15 @@ import javaposse.jobdsl.dsl.helpers.publisher.PublisherContext;
 import javaposse.jobdsl.plugin.ContextExtensionPoint;
 import javaposse.jobdsl.plugin.DslExtensionMethod;
 
-/*
- ```
+/** 
+Implement extension point for job-dsl plugin.
+<p>
+The job-dsl plugin allows one to generate new Jenkins projects from a script.
+This extension point implementation allows one to declare the use of the CodeSonar plugin in their job-dsl script.
+<p>
+This is the general structure:
+<pre>
+{@code
 job {
     publishers {
         codesonar(String protocol, String hubAddress, String projectName, String credentialId, String visibilityFilter) {
@@ -27,9 +34,13 @@ job {
         }
     }
 }
- ```
- For example:
- ```
+}
+</pre>
+
+For example:
+
+<pre>
+{@code
 job('myProject_GEN') {
     publishers {
         codesonar('https','codesonarhub.com:7340','MyProjectName','codesonar_hub_credential_id','active') {
@@ -47,12 +58,18 @@ job('myProject_GEN') {
         }
     }
 }
- ```
+}
+</pre>
  */
 @Extension(optional = true)
 public class CodeSonarJobDslExtension extends ContextExtensionPoint {
-
-    @RequiresPlugin(id = "codesonar", minimumVersion = "2.0.0")
+    /*
+     * See https://github.com/jenkinsci/job-dsl-plugin/blob/master/CONTRIBUTING.md#dsl-design
+     * @RequiresPlugin version should be updated whenever the `codesonar` method signature is changed here.
+     * @DslExtensionMethod declares that this method will implement a publisher declaration for a job-dsl script.
+     */
+    //TODO: @RequiresPlugin appears to be unnecessary here
+    @RequiresPlugin(id = "codesonar", minimumVersion = "3.3.0")
     @DslExtensionMethod(context = PublisherContext.class)
     public Object codesonar(
             String protocol, String hubAddress, String projectName, String credentialId, String visibilityFilter,
@@ -70,6 +87,7 @@ public class CodeSonarJobDslExtension extends ContextExtensionPoint {
         return publisher;
     }
 
+    /* TODO: Is it possible to use this method?  Can it be removed? */
     public Object codesonar(String protocol, String hubAddress, String projectName, Runnable closure) {
         return codesonar(protocol, hubAddress, projectName, null, IAnalysisService.VISIBILITY_FILTER_ALL_WARNINGS_DEFAULT, closure);
     }

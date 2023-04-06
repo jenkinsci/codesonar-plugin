@@ -15,7 +15,10 @@ import org.jenkinsci.plugins.codesonar.conditions.YellowAlertLimitCondition;
 import hudson.model.Result;
 import javaposse.jobdsl.dsl.Context;
 
-class CodeSonarJobDslContext implements Context {
+/**
+Provides for optional parameters in a CodeSonar plugin job-dsl declaration implemented by CodeSonarJobDslExtension.
+*/
+public class CodeSonarJobDslContext implements Context {
 
     private List<Condition> conditions = new ArrayList<>();
     private int socketTimeoutMS = -1;
