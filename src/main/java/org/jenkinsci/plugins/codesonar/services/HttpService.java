@@ -27,10 +27,10 @@ import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.ssl.SSLContextBuilder;
 import org.apache.http.util.EntityUtils;
+import org.jenkinsci.plugins.codesonar.CodeSonarPluginException;
 
 import com.google.common.base.Throwables;
 
-import hudson.AbortException;
 import hudson.util.Secret;
 
 /**
@@ -45,7 +45,7 @@ public class HttpService {
     private Executor executor;
     private int socketTimeoutMS = -1;
 
-    public HttpService(Collection<? extends Certificate> serverCertificates, KeyStore clientCertificateKeyStore, Secret clientCertificatePassword, int socketTimeoutMS) throws AbortException {
+    public HttpService(Collection<? extends Certificate> serverCertificates, KeyStore clientCertificateKeyStore, Secret clientCertificatePassword, int socketTimeoutMS) throws CodeSonarPluginException {
         LOGGER.log(Level.INFO, "Initializing HttpService");
         this.socketTimeoutMS = socketTimeoutMS;
         httpCookieStore = new BasicCookieStore();
@@ -58,11 +58,11 @@ public class HttpService {
             //If a server certificates are available, then set them in the SSL context so that they can be used by the trust strategy
             if(serverCertificates != null) {
                 LOGGER.log(Level.INFO, "Adding server certificates to the SSL context");
-                LOGGER.log(Level.INFO, String.format("Server certificates list size %d", serverCertificates.size()));
+                LOGGER.log(Level.INFO, "Server certificates list size {0}", serverCertificates.size());
                 try {
                     sslContextBuilder.loadTrustMaterial(new CertificateFileTrustStrategy(serverCertificates));
                 } catch (NoSuchAlgorithmException | KeyStoreException e) {
-                    throw new AbortException(String.format("[CodeSonar] Error setting up server certificates  %n[CodeSonar] %s: %s%n[CodeSonar] Stack Trace: %s", e.getClass().getName(), e.getMessage(), Throwables.getStackTraceAsString(e)));
+                    throw createError("Error setting up server certificates  %n{0}: {1}%nStack Trace: {2}", e.getClass().getName(), e.getMessage(), Throwables.getStackTraceAsString(e));
                 }
             }
             
@@ -72,7 +72,7 @@ public class HttpService {
                 try {
                     sslContextBuilder.loadKeyMaterial(clientCertificateKeyStore, clientCertificatePassword.getPlainText().toCharArray());
                 } catch (UnrecoverableKeyException | NoSuchAlgorithmException | KeyStoreException e) {
-                    throw new AbortException(String.format("[CodeSonar] Error setting up client certificate  %n[CodeSonar] %s: %s%n[CodeSonar] Stack Trace: %s", e.getClass().getName(), e.getMessage(), Throwables.getStackTraceAsString(e)));
+                    throw createError("Error setting up client certificate  %n{0}: {1}%nStack Trace: {2}", e.getClass().getName(), e.getMessage(), Throwables.getStackTraceAsString(e));
                 }
             }
             //Prepare the SSL context in order to let the HTTP client using specified certificates
@@ -83,7 +83,7 @@ public class HttpService {
                 httpClientBuilder.setSSLSocketFactory(csf);
                 LOGGER.log(Level.INFO, "SSL context initialized");
             } catch (KeyManagementException | NoSuchAlgorithmException e) {
-                throw new AbortException(String.format("[CodeSonar] Error initiating SSL context.%n[CodeSonar] Exception message: %s", e.getMessage()));
+                throw createError("Error initiating SSL context.%nException message: {0}", e.getMessage());
             }
         }
         
@@ -92,21 +92,25 @@ public class HttpService {
         executor = Executor.newInstance(httpClient).use(httpCookieStore);
         LOGGER.log(Level.INFO, "HttpService initialized");
     }
+    
+    private CodeSonarPluginException createError(String msg, Object...args) {
+        return new CodeSonarPluginException(msg, args);
+    }
 
     public void setSocketTimeoutMS(int socketTimeoutMS) {
-        LOGGER.log(Level.FINE, "[CodeSonar] HttpService - setSocketTimeoutMS to {0}", socketTimeoutMS);
+        LOGGER.log(Level.FINE, "HttpService - setSocketTimeoutMS to {0}", socketTimeoutMS);
         this.socketTimeoutMS = socketTimeoutMS;
     }
 
-    public String getContentFromUrlAsString(URI uri) throws AbortException {
+    public String getContentFromUrlAsString(URI uri) throws CodeSonarPluginException {
         return getContentFromUrlAsString(uri.toString());
     }
     
-    public String getContentFromUrlAsString(String url) throws AbortException {
+    public String getContentFromUrlAsString(String url) throws CodeSonarPluginException {
         if(!url.contains("response_try_plaintext")) {
             url = (url.contains("?")) ? url + "#response_try_plaintext=1" : url + "?response_try_plaintext=1";
         }
-        LOGGER.log(Level.INFO, String.format("getContentFromUrlAsString(%s)", url));
+        LOGGER.log(Level.INFO, "getContentFromUrlAsString({0})", url);
         int status = -1;
         String reason = "";
         String body = "";
@@ -121,24 +125,24 @@ public class HttpService {
             reason = resp.getStatusLine().getReasonPhrase();
             body = EntityUtils.toString(resp.getEntity(), "UTF-8");
         } catch (Exception e) {
-            throw new AbortException(String.format("[CodeSonar] Error on url: %s%n[CodeSonar] Message is: %s", url, e.getMessage()));
+            throw createError("Error on url: {0}%nMessage is: {1}", url, e.getMessage());
         }
         if (status != 200) {
-            throw new AbortException(String.format("[CodeSonar] Error communicating with CodeSonar Hub. %n[CodeSonar] URI: %s%n[CodeSonar] HTTP status code: %s - %s %n[CodeSonar] HTTP Body: %s", url, status, reason, body));
+            throw createError("Error communicating with CodeSonar Hub. %nURI: {0}%nHTTP status code: {1} - {2} %nHTTP Body: {3}", url, status, reason, body);
         }
         return body;
     }
     
-    public InputStream getContentFromUrlAsInputStream(URI uri) throws AbortException {
+    public InputStream getContentFromUrlAsInputStream(URI uri) throws CodeSonarPluginException {
         return getContentFromUrlAsInputStream(uri.toString());
     }
     
-    public InputStream getContentFromUrlAsInputStream(String url) throws AbortException {
+    public InputStream getContentFromUrlAsInputStream(String url) throws CodeSonarPluginException {
         InputStream is;
         if(!url.contains("response_try_plaintext")) {
             url = (url.contains("?")) ? url + "#response_try_plaintext=1" : url + "?response_try_plaintext=1";
         }
-        LOGGER.log(Level.INFO, String.format("getContentFromUrlAsInputStream(%s)", url));
+        LOGGER.log(Level.INFO, "getContentFromUrlAsInputStream({0})", url);
         int status = -1;
         String reason = "";
         String body = "";
@@ -154,10 +158,10 @@ public class HttpService {
             reason = resp.getStatusLine().getReasonPhrase();
             body = EntityUtils.toString(resp.getEntity(), "UTF-8");
         } catch (Exception e) {
-            throw new AbortException(String.format("[CodeSonar] Error on url: %s%n[CodeSonar] Message is: %s", url, e.getMessage()));
+            throw createError("Error on url: {0}%nMessage is: {1}", url, e.getMessage());
         }
         if (status != 200) {
-            throw new AbortException(String.format("[CodeSonar] Error communicating with CodeSonar Hub. %n[CodeSonar] URI: %s%n[CodeSonar] HTTP status code: %s - %s %n[CodeSonar] HTTP Body: %s", url, status, reason, body));
+            throw createError("Error communicating with CodeSonar Hub. %nURI: {0}%nHTTP status code: {1} - {2} %nHTTP Body: {3}", url, status, reason, body);
         }
         return is;
     }

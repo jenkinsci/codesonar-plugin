@@ -6,10 +6,12 @@ public class CodeSonarHubInfo {
 
     private String version;
     private boolean openAPISupported;
+    private boolean strictQueryParametersEnforced;
     
     public CodeSonarHubInfo() {
         version = VERSION_NOT_INITIALIZED;
         openAPISupported = false;
+        strictQueryParametersEnforced = false;
     }
 
     public String getVersion() {
@@ -26,6 +28,14 @@ public class CodeSonarHubInfo {
 
     public void setOpenAPISupported(boolean openAPISupported) {
         this.openAPISupported = openAPISupported;
+    }
+
+    public boolean isStrictQueryParametersEnforced() {
+        return strictQueryParametersEnforced;
+    }
+
+    public void setStrictQueryParametersEnforced(boolean strictQueryParametersEnforced) {
+        this.strictQueryParametersEnforced = strictQueryParametersEnforced;
     }
     
 }

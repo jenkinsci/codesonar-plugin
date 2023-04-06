@@ -14,14 +14,14 @@ import org.apache.http.HttpResponse;
 import org.apache.http.ParseException;
 import org.apache.http.client.fluent.Request;
 import org.apache.http.util.EntityUtils;
+import org.jenkinsci.plugins.codesonar.CodeSonarLogger;
+import org.jenkinsci.plugins.codesonar.CodeSonarPluginException;
 import org.jenkinsci.plugins.codesonar.models.CodeSonarHubClientCompatibilityInfo;
 import org.jenkinsci.plugins.codesonar.models.CodeSonarHubInfo;
 
 import com.google.common.base.Throwables;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
-
-import hudson.AbortException;
 
 public class HubInfoService {
     private static final Logger LOGGER = Logger.getLogger(HubInfoService.class.getName());
@@ -34,8 +34,12 @@ public class HubInfoService {
     public HubInfoService(HttpService httpService) {
         this.httpService = httpService;
     }
+    
+    private CodeSonarPluginException createError(String msg, Object...args) {
+        return new CodeSonarPluginException(msg, args);
+    }
 
-    public CodeSonarHubInfo fetchHubInfo(URI baseHubUri) throws AbortException {
+    public CodeSonarHubInfo fetchHubInfo(URI baseHubUri) throws CodeSonarPluginException {
         LOGGER.log(Level.INFO, String.format("Retrieving CodeSonar hub info"));
         
         CodeSonarHubInfo hubInfo = new CodeSonarHubInfo();
@@ -48,9 +52,10 @@ public class HubInfoService {
             //If this client is supposed to be able to talk to the hub
             if(checkClientOk(cci)) {
                 hubInfo.setOpenAPISupported(supportsOpenAPI(cci));
+                hubInfo.setStrictQueryParametersEnforced(supportsStrictQueryParameters(cci));
             } else {
                 //In this case this client has been rejected by the hub
-                throw new AbortException(String.format("[CodeSonar] client rejected by the hub. %n[CodeSonar] clientOK=%s", cci.getClientOK().toString()));
+                throw createError("client rejected by the hub. %nclientOK={0}", cci.getClientOK().toString());
             }
         } else {
             /*
@@ -64,20 +69,20 @@ public class HubInfoService {
 
         return hubInfo;
     }
-    
+
     /**
      * 
      * @param baseHubUri
      * @param clientName the client name, in this case "jenkins"
      * @param clientVersion the client version
-     * @throws AbortException when hub returns an unexpected response
+     * @throws CodeSonarPluginException when hub returns an unexpected response
      * @throws IOException thrown when the communication with the hub fails
      */
-    private CodeSonarHubClientCompatibilityInfo fetchVersionCompatibilityInfo(URI baseHubUri, String clientName, int clientVersion) throws AbortException {
+    private CodeSonarHubClientCompatibilityInfo fetchVersionCompatibilityInfo(URI baseHubUri, String clientName, int clientVersion) throws CodeSonarPluginException {
         
         URI resolvedURI = baseHubUri;
         
-        resolvedURI = baseHubUri.resolve(String.format("/command/check_version/%s/?version=%d&capability=openapi", clientName, clientVersion));
+        resolvedURI = baseHubUri.resolve(String.format("/command/check_version/%s/?version=%d&capability=openapi&capability=strictQueryParameters", clientName, clientVersion));
         LOGGER.log(Level.INFO, "Calling " + resolvedURI.toString());
         
         HttpResponse resp;
@@ -85,23 +90,23 @@ public class HubInfoService {
             resp = httpService.execute(Request.Get(resolvedURI))
                     .returnResponse();
         } catch (IOException e) {
-            LOGGER.log(Level.WARNING, String.format("[CodeSonar] failed to get a response. %n[CodeSonar] IOException: %s%n[CodeSonar] Stack Trace: %s", e.getMessage(), Throwables.getStackTraceAsString(e)));
+            LOGGER.log(Level.WARNING, "failed to get a response. %nIOException: {0}%nStack Trace: {1}", new Object[] {e.getMessage(), Throwables.getStackTraceAsString(e)});
             return null;
         }
         
         if(resp.getStatusLine() == null) {
-            LOGGER.log(Level.INFO, String.format("[CodeSonar] not able to read http status."));
+            LOGGER.log(Level.INFO, String.format("Not able to read http status."));
             return null;
         }
         
         if(resp.getStatusLine().getStatusCode() == 404) {
             //Hub might respond with an HTTP 404, we want to keep track this special case
-            LOGGER.log(Level.INFO, String.format("[CodeSonar] specified endpoint seems not to exist on the hub. %n[CodeSonar] response is \"%d, %s\"", resp.getStatusLine().getStatusCode() , resp.getStatusLine().getReasonPhrase()));
+            LOGGER.log(Level.INFO, "specified endpoint seems not to exist on the hub. %nresponse is \"{0,number,integer}, {1}\"", new Object[]{resp.getStatusLine().getStatusCode() , resp.getStatusLine().getReasonPhrase()});
             return null;
         } else if(resp.getStatusLine().getStatusCode() != 200) {
             //Hub returned an unexpected response
             String responseBody = readResponseBody(resp);
-            throw new AbortException(String.format("[CodeSonar] response is not successfull. %n[CodeSonar] response is \"%d, %s\" %n[CodeSonar] respose body: \"%s\"", resp.getStatusLine().getStatusCode() , resp.getStatusLine().getReasonPhrase(), responseBody));
+            throw createError("response is not successfull. %nresponse is \"{0}, {1}\" %nrespose body: \"{2}\"", resp.getStatusLine().getStatusCode() , resp.getStatusLine().getReasonPhrase(), responseBody);
         }
         
         String responseBody = readResponseBody(resp);
@@ -111,7 +116,7 @@ public class HubInfoService {
         
         //We cannot parse the JSON response if "responseBody" is null or if it's empty
         if(StringUtils.isEmpty(responseBody)) {
-            LOGGER.log(Level.INFO, String.format("[CodeSonar] response is empty. %n[CodeSonar] response is \"%s\"", responseBody));
+            LOGGER.log(Level.INFO, "response is empty. %nresponse is \"{0}\"", responseBody);
             return null;
         }
         
@@ -119,9 +124,9 @@ public class HubInfoService {
         CodeSonarHubClientCompatibilityInfo cci = null;
         try {
             cci = gson.fromJson(responseBody, CodeSonarHubClientCompatibilityInfo.class);
-            LOGGER.log(Level.INFO, String.format("[CodeSonar] %s", cci.toString()));
+            LOGGER.log(Level.INFO, CodeSonarLogger.formatMessage(cci.toString()));
         } catch(JsonSyntaxException e) {
-            LOGGER.log(Level.WARNING, String.format("[CodeSonar] failed to parse JSON response. %n[CodeSonar] Exception: %s%n[CodeSonar] Stack Trace: %s", e.getMessage(), Throwables.getStackTraceAsString(e)));
+            LOGGER.log(Level.WARNING, "failed to parse JSON response. %nException: {0}%nStack Trace: {1}", new Object[] {e.getMessage(), Throwables.getStackTraceAsString(e)});
             return null;
         }
         
@@ -131,14 +136,14 @@ public class HubInfoService {
     private String readResponseBody(HttpResponse resp) {
         HttpEntity entity = resp.getEntity();
         if(entity == null) {
-            LOGGER.log(Level.INFO, "[CodeSonar] hub compatibility info cannot be read. %n[CodeSonar] entity is null");
+            LOGGER.log(Level.INFO, "hub compatibility info cannot be read. %nentity is null");
             return null;
         }
         
         try {
             return EntityUtils.toString(entity, Consts.UTF_8);
         } catch (ParseException | IOException e) {
-            LOGGER.log(Level.WARNING, String.format("[CodeSonar] failed to read the response. %n[CodeSonar] Exception: %s%n[CodeSonar] Stack Trace: %s", e.getMessage(), Throwables.getStackTraceAsString(e)));
+            LOGGER.log(Level.WARNING, "failed to read the response. %nException: {0}%nStack Trace: {1}", new Object[] {e.getMessage(), Throwables.getStackTraceAsString(e)});
             return null;
         }
     }
@@ -147,6 +152,12 @@ public class HubInfoService {
         return cci.getCapabilities() != null
                 && cci.getCapabilities().getOpenapi() != null
                 && cci.getCapabilities().getOpenapi().booleanValue();
+    }
+    
+    private boolean supportsStrictQueryParameters(CodeSonarHubClientCompatibilityInfo cci) {
+        return cci.getCapabilities() != null
+                && cci.getCapabilities().getStrictQueryParameters() != null
+                && cci.getCapabilities().getStrictQueryParameters().booleanValue();
     }
 
     private boolean checkClientOk(CodeSonarHubClientCompatibilityInfo cci) {
@@ -159,15 +170,15 @@ public class HubInfoService {
      * I kept as a fallback.
      * @param baseHubUri
      * @return
-     * @throws AbortException
+     * @throws CodeSonarPluginException 
      */
-    private String fetchHubSignatureVersionString(URI baseHubUri) throws AbortException {
+    private String fetchHubSignatureVersionString(URI baseHubUri) throws CodeSonarPluginException {
         String info;
         try {
             URI endpoint = baseHubUri.resolve("/command/anon_info/");
             LOGGER.log(Level.INFO, "Calling " + endpoint.toString());
             info = httpService.getContentFromUrlAsString(endpoint);
-        } catch (AbortException e) {
+        } catch (CodeSonarPluginException e) {
             // /command/anon_info/ is not available. Assume hub is older than v4.2
             return "4.0";
         }
@@ -178,13 +189,14 @@ public class HubInfoService {
         if (matcher.find()) {
             String version = matcher.group(1);
             if(StringUtils.isBlank(version)) {
-                throw new AbortException("[CodeSonar] Hub version cannot be parsed");
+                throw createError(CodeSonarLogger.formatMessage("Hub version cannot be parsed"));
             }
             return version;
         }
 
-        LOGGER.log(Level.WARNING, "[CodeSonar] Version info could not be determined by data:\n"+info); // No version could be found
+        LOGGER.log(Level.WARNING, "Version info could not be determined by data:\n"+info); // No version could be found
 
-        throw new AbortException("[CodeSonar] Hub version could not be determined");
+        throw createError(CodeSonarLogger.formatMessage("Hub version could not be determined"));
     }
+    
 }

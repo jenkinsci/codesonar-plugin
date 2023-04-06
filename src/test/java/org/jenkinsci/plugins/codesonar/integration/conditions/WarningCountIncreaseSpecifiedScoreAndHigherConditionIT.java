@@ -1,17 +1,20 @@
 package org.jenkinsci.plugins.codesonar.integration.conditions;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import org.jenkinsci.plugins.codesonar.CodeSonarPublisher;
+import org.jenkinsci.plugins.codesonar.conditions.Condition;
+import org.jenkinsci.plugins.codesonar.conditions.WarningCountIncreaseSpecifiedScoreAndHigherCondition;
+import org.jenkinsci.plugins.codesonar.services.IAnalysisService;
+import org.junit.Assert;
+import org.junit.Test;
+
 import hudson.model.Cause;
 import hudson.model.FreeStyleBuild;
 import hudson.model.FreeStyleProject;
 import hudson.model.Result;
 import hudson.model.queue.QueueTaskFuture;
-import java.util.ArrayList;
-import java.util.List;
-import org.jenkinsci.plugins.codesonar.CodeSonarPublisher;
-import org.jenkinsci.plugins.codesonar.conditions.Condition;
-import org.jenkinsci.plugins.codesonar.conditions.WarningCountIncreaseSpecifiedScoreAndHigherCondition;
-import org.junit.Assert;
-import org.junit.Test;
 
 /**
  *
@@ -24,7 +27,6 @@ public class WarningCountIncreaseSpecifiedScoreAndHigherConditionIT extends Cond
         // arrange
         final Result EXPECTED_RESULT = Result.FAILURE;
         final String WARRANTED_RESULT = Result.FAILURE.toString();
-        final String VISIBILITY_FILTER = "2"; // active warnings
 
         final int RANK_OF_WARNINGS = 30;
         final float WARNING_PERCENTAGE = 50.0f;
@@ -36,7 +38,9 @@ public class WarningCountIncreaseSpecifiedScoreAndHigherConditionIT extends Cond
         List<Condition> conditions = new ArrayList<>();
         conditions.add(condition);
 
-        CodeSonarPublisher codeSonarPublisher = new CodeSonarPublisher(conditions, "http", VALID_HUB_ADDRESS.toString(), VALID_PROJECT_NAME, "", "2");
+        CodeSonarPublisher codeSonarPublisher = new CodeSonarPublisher(conditions, "http", VALID_HUB_ADDRESS.toString(), VALID_PROJECT_NAME, "", IAnalysisService.VISIBILITY_FILTER_ALL_WARNINGS_DEFAULT);
+        codeSonarPublisher.setNewWarningsFilter(IAnalysisService.VISIBILITY_FILTER_NEW_WARNINGS_DEFAULT);
+        codeSonarPublisher.setProjectFile(VALID_CODESONAR_PROJECT_FILE);
         codeSonarPublisher.setAnalysisService(mockedAnalysisService);
         codeSonarPublisher.setMetricsService(mockedMetricsService);
         codeSonarPublisher.setProceduresService(mockedProceduresService);
@@ -69,7 +73,9 @@ public class WarningCountIncreaseSpecifiedScoreAndHigherConditionIT extends Cond
         List<Condition> conditions = new ArrayList<>();
         conditions.add(condition);
 
-        CodeSonarPublisher codeSonarPublisher = new CodeSonarPublisher(conditions, "http", VALID_HUB_ADDRESS.toString(), VALID_PROJECT_NAME, "", "2");
+        CodeSonarPublisher codeSonarPublisher = new CodeSonarPublisher(conditions, "http", VALID_HUB_ADDRESS.toString(), VALID_PROJECT_NAME, "", IAnalysisService.VISIBILITY_FILTER_ALL_WARNINGS_DEFAULT);
+        codeSonarPublisher.setNewWarningsFilter(IAnalysisService.VISIBILITY_FILTER_NEW_WARNINGS_DEFAULT);
+        codeSonarPublisher.setProjectFile(VALID_CODESONAR_PROJECT_FILE);
         codeSonarPublisher.setAnalysisService(mockedAnalysisService);
         codeSonarPublisher.setMetricsService(mockedMetricsService);
         codeSonarPublisher.setProceduresService(mockedProceduresService);

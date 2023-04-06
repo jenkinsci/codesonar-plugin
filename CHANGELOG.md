@@ -2,6 +2,16 @@
 
 === Master ===
 
+=== Version 3.3.0 (April 2022) ===
+
+* Add new `projectFile` parameter for CodeSonar project file path.
+* Add new `newWarningsFilter` parameter to allow greater control of new warning identification.
+* Improve interactive help information for parameters seen in freestyle projects.
+* Add parameter and output data to build result messages seen on Jenkins build page.
+* Fix bug where `aid` parameter would become stuck.
+* Fix and clean up some job-dsl code that was broken.
+* Clean up some internal logging and error handling code.
+
 === Version 3.2.1 (February 2022) ===
 
 * Revise documentation to correct errors and to focus on scripted pipeline.

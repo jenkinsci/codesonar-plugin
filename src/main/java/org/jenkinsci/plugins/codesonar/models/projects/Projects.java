@@ -1,15 +1,16 @@
 package org.jenkinsci.plugins.codesonar.models.projects;
 
-import hudson.AbortException;
-import org.jenkinsci.plugins.codesonar.models.ProjectTree;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.List;
+
+import org.jenkinsci.plugins.codesonar.CodeSonarPluginException;
+import org.jenkinsci.plugins.codesonar.models.ProjectTree;
 
 /**
  *
@@ -24,15 +25,19 @@ public class Projects implements Serializable {
 
     @XmlElement(name = "project")
     private List<Project> projects;
+    
+    private CodeSonarPluginException createError(String msg, Object...args) {
+        return new CodeSonarPluginException(msg, args);
+    }
 
-    public Project getProjectByName(String projectName) throws AbortException {
+    public Project getProjectByName(String projectName) throws CodeSonarPluginException {
         for (Project project : getProjects()) {
             if (project.getName().equals(projectName)) {
                 return project;
             }
         }
         
-        throw new AbortException(String.format("Project by the name %s was not found on the hub", projectName));
+        throw createError("Project by the name {0} was not found on the hub", projectName);
     }
 
     public List<ProjectTree> getProjectTrees() {

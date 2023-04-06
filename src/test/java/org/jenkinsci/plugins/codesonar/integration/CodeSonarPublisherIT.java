@@ -1,21 +1,18 @@
 package org.jenkinsci.plugins.codesonar.integration;
 
-import hudson.model.Cause;
-import hudson.model.FreeStyleBuild;
-import hudson.model.FreeStyleProject;
-import hudson.model.Result;
-import hudson.model.queue.QueueTaskFuture;
+import static org.hamcrest.CoreMatchers.is;
+import static org.junit.Assert.assertEquals;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.*;
-
 import org.apache.commons.lang.StringUtils;
+import org.jenkinsci.plugins.codesonar.CodeSonarLogger;
 import org.jenkinsci.plugins.codesonar.CodeSonarPublisher;
 import org.jenkinsci.plugins.codesonar.conditions.Condition;
 import org.jenkinsci.plugins.codesonar.conditions.WarningCountIncreaseSpecifiedScoreAndHigherCondition;
+import org.jenkinsci.plugins.codesonar.services.IAnalysisService;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
@@ -23,6 +20,12 @@ import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
 import org.jvnet.hudson.test.JenkinsRule;
+
+import hudson.model.Cause;
+import hudson.model.FreeStyleBuild;
+import hudson.model.FreeStyleProject;
+import hudson.model.Result;
+import hudson.model.queue.QueueTaskFuture;
 
 /**
  *
@@ -46,11 +49,14 @@ public class CodeSonarPublisherIT {
 
         final String EMPTY_HUB_ADDRESS = "";
         final String VALID_PROJECT_NAME = "projectName";
+        final String VALID_CODESONAR_PROJECT_FILE = "projectName.prj";
 
         FreeStyleProject project = jenkinsRule.createFreeStyleProject();
 
         List<Condition> conditions = new ArrayList<>();
-        CodeSonarPublisher codeSonarPublisher = new CodeSonarPublisher(conditions, "http", EMPTY_HUB_ADDRESS, VALID_PROJECT_NAME, "", "2");
+        CodeSonarPublisher codeSonarPublisher = new CodeSonarPublisher(conditions, "http", EMPTY_HUB_ADDRESS, VALID_PROJECT_NAME, "", IAnalysisService.VISIBILITY_FILTER_ALL_WARNINGS_DEFAULT);
+        codeSonarPublisher.setNewWarningsFilter(IAnalysisService.VISIBILITY_FILTER_NEW_WARNINGS_DEFAULT);
+        codeSonarPublisher.setProjectFile(VALID_CODESONAR_PROJECT_FILE);
         project.getPublishersList().add(codeSonarPublisher);
 
         // act
@@ -73,11 +79,15 @@ public class CodeSonarPublisherIT {
         
         final String VALID_HUB_ADDRESS = "10.10.10.10";
         final String EMPTY_PROJECT_NAME = "";
+        final String VALID_CODESONAR_PROJECT_FILE = "projectName.prj";
 
         FreeStyleProject project = jenkinsRule.createFreeStyleProject();
         
         List<Condition> conditions = new ArrayList<>();
-        project.getPublishersList().add(new CodeSonarPublisher(conditions, "http", VALID_HUB_ADDRESS, EMPTY_PROJECT_NAME,"", "2"));
+        CodeSonarPublisher codeSonarPublisher = new CodeSonarPublisher(conditions, "http", VALID_HUB_ADDRESS, EMPTY_PROJECT_NAME,"", IAnalysisService.VISIBILITY_FILTER_ALL_WARNINGS_DEFAULT);
+        codeSonarPublisher.setNewWarningsFilter(IAnalysisService.VISIBILITY_FILTER_NEW_WARNINGS_DEFAULT);
+        codeSonarPublisher.setProjectFile(VALID_CODESONAR_PROJECT_FILE);
+        project.getPublishersList().add(codeSonarPublisher);
         
         // act
         QueueTaskFuture<FreeStyleBuild> queueTaskFuture = project.scheduleBuild2(0, new Cause.UserIdCause());
@@ -107,7 +117,7 @@ public class CodeSonarPublisherIT {
         boolean valid = false;
         List<String> log = b.getLog(500);
         for (String line : log) {
-            if (line.equals("ERROR: [CodeSonar] Error on url: http://10/index.xml")) {
+            if (line.equals(String.format("ERROR: %s", CodeSonarLogger.formatMessage("Error on url: {0}", "http://10/index.xml")))) {
                 valid = true;
                 break;
             }

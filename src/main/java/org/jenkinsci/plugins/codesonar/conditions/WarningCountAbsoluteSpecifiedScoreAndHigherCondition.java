@@ -1,16 +1,13 @@
 package org.jenkinsci.plugins.codesonar.conditions;
 
-import hudson.Extension;
-import hudson.Launcher;
-import hudson.model.Run;
-import hudson.model.TaskListener;
-import hudson.model.Result;
-
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
-import hudson.util.FormValidation;
+import javax.annotation.Nonnull;
+
 import org.jenkinsci.Symbol;
-import org.jenkinsci.plugins.codesonar.CodeSonarBuildAction;
+import org.jenkinsci.plugins.codesonar.CodeSonarLogger;
 import org.jenkinsci.plugins.codesonar.models.CodeSonarBuildActionDTO;
 import org.jenkinsci.plugins.codesonar.models.analysis.Analysis;
 import org.jenkinsci.plugins.codesonar.models.analysis.Warning;
@@ -18,14 +15,20 @@ import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 
-import javax.annotation.Nonnull;
+import hudson.Extension;
+import hudson.Launcher;
+import hudson.model.Result;
+import hudson.model.TaskListener;
+import hudson.util.FormValidation;
 
 /**
  * @author oehc
  */
 public class WarningCountAbsoluteSpecifiedScoreAndHigherCondition extends Condition {
+    private static final Logger LOGGER = Logger.getLogger(WarningCountAbsoluteSpecifiedScoreAndHigherCondition.class.getName());
 
     private static final String NAME = "Warning count absolute: specified score and higher";
+    private static final String RESULT_DESCRIPTION_MESSAGE_FORMAT = "rank={0,number,0}, threshold={1,number,0}, count={2,number,0}";
 
     private int rankOfWarnings = 30;
     private int warningCountThreshold = 20;
@@ -63,13 +66,20 @@ public class WarningCountAbsoluteSpecifiedScoreAndHigherCondition extends Condit
     }
 
     @Override
-    public Result validate(CodeSonarBuildActionDTO current, CodeSonarBuildActionDTO previous, Launcher launcher, TaskListener listener) {
-        
+    public Result validate(CodeSonarBuildActionDTO current, CodeSonarBuildActionDTO previous, Launcher launcher, TaskListener listener, CodeSonarLogger csLogger) {
         if (current == null) {
+            registerResult(csLogger, CURRENT_BUILD_DATA_NOT_AVAILABLE);
             return Result.SUCCESS;
         }
 
         Analysis analysis = current.getAnalysisActiveWarnings();
+        
+        // Going to produce build failure in the case of missing necessary information
+        if(analysis == null) {
+            LOGGER.log(Level.SEVERE, "\"analysisActiveWarnings\" data not found in persisted build.");
+            registerResult(csLogger, CURRENT_BUILD_DATA_NOT_AVAILABLE);
+            return Result.FAILURE;
+        }
 
         int severeWarnings = 0;
         List<Warning> warnings = analysis.getWarnings();
@@ -80,9 +90,11 @@ public class WarningCountAbsoluteSpecifiedScoreAndHigherCondition extends Condit
         }
 
         if (severeWarnings > warningCountThreshold) {
+            registerResult(csLogger, RESULT_DESCRIPTION_MESSAGE_FORMAT, rankOfWarnings, warningCountThreshold, severeWarnings);
             return Result.fromString(warrantedResult);
         }
 
+        registerResult(csLogger, RESULT_DESCRIPTION_MESSAGE_FORMAT, rankOfWarnings, warningCountThreshold, severeWarnings);
         return Result.SUCCESS;
     }
 

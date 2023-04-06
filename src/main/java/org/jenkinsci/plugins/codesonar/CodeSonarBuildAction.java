@@ -1,23 +1,31 @@
 package org.jenkinsci.plugins.codesonar;
 
+import java.io.IOException;
+import java.net.URI;
+import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import org.apache.commons.lang.StringUtils;
+import org.javatuples.Pair;
+import org.jenkinsci.plugins.codesonar.models.CodeSonarBuildActionDTO;
+import org.jenkinsci.plugins.codesonar.models.analysis.Analysis;
+import org.jenkinsci.plugins.codesonar.models.metrics.Metric;
+import org.jenkinsci.plugins.codesonar.models.metrics.Metrics;
+import org.kohsuke.stapler.StaplerRequest;
+import org.kohsuke.stapler.StaplerResponse;
+
 import hudson.model.Action;
 import hudson.model.Run;
 import hudson.util.ChartUtil;
 import hudson.util.DataSetBuilder;
-import java.io.IOException;
-import java.net.URI;
-import java.util.List;
-import org.javatuples.Pair;
-import org.jenkinsci.plugins.codesonar.models.CodeSonarBuildActionDTO;
-import org.jenkinsci.plugins.codesonar.models.metrics.Metric;
-import org.kohsuke.stapler.StaplerRequest;
-import org.kohsuke.stapler.StaplerResponse;
         
 /**
  *
  * @author andrius
  */
 public class CodeSonarBuildAction implements Action {
+    private static final Logger LOGGER = Logger.getLogger(CodeSonarBuildAction.class.getName());
     
     private final CodeSonarBuildActionDTO buildActionDTO;
     private final Run<?, ?> run;
@@ -52,7 +60,16 @@ public class CodeSonarBuildAction implements Action {
     @Override
     public String getUrlName() {
         URI baseHubUri = buildActionDTO.getBaseHubUri();
-        String analysisId = buildActionDTO.getAnalysisActiveWarnings().getAnalysisId();
+        if(baseHubUri == null) {
+            LOGGER.log(Level.WARNING, "\"baseHubUri\" not found in persisted build, returning empty URL name");
+            return StringUtils.EMPTY;
+        }
+        Analysis analysisActiveWarnings = buildActionDTO.getAnalysisActiveWarnings();
+        if(analysisActiveWarnings == null) {
+            LOGGER.log(Level.WARNING, "\"analysisActiveWarnings\" data not found in persisted build, returning empty URL name");
+            return StringUtils.EMPTY;
+        }
+        String analysisId = analysisActiveWarnings.getAnalysisId();
         return baseHubUri.resolve(String.format("/analysis/%s.html", analysisId)).toString();
     }
 
@@ -78,7 +95,11 @@ public class CodeSonarBuildAction implements Action {
                     continue;
                 }
                  
-                int totalNubmerOfWarnings = prevBuildActionDTO.getAnalysisActiveWarnings().getWarnings().size();
+                int totalNubmerOfWarnings = 0;
+                Analysis analysisActiveWarnings = prevBuildActionDTO.getAnalysisActiveWarnings();
+                if(analysisActiveWarnings != null) {
+                    totalNubmerOfWarnings = analysisActiveWarnings.getWarnings().size();
+                }
                 label = new ChartUtil.NumberOnlyBuildLabel((Run<?, ?>)codeSonarBuildAction.run);
                 dsb.add(totalNubmerOfWarnings, title, label);
             }
@@ -92,7 +113,12 @@ public class CodeSonarBuildAction implements Action {
                     continue;
                 }
 
-                Metric metric = prevBuildActionDTO.getMetrics().getMetricByName("LCodeOnly");
+                Metrics metrics = prevBuildActionDTO.getMetrics();
+                //Skip current build action iteration if metrics are missing
+                if(metrics == null) {
+                    continue;
+                }
+                Metric metric = metrics.getMetricByName("LCodeOnly");
                 int value = Integer.parseInt(metric.getValue());
                 label = new ChartUtil.NumberOnlyBuildLabel((Run<?, ?>)codeSonarBuildAction.run);
                 dsb.add(value, title, label);

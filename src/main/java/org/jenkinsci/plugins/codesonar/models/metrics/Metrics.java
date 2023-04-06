@@ -1,14 +1,16 @@
 package org.jenkinsci.plugins.codesonar.models.metrics;
 
-import hudson.AbortException;
 import java.io.Serializable;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
+
+import org.jenkinsci.plugins.codesonar.CodeSonarPluginException;
 
 /**
  *
@@ -20,8 +22,12 @@ public class Metrics implements Serializable {
 
     @XmlElement(name = "metric")
     private List<Metric> metrics;
+    
+    private CodeSonarPluginException createError(String msg, Object...args) {
+        return new CodeSonarPluginException(msg, args);
+    }
 
-    public Metric getMetricByName(String name) throws AbortException {
+    public Metric getMetricByName(String name) throws CodeSonarPluginException {
         if (metrics == null) {
             metrics = Collections.EMPTY_LIST;
         }
@@ -32,7 +38,7 @@ public class Metrics implements Serializable {
             }
         }
 
-        throw new AbortException(String.format("Metric by the name %s was not found on the hub", name));
+        throw createError("Metric by the name {0} was not found on the hub", name);
     }
 
     public List<Metric> getMetrics() {

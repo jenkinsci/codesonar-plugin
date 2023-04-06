@@ -1,24 +1,30 @@
 package org.jenkinsci.plugins.codesonar.conditions;
 
-import hudson.AbortException;
+import java.text.MessageFormat;
+
+import org.apache.commons.lang.StringUtils;
+import org.jenkinsci.plugins.codesonar.CodeSonarLogger;
+import org.jenkinsci.plugins.codesonar.models.CodeSonarBuildActionDTO;
+
 import hudson.DescriptorExtensionList;
 import hudson.ExtensionPoint;
 import hudson.Launcher;
-import hudson.model.Run;
 import hudson.model.Describable;
 import hudson.model.Descriptor;
 import hudson.model.Result;
 import hudson.model.TaskListener;
 import jenkins.model.Jenkins;
-import org.jenkinsci.plugins.codesonar.models.CodeSonarBuildActionDTO;
 
 /**
  *
  * @author andrius
  */
 public abstract class Condition implements Describable<Condition>, ExtensionPoint {
+    protected static final String CURRENT_BUILD_DATA_NOT_AVAILABLE = "current build not found";
+    protected static final String PREVIOUS_BUILD_DATA_NOT_AVAILABLE = "previous successful build not found";
+    private String resultDescription;
     
-    public abstract Result validate(CodeSonarBuildActionDTO current, CodeSonarBuildActionDTO previous, Launcher launcher, TaskListener listener);
+    public abstract Result validate(CodeSonarBuildActionDTO current, CodeSonarBuildActionDTO previous, Launcher launcher, TaskListener listener, CodeSonarLogger logger);
 
     @Override
     public Descriptor<Condition> getDescriptor() {
@@ -39,5 +45,21 @@ public abstract class Condition implements Describable<Condition>, ExtensionPoin
         }
 
         throw new NullPointerException("Jenkins is not started or is stopped");
+    }
+    
+    public String describeResult() {
+        if(StringUtils.isBlank(resultDescription)) {
+            return getDescriptor().getDisplayName();
+        }
+        return String.format("%s [%s]", getDescriptor().getDisplayName(), resultDescription);
+    }
+    
+    protected void registerResult(CodeSonarLogger logger, String message, Object...args) {
+        if(args != null && args.length > 0) {
+            resultDescription = MessageFormat.format(message, args);
+        } else {
+            resultDescription = message;
+        }
+        logger.writeInfo(resultDescription);
     }
 }

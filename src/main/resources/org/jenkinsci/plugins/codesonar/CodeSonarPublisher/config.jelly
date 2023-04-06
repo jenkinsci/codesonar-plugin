@@ -10,15 +10,19 @@
        <f:textbox />
     </f:entry>
 
-    <f:entry field="hubAddress" title="Hub address">
+    <f:entry field="hubAddress" title="Hub Address">
         <f:textbox/>
     </f:entry>
     
-    <f:entry field="projectName" title="Project name">
+    <f:entry field="projectName" title="Project Name">
         <f:textbox default="$${JOB_NAME}" />
     </f:entry>
 
-    <f:entry field="visibilityFilter" title="Use this visibility filter for the conditions (not for new!)">
+    <f:entry field="visibilityFilter" title="Visibility Filter: All Warnings">
+        <f:textbox/>
+    </f:entry>
+    
+    <f:entry field="newWarningsFilter" title="Visibility Filter: New Warnings">
         <f:textbox/>
     </f:entry>
 
@@ -30,7 +34,11 @@
         <c:select/>
     </f:entry>
 
-    <f:entry field="aid" title="Analysis ID Override">
+    <f:invisibleEntry field="aid" title="Analysis ID" >
+        <f:textbox/>
+    </f:invisibleEntry>
+    
+    <f:entry field="projectFile" title="CodeSonar Project File">
         <f:textbox/>
     </f:entry>
 

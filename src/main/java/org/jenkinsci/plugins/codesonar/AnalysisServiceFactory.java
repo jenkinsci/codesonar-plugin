@@ -1,28 +1,28 @@
 package org.jenkinsci.plugins.codesonar;
 
+import org.jenkinsci.plugins.codesonar.models.CodeSonarHubInfo;
 import org.jenkinsci.plugins.codesonar.services.AnalysisService;
 import org.jenkinsci.plugins.codesonar.services.HttpService;
 import org.jenkinsci.plugins.codesonar.services.IAnalysisService;
 import org.jenkinsci.plugins.codesonar.services.XmlSerializationService;
 
-import hudson.AbortException;
-
 public class AnalysisServiceFactory {
-    private String version;
+    private CodeSonarHubInfo hubInfo;
 
     public AnalysisServiceFactory() {
-        this.version = null;
+        this.hubInfo = null;
     }
     
-    public IAnalysisService getAnalysisService(HttpService httpService, XmlSerializationService xmlSerializationService) throws AbortException {
-        if (version == null) {
-            throw new AbortException("[CodeSonar] version could not be determined");
+    public IAnalysisService getAnalysisService(HttpService httpService, XmlSerializationService xmlSerializationService) throws CodeSonarPluginException {
+        if (hubInfo == null || hubInfo.getVersion() == null) {
+            throw new CodeSonarPluginException("Version could not be determined");
         }
         
-        return new AnalysisService(httpService, xmlSerializationService,"0");
+        return new AnalysisService(httpService, xmlSerializationService, IAnalysisService.VISIBILITY_FILTER_ALL_WARNINGS_DEFAULT, IAnalysisService.VISIBILITY_FILTER_NEW_WARNINGS_DEFAULT, hubInfo.isStrictQueryParametersEnforced());
     }
 
-    public void setVersion(String version) {
-        this.version = version;
+    public void setHubInfo(CodeSonarHubInfo hubInfo) {
+        this.hubInfo = hubInfo;
     }
+
 }

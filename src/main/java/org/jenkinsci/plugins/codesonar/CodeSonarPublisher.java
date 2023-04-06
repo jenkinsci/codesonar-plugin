@@ -1,12 +1,18 @@
 package org.jenkinsci.plugins.codesonar;
 
 import java.io.File;
+import java.io.FileFilter;
 import java.io.IOException;
 import java.net.URI;
+import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.security.KeyStore;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -19,6 +25,7 @@ import javax.annotation.Nonnull;
 
 import org.apache.commons.collections.ListUtils;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.math.NumberUtils;
 import org.javatuples.Pair;
 import org.jenkinsci.Symbol;
 import org.jenkinsci.plugins.codesonar.conditions.Condition;
@@ -53,7 +60,6 @@ import com.cloudbees.plugins.credentials.common.UsernamePasswordCredentials;
 import com.cloudbees.plugins.credentials.domains.DomainRequirement;
 import com.google.common.base.Throwables;
 
-import hudson.AbortException;
 import hudson.DescriptorExtensionList;
 import hudson.Extension;
 import hudson.FilePath;
@@ -83,12 +89,17 @@ import jenkins.tasks.SimpleBuildStep;
 public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
     private static final Logger LOGGER = Logger.getLogger(CodeSonarPublisher.class.getName());
     
-    private String visibilityFilter = "2"; // active warnings
+    private static final String CS_PROJECT_FILE_EXTENSION = ".prj";
+    private static final String CS_PROJECT_DIR_EXTENSION = ".prj_files";
+    
+    private String visibilityFilter;
+    private String newWarningsFilter;
     private String hubAddress;
     private String projectName;
     private String protocol = "http";
     private String aid;
     private int socketTimeoutMS = -1;
+    private String projectFile;
 
     private XmlSerializationService xmlSerializationService = null;
     private HttpService httpService = null;
@@ -121,9 +132,12 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
             conditions = ListUtils.EMPTY_LIST;
         }
         this.conditions = conditions;
-
         this.credentialId = credentialId;
         this.visibilityFilter = visibilityFilter;
+    }
+    
+    private CodeSonarPluginException createError(String msg, Object...args) {
+        return new CodeSonarPluginException(msg, args);
     }
 
     @DataBoundSetter
@@ -159,45 +173,161 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
     }
 
     public String getVisibilityFilter() {
-        // Backwards compatibility!
-        // Not pressed save after upgrade!
-        if(StringUtils.isBlank(this.visibilityFilter)){
-            return "2"; // Active warnings!
-        }
-        return this.visibilityFilter;
+        return visibilityFilter;
     }
     
-    private static final class DetermineAid implements FileCallable<String> {
+    public String getVisibilityFilterOrDefault() {
+        return StringUtils.isNotBlank(visibilityFilter) ? visibilityFilter : IAnalysisService.VISIBILITY_FILTER_ALL_WARNINGS_DEFAULT;
+    }
+    
+    public String getProjectFile() {
+        return projectFile;
+    }
+
+    @DataBoundSetter
+    public void setProjectFile(String projectFile) {
+        this.projectFile = projectFile;
+    }
+    
+    public String getNewWarningsFilter() {
+        return newWarningsFilter;
+    }
+    
+    public String getNewWarningsFilterOrDefault() {
+        return StringUtils.isNotBlank(newWarningsFilter) ? newWarningsFilter : IAnalysisService.VISIBILITY_FILTER_NEW_WARNINGS_DEFAULT;
+    }
+
+    @DataBoundSetter
+    public void setNewWarningsFilter(String newWarningsFilter) {
+        this.newWarningsFilter = newWarningsFilter;
+    }
+
+    public static final class DetermineAid implements FileCallable<String> {
+        
+        private static final String FILE_AID_TXT = "aid.txt";
+        private String projectFile;
+        
+        public DetermineAid(String projectFile) {
+            this.projectFile = projectFile;
+        }
+
+        private IOException createError(String msg) {
+            IOException e = new IOException(msg); 
+            LOGGER.log(Level.SEVERE, msg, e);
+            return e;
+        }
+        
+        /**
+         * Get CodeSonar Project File base name, removing known extensions.
+         * @return Path representing CodeSonar Project File base name
+         */
+        private String getProjectFileBaseName(String fileName) {
+            String baseFileName = fileName;
+            //Remove extension if it is one of the known ones (.prj, .prj_files)
+            if(StringUtils.endsWith(baseFileName, CS_PROJECT_FILE_EXTENSION)) {
+                baseFileName = baseFileName.substring(0, baseFileName.lastIndexOf(CS_PROJECT_FILE_EXTENSION));
+            } else if(StringUtils.endsWith(baseFileName, CS_PROJECT_DIR_EXTENSION)) {
+                baseFileName = baseFileName.substring(0, baseFileName.lastIndexOf(CS_PROJECT_DIR_EXTENSION));
+            }
+            return baseFileName;
+        }
+        
+        private Path getPrjFilesDirectory(Path projectFilePath) throws IOException {
+            Path originalFileName = projectFilePath.getFileName();
+            if(originalFileName == null) {
+                throw createError(MessageFormat.format("Specified CodeSonar Project File \"{0}\" does not represent a file or a directory neither", projectFilePath.toString()));
+            }
+            String projectFileBaseName = getProjectFileBaseName(originalFileName.toString());
+            Path resultingPath = Paths.get(projectFileBaseName + CS_PROJECT_DIR_EXTENSION);
+            Path parentPath = projectFilePath.getParent();
+            if(parentPath != null) {
+                resultingPath = parentPath.resolve(resultingPath);
+            }
+            return resultingPath;
+        }
+        
+        /**
+         * Determine the real file system location described by path.
+         * If path is absolute than there's nothing additional to do,
+         * whereas if it is relative, it will be resolved to its absolute form
+         * starting the resolution process from jenkin's current working directory.
+         * @param jenkinsPipelineCWD Jenkin's current working directory for a given pipeline
+         * @param path A path
+         * @return The absolute form for parameter path
+         */
+        private Path resolveRelativePath(File jenkinsPipelineCWD, Path path) {
+            if(!path.isAbsolute()) {
+                /* If path is expressed as relative, then it is always 
+                 * considered relative to pipeline's current working directory
+                 */
+                path = jenkinsPipelineCWD.toPath().resolve(path).normalize();
+            }
+            return path;
+        }
+        
+        private String readAidFileContent(File aidFile) throws IOException, InterruptedException {
+            FilePath fp = new FilePath(aidFile);
+            LOGGER.log(Level.INFO, "Found aid.txt: " + aidFile);
+            String aid = fp.readToString();
+            if(StringUtils.isBlank(aid)) {
+                throw createError("File aid.txt is empty");
+            }
+            return aid;
+        }
+        
         @Override
-        public String invoke(File file, VirtualChannel vc) throws IOException, InterruptedException {
-            LOGGER.log(Level.INFO, "Finding aid....");
-            if(file != null ) {
-                File[] files = file.listFiles();
-                if(files != null) {
-                    LOGGER.log(Level.INFO, "Enumerating files to find aid....");
-                    for(File f : files) {
-                        if (f.isDirectory() && f.getName().endsWith(".prj_files")) {
-                            //String foundAid = new String(Files.readAllBytes(), StandardCharsets.UTF_8);
-                            File aidPath = new File(f, "aid.txt");
-                            FilePath fp = new FilePath(aidPath);
-                            LOGGER.log(Level.INFO, "Found project aid: "+aidPath);
-                            return fp.readToString();
-                        }
-                    }
+        public String invoke(File jenkinsPipelineCWD, VirtualChannel vc) throws IOException, InterruptedException {
+            /*
+             * If it has been specified parameter "projectFile" for this pipeline, then use it
+             * to determine where to search into in order to retrieve the prj_files directory
+             */
+            if(StringUtils.isNotBlank(projectFile)) {
+                Path projectFilePath = null;
+                try {
+                    projectFilePath = Paths.get(projectFile);
+                } catch(InvalidPathException e) {
+                    throw createError(MessageFormat.format("Specified CodeSonar Project File \"{0}\" does not represent a file path", projectFile));
+                }
+                Path prjFilesDirectoryPath = getPrjFilesDirectory(projectFilePath);
+                Path prjFilesDirectoryAbsolutePath = resolveRelativePath(jenkinsPipelineCWD, prjFilesDirectoryPath);
+                //Check that prj_files directory exists
+                if(Files.isDirectory(prjFilesDirectoryAbsolutePath)) {
+                    LOGGER.log(Level.INFO, "Finding aid.txt into {0}....", prjFilesDirectoryAbsolutePath.toString());
+                    File aidFile = new File(prjFilesDirectoryAbsolutePath.toFile(), FILE_AID_TXT);
+                    return readAidFileContent(aidFile);
                 } else {
-                    LOGGER.log(Level.SEVERE, "No files, this is not supposed to happen!");
+                    throw createError(MessageFormat.format(".prj_files directory \"{0}\" seems not to exist", prjFilesDirectoryAbsolutePath.toString()));
                 }
             } else {
-                LOGGER.log(Level.WARNING, "No workspace!");
+                
+                if(jenkinsPipelineCWD != null ) {
+                    LOGGER.log(Level.INFO, "Finding aid.txt into {0}....", jenkinsPipelineCWD.getAbsoluteFile());
+                    File[] prjFilesDirectories = jenkinsPipelineCWD.listFiles(new FileFilter() {
+                        @Override
+                        public boolean accept(File pathname) {
+                            return pathname.isDirectory() && pathname.getName().endsWith(CS_PROJECT_DIR_EXTENSION);
+                        }
+                    });
+                    if(prjFilesDirectories != null && prjFilesDirectories.length > 0) {
+                        File prjFilesDir = prjFilesDirectories[0];
+                        if(prjFilesDirectories.length > 1) {
+                            LOGGER.log(Level.WARNING, "More than one .prj_files directory found, going to take the first one: " + prjFilesDir);
+                        }
+                        File aidFile = new File(prjFilesDir, FILE_AID_TXT);
+                        return readAidFileContent(aidFile);
+                    } else {
+                        LOGGER.log(Level.SEVERE, "No prj_files directory found!");
+                    }
+                } else {
+                    LOGGER.log(Level.WARNING, "Could not determine Jenkins build working directory.");
+                }
+                throw createError("Could not find a .prj_files folder for project");
             }
-            IOException ex = new IOException("Could not find a .prj files folder for project"); 
-            LOGGER.log(Level.SEVERE, "Could not find a .prj files folder for project", ex);
-            throw ex;
         }
 
         @Override
         public void checkRoles(RoleChecker rc) throws SecurityException { }
- 
+        
     }
        
     @Override
@@ -215,16 +345,22 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
 
         String expandedHubAddress = run.getEnvironment(listener).expand(Util.fixNull(hubAddress));
         String expandedProjectName = run.getEnvironment(listener).expand(Util.fixNull(projectName));
+        LOGGER.log(Level.INFO, "projectName: {0} expandedProjectName {1}", new String[] {projectName, expandedProjectName});
+        String expandedProjectFile = run.getEnvironment(listener).expand(Util.fixNull(projectFile));
+        LOGGER.log(Level.INFO, "projectFile: {0} expandedProjectFile {1}", new String[] {projectFile, expandedProjectFile});
+
 
         if (expandedHubAddress.isEmpty()) {
-            throw new AbortException("[CodeSonar] Hub address not provided");
+            throw createError("Hub address not provided");
         }
         if (expandedProjectName.isEmpty()) {
-            throw new AbortException("[CodeSonar] Project name not provided");
+            throw createError("Project name not provided");
         }
+        
+        CodeSonarLogger csLogger = new CodeSonarLogger(listener.getLogger());
 
         URI baseHubUri = URI.create(String.format("%s://%s", getProtocol(), expandedHubAddress));
-        listener.getLogger().println("[CodeSonar] Using hub URI: "+baseHubUri);
+        csLogger.writeInfo("Using hub URI: {0}", baseHubUri);
 
         CodeSonarHubInfo hubInfo = hubInfoService.fetchHubInfo(baseHubUri);
         LOGGER.log(Level.FINE, "hub version: {0}", hubInfo.getVersion());
@@ -232,68 +368,81 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
         authenticate(run, baseHubUri, hubInfo.isOpenAPISupported());
 
         analysisServiceFactory = getAnalysisServiceFactory();
-        analysisServiceFactory.setVersion(hubInfo.getVersion());
+        analysisServiceFactory.setHubInfo(hubInfo);
         analysisService = analysisServiceFactory.getAnalysisService(httpService, xmlSerializationService);
-        analysisService.setVisibilityFilter(getVisibilityFilter());
+        analysisService.setVisibilityFilter(getVisibilityFilterOrDefault());
+        analysisService.setNewWarningsFilter(getNewWarningsFilterOrDefault());
 
+        String analysisId = null;
         if(StringUtils.isBlank(aid)) {
-            LOGGER.log(Level.INFO, "[CodeSonar] Determining analysis id...");
-            aid = workspace.act(new DetermineAid());
+            LOGGER.log(Level.INFO, "Determining analysis id...");
+            analysisId = workspace.act(new DetermineAid(expandedProjectFile));
+            LOGGER.log(Level.INFO, "Found analysis id: {0}", analysisId);
         } else {
-            LOGGER.log(Level.INFO, "[CodeSonar] Using override analysis id: '" + aid + "'.");
+            analysisId = aid;
+            LOGGER.log(Level.INFO, "Using override analysis id: \"" + aid + "\".");
         }
         
-        String analysisUrl = baseHubUri.toString() + "/analysis/" + aid + ".xml";
+        String analysisUrl = baseHubUri.toString() + "/analysis/" + analysisId + ".xml";
 
         Analysis analysisWarnings = analysisService.getAnalysisFromUrlWarningsByFilter(analysisUrl);
-        URI metricsUri = metricsService.getMetricsUriFromAnAnalysisId(baseHubUri, aid);
+        URI metricsUri = metricsService.getMetricsUriFromAnAnalysisId(baseHubUri, analysisId);
         Metrics metrics = metricsService.getMetricsFromUri(metricsUri);
-        URI proceduresUri = proceduresService.getProceduresUriFromAnAnalysisId(baseHubUri, aid);
+        URI proceduresUri = proceduresService.getProceduresUriFromAnAnalysisId(baseHubUri, analysisId);
         Procedures procedures = proceduresService.getProceduresFromUri(proceduresUri);
 
         Analysis analysisNewWarnings = analysisService.getAnalysisFromUrlWithNewWarnings(analysisUrl);
         List<Pair<String, String>> conditionNamesAndResults = new ArrayList<>();
-
-        CodeSonarBuildActionDTO buildActionDTO = new CodeSonarBuildActionDTO(analysisWarnings, analysisNewWarnings, metrics, procedures, baseHubUri);
+        
+        Long lAnalysisId = null;
+        try {
+            lAnalysisId = Long.valueOf(analysisId);
+        } catch(NumberFormatException e) {
+            LOGGER.log(Level.WARNING, "Unable to parse analysis id \"" + analysisId + "\" as long integer.");
+        }
+        CodeSonarBuildActionDTO buildActionDTO = new CodeSonarBuildActionDTO(lAnalysisId, analysisWarnings, analysisNewWarnings, metrics, procedures, baseHubUri);
         CodeSonarBuildAction csba = new CodeSonarBuildAction(buildActionDTO, run, expandedProjectName, analysisUrl);
         
-        listener.getLogger().println("[CodeSonar] Finding previous builds for comparison");
+        csLogger.writeInfo("Finding previous builds for comparison");
         
         CodeSonarBuildActionDTO compareDTO = null;
-        Run<?,?> previosSuccess = run.getPreviousSuccessfulBuild();
-        if(previosSuccess != null) {
-            listener.getLogger().println("[CodeSonar] Found previous build to compare to");
-            List<CodeSonarBuildAction> actions = previosSuccess.getActions(CodeSonarBuildAction.class).stream().filter(c -> c.getProjectName() != null && c.getProjectName().equals(expandedProjectName)).collect(Collectors.toList());
-            if(actions != null && !actions.isEmpty() && actions.size() < 2) {
-                listener.getLogger().println("[CodeSonar] Found comparison data");
-                compareDTO = actions.get(0).getBuildActionDTO();
+        Run<?,?> previousSuccess = run.getPreviousSuccessfulBuild();
+        if(previousSuccess != null) {
+            csLogger.writeInfo("Found previous build to compare to ({0})", previousSuccess.getDisplayName());
+            List<CodeSonarBuildAction> actionsList = previousSuccess.getActions(CodeSonarBuildAction.class);
+            List<CodeSonarBuildAction> filteredActions = actionsList.stream()
+                    .filter(c -> c.getProjectName() != null && c.getProjectName().equals(expandedProjectName))
+                    .collect(Collectors.toList());
+            if(filteredActions != null && !filteredActions.isEmpty() && filteredActions.size() < 2) {
+                csLogger.writeInfo("Found comparison data");
+                compareDTO = filteredActions.get(0).getBuildActionDTO();
             }
         }
         
-        listener.getLogger().println("[CodeSonar] Evaluating conditions");
+        csLogger.writeInfo("Evaluating conditions");
 
         for (Condition condition : conditions) {
-            Result validationResult = condition.validate(buildActionDTO, compareDTO, launcher, listener);
-            Pair<String, String> pair = Pair.with(condition.getDescriptor().getDisplayName(), validationResult.toString());
+            Result validationResult = condition.validate(buildActionDTO, compareDTO, launcher, listener, csLogger);
+            Pair<String, String> pair = Pair.with(condition.describeResult(), validationResult.toString());
             conditionNamesAndResults.add(pair);
             run.setResult(validationResult);
-            listener.getLogger().println(String.format("[CodeSonar] '%s' marked the build as %s", condition.getDescriptor().getDisplayName(), validationResult.toString()));
+            csLogger.writeInfo("\"{0}\" marked the build as {1}", condition.getDescriptor().getDisplayName(), validationResult.toString());
         }
         
-        listener.getLogger().println("[CodeSonar] Done evaluating conditions");
+        csLogger.writeInfo("Done evaluating conditions");
         
         csba.getBuildActionDTO().setConditionNamesAndResults(conditionNamesAndResults);
         run.addAction(csba);
         authenticationService.signOut(baseHubUri);
             
-        listener.getLogger().println("[CodeSonar] Done performing codesonar actions");
+        csLogger.writeInfo("Done performing codesonar actions");
     }
 
-    private void authenticate(Run<?, ?> run, URI baseHubUri, boolean supportsOpenAPI) throws AbortException {
+    private void authenticate(Run<?, ?> run, URI baseHubUri, boolean supportsOpenAPI) throws CodeSonarPluginException {
         //If clientCertificateCredentials is null, then authenticate as anonymous
         if(clientCertificateCredentials != null) {
             if (clientCertificateCredentials instanceof StandardUsernamePasswordCredentials) {
-                LOGGER.log(Level.INFO, "[CodeSonar] Authenticating using username and password");
+                LOGGER.log(Level.INFO, "Authenticating using username and password");
                 UsernamePasswordCredentials c = (UsernamePasswordCredentials) clientCertificateCredentials;
     
                 authenticationService.authenticate(baseHubUri,
@@ -301,16 +450,16 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
                         c.getUsername(),
                         c.getPassword().getPlainText());
             } else if (clientCertificateCredentials instanceof StandardCertificateCredentials) {
-                LOGGER.log(Level.INFO, "[CodeSonar] Authenticating using SSL certificate");
+                LOGGER.log(Level.INFO, "Authenticating using SSL certificate");
                 if (protocol.equals("http")) {
-                    throw new AbortException("[CodeSonar] Authentication using a certificate is only available while SSL is enabled.");
+                    throw createError("Authentication using a certificate is only available while SSL is enabled.");
                 }
     
                 authenticationService.authenticate(baseHubUri,
                         supportsOpenAPI);
             }
         } else {
-            LOGGER.log(Level.INFO, "[CodeSonar] Authenticating as anonymous");
+            LOGGER.log(Level.INFO, "Authenticating as anonymous");
         }
     }
 
@@ -414,7 +563,7 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
         return xmlSerializationService;
     }
 
-    public HttpService getHttpService(@Nonnull Run<?, ?> run) throws AbortException {
+    public HttpService getHttpService(@Nonnull Run<?, ?> run) throws CodeSonarPluginException {
         if (httpService == null) {
             Collection<? extends Certificate> serverCertificates = null;
             if(StringUtils.isNotEmpty(serverCertificateCredentialId)) {
@@ -423,22 +572,22 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
                                 Collections.<DomainRequirement>emptyList()), CredentialsMatchers.withId(getServerCertificateCredentialId()));
     
                 if(serverCertificateCredentials instanceof FileCredentials) {
-                    LOGGER.log(Level.INFO, "[CodeSonar] Found FileCredentials provided as Hub HTTPS certificate");
+                    LOGGER.log(Level.INFO, "Found FileCredentials provided as Hub HTTPS certificate");
                     FileCredentials f = (FileCredentials) serverCertificateCredentials;
                     try {
                         CertificateFactory cf = CertificateFactory.getInstance("X.509");
                         serverCertificates = cf.generateCertificates(f.getContent());
-                        LOGGER.log(Level.INFO, "[CodeSonar] X509Certificate initialized");
+                        LOGGER.log(Level.INFO, "X509Certificate initialized");
                     } catch (IOException | CertificateException e ) {
-                        throw new AbortException(String.format("[CodeSonar] Failed to create X509Certificate from Secret File Credential. %n[CodeSonar] %s: %s%n[CodeSonar] Stack Trace: %s", e.getClass().getName(), e.getMessage(), Throwables.getStackTraceAsString(e)));
+                        throw createError("Failed to create X509Certificate from Secret File Credential. %n{0}: {1}%nStack Trace: {2}", e.getClass().getName(), e.getMessage(), Throwables.getStackTraceAsString(e));
                     }
                 } else {
                     if(serverCertificateCredentials != null) {
-                        LOGGER.log(Level.INFO, "[CodeSonar] Found {0} provided as Hub HTTPS certificate", serverCertificateCredentials.getClass().getName());
-                        throw new AbortException(String.format("[CodeSonar] The Jenkins Credentials provided as Hub HTTPS certificate is of type %s.%n[CodeSonar] Please provide a credential of type FileCredentials", serverCertificateCredentials.getClass().getName()));
+                        LOGGER.log(Level.INFO, "Found {0} provided as Hub HTTPS certificate", serverCertificateCredentials.getClass().getName());
+                        throw createError("The Jenkins Credentials provided as Hub HTTPS certificate is of type {0}.%nPlease provide a credential of type FileCredentials", serverCertificateCredentials.getClass().getName());
                     }
-                    LOGGER.log(Level.INFO, "[CodeSonar] Credentials with id '{0}' not found", getServerCertificateCredentialId());
-                    throw new AbortException(String.format("[CodeSonar] Credentials with id '{0}' not found", getServerCertificateCredentialId()));
+                    LOGGER.log(Level.INFO, "Credentials with id \"{0}\" not found", getServerCertificateCredentialId());
+                    throw createError(CodeSonarLogger.formatMessage("Credentials with id \"{0}\" not found", getServerCertificateCredentialId()));
                 }
             }
             
@@ -453,10 +602,10 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
 
                 if (clientCertificateCredentials instanceof StandardCertificateCredentials) {
                     if (protocol.equals("http")) {
-                        throw new AbortException("[CodeSonar] Authentication using a certificate is only available while SSL is enabled.");
+                        throw createError(CodeSonarLogger.formatMessage("Authentication using a certificate is only available while SSL is enabled."));
                     }
         
-                    LOGGER.log(Level.INFO, "[CodeSonar] Configuring HttpClient with certificate authentication");
+                    LOGGER.log(Level.INFO, "Configuring HttpClient with certificate authentication");
                     
                     StandardCertificateCredentials c = (StandardCertificateCredentials) clientCertificateCredentials;
         
@@ -470,28 +619,28 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
         return httpService;
     }
 
-    public AuthenticationService getAuthenticationService(@Nonnull Run<?, ?> run) throws AbortException {
+    public AuthenticationService getAuthenticationService(@Nonnull Run<?, ?> run) throws CodeSonarPluginException {
         if (authenticationService == null) {
             authenticationService = new AuthenticationService(getHttpService(run));
         }
         return authenticationService;
     }
 
-    public MetricsService getMetricsService(@Nonnull Run<?, ?> run) throws AbortException {
+    public MetricsService getMetricsService(@Nonnull Run<?, ?> run) throws CodeSonarPluginException {
         if (metricsService == null) {
             metricsService = new MetricsService(getHttpService(run), getXmlSerializationService());
         }
         return metricsService;
     }
 
-    public ProceduresService getProceduresService(@Nonnull Run<?, ?> run) throws AbortException {
+    public ProceduresService getProceduresService(@Nonnull Run<?, ?> run) throws CodeSonarPluginException {
         if (proceduresService == null) {
             proceduresService = new ProceduresService(getHttpService(run), getXmlSerializationService());
         }
         return proceduresService;
     }
     
-    public HubInfoService getHubInfoService(@Nonnull Run<?, ?> run) throws AbortException {
+    public HubInfoService getHubInfoService(@Nonnull Run<?, ?> run) throws CodeSonarPluginException {
         if (hubInfoService == null) {
             hubInfoService = new HubInfoService(getHttpService(run));
         }
@@ -530,30 +679,45 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
         }
         
         public FormValidation doCheckHubAddress(@QueryParameter("hubAddress") String hubAddress) {
-            if (!StringUtils.isBlank(hubAddress)) {
-                return FormValidation.ok();
+            if (StringUtils.isBlank(hubAddress)) {
+                return FormValidation.error("Hub address cannot be empty.");
             }
 
             if(hubAddress.startsWith("http://") || hubAddress.startsWith("https://")) {
                 return FormValidation.error("Protocol should not be part of the hub address, protocol is selected in seperate field");
             }
 
-            return FormValidation.error("Hub address cannot be empty.");
+            return FormValidation.ok();
         }
 
         public FormValidation doCheckProjectName(@QueryParameter("projectName") String projectName) {
-            if (!StringUtils.isBlank(projectName)) {
-                return FormValidation.ok();
+            if (StringUtils.isBlank(projectName)) {
+                return FormValidation.error("Project name cannot be empty.");
             }
-            return FormValidation.error("Project name cannot be empty.");
+            return FormValidation.ok();
         }
 
         public FormValidation doCheckVisibilityFilter(@QueryParameter("visibilityFilter") String visibilityFilter){
-            if (!StringUtils.isBlank(visibilityFilter)) {
+            return validateVisibilityFilter(visibilityFilter);
+        }
+        
+        public FormValidation doCheckNewWarningsFilter(@QueryParameter("newWarningsFilter") String visibilityFilter){
+            return validateVisibilityFilter(visibilityFilter);
+        }
+
+        private FormValidation validateVisibilityFilter(String visibilityFilter) {
+            if (StringUtils.isBlank(visibilityFilter)) {
+                //When left blank, use predefined default filter
                 return FormValidation.ok();
             }
-            if(!StringUtils.isNumeric(visibilityFilter) && Integer.parseInt(visibilityFilter) < 0){
-                return FormValidation.error("The visibility filter must be a positive integer");
+            if(NumberUtils.isNumber(visibilityFilter)) {
+                try {
+                    if(Integer.parseInt(visibilityFilter) < 0) {
+                        return FormValidation.error("The visibility filter must be a positive integer");
+                    }
+                } catch(NumberFormatException e) {
+                    return FormValidation.error("Invalid numeric value for visibility filter", visibilityFilter);
+                }
             }
             // It's a bit tricky to check if the visibility filter number is actually defined,
             // as there's no URL to check this. The URLs contain the entire query string, which

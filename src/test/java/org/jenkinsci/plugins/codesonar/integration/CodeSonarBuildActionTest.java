@@ -28,6 +28,7 @@ public class CodeSonarBuildActionTest {
     public void testJEP200() throws Exception {
          FreeStyleProject fp = jr.createFreeStyleProject("JEP-200");
          Run<?,?> r = jr.buildAndAssertSuccess(fp);
+         Long analysisId = Long.valueOf(1L);
          Analysis a = new Analysis();
          Analysis a2 = new Analysis();
          Metric m = new Metric("fuzzyness", "42");
@@ -36,7 +37,7 @@ public class CodeSonarBuildActionTest {
          Procedures p = new Procedures();
          Pair<String, String> pp = new Pair<>("hello","there");
 
-         CodeSonarBuildActionDTO dto = new CodeSonarBuildActionDTO(a, a2, ms, p, URI.create("http://localhost"));
+         CodeSonarBuildActionDTO dto = new CodeSonarBuildActionDTO(analysisId, a, a2, ms, p, URI.create("http://localhost"));
          dto.setConditionNamesAndResults(Arrays.asList(pp));
 
          r.addAction(new CodeSonarBuildAction(dto, r, "dummy","dummy"));
