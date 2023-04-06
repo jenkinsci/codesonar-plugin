@@ -12,6 +12,7 @@ import org.jenkinsci.plugins.codesonar.CodeSonarLogger;
 import org.jenkinsci.plugins.codesonar.CodeSonarPublisher;
 import org.jenkinsci.plugins.codesonar.conditions.Condition;
 import org.jenkinsci.plugins.codesonar.conditions.WarningCountIncreaseSpecifiedScoreAndHigherCondition;
+import org.jenkinsci.plugins.codesonar.services.IAnalysisService;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
@@ -53,8 +54,8 @@ public class CodeSonarPublisherIT {
         FreeStyleProject project = jenkinsRule.createFreeStyleProject();
 
         List<Condition> conditions = new ArrayList<>();
-        CodeSonarPublisher codeSonarPublisher = new CodeSonarPublisher(conditions, "http", EMPTY_HUB_ADDRESS, VALID_PROJECT_NAME, "", "active");
-        codeSonarPublisher.setNewWarningsFilter("all");
+        CodeSonarPublisher codeSonarPublisher = new CodeSonarPublisher(conditions, "http", EMPTY_HUB_ADDRESS, VALID_PROJECT_NAME, "", IAnalysisService.VISIBILITY_FILTER_ALL_WARNINGS_DEFAULT);
+        codeSonarPublisher.setNewWarningsFilter(IAnalysisService.VISIBILITY_FILTER_NEW_WARNINGS_DEFAULT);
         codeSonarPublisher.setProjectFile(VALID_CODESONAR_PROJECT_FILE);
         project.getPublishersList().add(codeSonarPublisher);
 
@@ -83,8 +84,8 @@ public class CodeSonarPublisherIT {
         FreeStyleProject project = jenkinsRule.createFreeStyleProject();
         
         List<Condition> conditions = new ArrayList<>();
-        CodeSonarPublisher codeSonarPublisher = new CodeSonarPublisher(conditions, "http", VALID_HUB_ADDRESS, EMPTY_PROJECT_NAME,"", "active");
-        codeSonarPublisher.setNewWarningsFilter("all");
+        CodeSonarPublisher codeSonarPublisher = new CodeSonarPublisher(conditions, "http", VALID_HUB_ADDRESS, EMPTY_PROJECT_NAME,"", IAnalysisService.VISIBILITY_FILTER_ALL_WARNINGS_DEFAULT);
+        codeSonarPublisher.setNewWarningsFilter(IAnalysisService.VISIBILITY_FILTER_NEW_WARNINGS_DEFAULT);
         codeSonarPublisher.setProjectFile(VALID_CODESONAR_PROJECT_FILE);
         project.getPublishersList().add(codeSonarPublisher);
         

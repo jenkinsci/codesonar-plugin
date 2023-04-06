@@ -1,21 +1,43 @@
 package org.jenkinsci.plugins.codesonar;
 
-import hudson.model.Result;
 import java.util.ArrayList;
 import java.util.List;
-import javaposse.jobdsl.dsl.Context;
+
 import org.jenkinsci.plugins.codesonar.conditions.Condition;
 import org.jenkinsci.plugins.codesonar.conditions.NewWarningsIncreasedByPercentageCondition;
-import org.jenkinsci.plugins.codesonar.conditions.WarningCountIncreaseSpecifiedScoreAndHigherCondition;
 import org.jenkinsci.plugins.codesonar.conditions.ProcedureCyclomaticComplexityExceededCondition;
 import org.jenkinsci.plugins.codesonar.conditions.RedAlertLimitCondition;
-import org.jenkinsci.plugins.codesonar.conditions.WarningCountIncreaseOverallCondition;
-import org.jenkinsci.plugins.codesonar.conditions.YellowAlertLimitCondition;
 import org.jenkinsci.plugins.codesonar.conditions.WarningCountAbsoluteSpecifiedScoreAndHigherCondition;
+import org.jenkinsci.plugins.codesonar.conditions.WarningCountIncreaseOverallCondition;
+import org.jenkinsci.plugins.codesonar.conditions.WarningCountIncreaseSpecifiedScoreAndHigherCondition;
+import org.jenkinsci.plugins.codesonar.conditions.YellowAlertLimitCondition;
+
+import hudson.model.Result;
+import javaposse.jobdsl.dsl.Context;
 
 class CodeSonarJobDslContext implements Context {
 
-    List<Condition> conditions = new ArrayList<>();
+    private List<Condition> conditions = new ArrayList<>();
+    private int socketTimeoutMS = -1;
+    private String sslCertificateCredentialId;
+    private String projectFile;
+    private String newWarningsFilter;
+    
+    public void socketTimeoutMS(int value) {
+        socketTimeoutMS = value;
+    }
+    
+    public void sslCertificateCredentialId(String value) {
+        sslCertificateCredentialId = value;
+    }
+    
+    public void projectFile(String value) {
+        projectFile = value;
+    }
+    
+    public void newWarningsFilter(String value) {
+        newWarningsFilter = value;
+    }
 
     public void cyclomaticComplexity(int max, boolean fail) {
         ProcedureCyclomaticComplexityExceededCondition condition = new ProcedureCyclomaticComplexityExceededCondition(max);
@@ -85,5 +107,25 @@ class CodeSonarJobDslContext implements Context {
             condition.setWarrantedResult(Result.UNSTABLE.toString());
         }
         conditions.add(condition);
+    }
+
+    public List<Condition> getConditions() {
+        return conditions;
+    }
+
+    public int getSocketTimeoutMS() {
+        return socketTimeoutMS;
+    }
+
+    public String getSslCertificateCredentialId() {
+        return sslCertificateCredentialId;
+    }
+
+    public String getProjectFile() {
+        return projectFile;
+    }
+
+    public String getNewWarningsFilter() {
+        return newWarningsFilter;
     }
 }
