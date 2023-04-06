@@ -2,6 +2,10 @@
 
 === Master ===
 
+=== Version 3.3.1 (April 2022) ===
+
+* Update job-dsl plugin dependency to address CVE-2019-1003034.
+
 === Version 3.3.0 (April 2022) ===
 
 * Add new `projectFile` parameter for CodeSonar project file path.
