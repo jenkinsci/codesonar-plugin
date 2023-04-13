@@ -144,7 +144,8 @@ public class AnalysisServiceTest {
     
     @Test
     public void providedValidAnalysisUrlAndUrlFilterNEW_shouldReturnAnAnalysisUrlForNewWarnings() throws IOException {
-        final String VALID_ANALYSIS_URL = "10.10.10.10";
+        final URI BASE_HUB_URI = URI.create("10.10.10.10");
+        final long ANALYSIS_ID = 15;
         final String RESPONSE_XML_CONTENT = "valid xml content";
         final InputStream RESPONSE_IS = IOUtils.toInputStream(RESPONSE_XML_CONTENT, "UTF-8");
         final Analysis ANALYSIS = new Analysis();
@@ -153,7 +154,7 @@ public class AnalysisServiceTest {
         when(mockedHttpService.getContentFromUrlAsInputStream(any(String.class))).thenReturn(RESPONSE_IS);
         when(mockedXmlSerializationService.deserialize(any(InputStream.class), isA(Class.class))).thenReturn(ANALYSIS);
 
-        Analysis analysis = analysisService.getAnalysisFromUrlWithNewWarnings(VALID_ANALYSIS_URL);
+        Analysis analysis = analysisService.getAnalysisFromUrlWithNewWarnings(BASE_HUB_URI, ANALYSIS_ID);
 
         assertNotNull(analysis);
     }

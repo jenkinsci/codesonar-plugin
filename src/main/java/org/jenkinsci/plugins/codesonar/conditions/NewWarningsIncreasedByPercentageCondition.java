@@ -8,8 +8,8 @@ import javax.annotation.Nonnull;
 import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.Symbol;
 import org.jenkinsci.plugins.codesonar.CodeSonarLogger;
-import org.jenkinsci.plugins.codesonar.models.CodeSonarBuildActionDTO;
-import org.jenkinsci.plugins.codesonar.models.analysis.Analysis;
+import org.jenkinsci.plugins.codesonar.models.CodeSonarAnalysisData;
+import org.jenkinsci.plugins.codesonar.models.CodeSonarAnalysisWarningCount;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
@@ -58,28 +58,28 @@ public class NewWarningsIncreasedByPercentageCondition extends Condition {
     }
 
     @Override
-    public Result validate(CodeSonarBuildActionDTO current, CodeSonarBuildActionDTO previous, Launcher launcher, TaskListener listener, CodeSonarLogger csLogger) {
+    public Result validate(CodeSonarAnalysisData current, CodeSonarAnalysisData previous, Launcher launcher, TaskListener listener, CodeSonarLogger csLogger) {
         if (current == null) {
             registerResult(csLogger, CURRENT_BUILD_DATA_NOT_AVAILABLE);
             return Result.SUCCESS;
         }
-        Analysis currentActiveWarnings = current.getAnalysisActiveWarnings();
-        Analysis currentNewWarnings = current.getAnalysisNewWarnings();
+        CodeSonarAnalysisWarningCount currentActiveWarnings = current.getActiveWarningsCount();
+        CodeSonarAnalysisWarningCount currentNewWarnings = current.getNewWarningsCount();
         
         // Going to produce build failures in the case of missing necessary information
         if(currentActiveWarnings == null) {
-            LOGGER.log(Level.SEVERE, "\"analysisActiveWarnings\" data not found in persisted build.");
+            LOGGER.log(Level.SEVERE, "\"currentActiveWarnings\" data not found.");
             registerResult(csLogger, CURRENT_BUILD_DATA_NOT_AVAILABLE);
             return Result.FAILURE;
         }
         if(currentNewWarnings == null) {
-            LOGGER.log(Level.SEVERE, "\"analysisNewWarnings\" data not found in persisted build.");
+            LOGGER.log(Level.SEVERE, "\"currentNewWarnings\" data not found.");
             registerResult(csLogger, CURRENT_BUILD_DATA_NOT_AVAILABLE);
             return Result.FAILURE;
         }        
 
-        float activeWarningCount = currentActiveWarnings.getWarnings().size();
-        float newWarningCount = currentNewWarnings.getWarnings().size();
+        float activeWarningCount = currentActiveWarnings.getNumberOfWarnings();
+        float newWarningCount = currentNewWarnings.getNumberOfWarnings();
         
         float result;
         //If there are no active warnings, redefine percentage of new warnings

@@ -8,8 +8,8 @@ import javax.annotation.Nonnull;
 import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.Symbol;
 import org.jenkinsci.plugins.codesonar.CodeSonarLogger;
-import org.jenkinsci.plugins.codesonar.models.CodeSonarBuildActionDTO;
-import org.jenkinsci.plugins.codesonar.models.analysis.Analysis;
+import org.jenkinsci.plugins.codesonar.models.CodeSonarAnalysisData;
+import org.jenkinsci.plugins.codesonar.models.CodeSonarAnalysisWarningCount;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
@@ -57,7 +57,7 @@ public class WarningCountIncreaseOverallCondition extends Condition {
     }
 
     @Override
-    public Result validate(CodeSonarBuildActionDTO current, CodeSonarBuildActionDTO previous, Launcher launcher, TaskListener listener, CodeSonarLogger csLogger) {
+    public Result validate(CodeSonarAnalysisData current, CodeSonarAnalysisData previous, Launcher launcher, TaskListener listener, CodeSonarLogger csLogger) {
         if (current == null) {
             registerResult(csLogger, CURRENT_BUILD_DATA_NOT_AVAILABLE);
             return Result.SUCCESS;
@@ -69,22 +69,22 @@ public class WarningCountIncreaseOverallCondition extends Condition {
         }
         
         // Going to produce build failures in the case of missing necessary information
-        Analysis previousAnalysisActiveWarnings = previous.getAnalysisActiveWarnings();
+        CodeSonarAnalysisWarningCount previousAnalysisActiveWarnings = previous.getActiveWarningsCount();
         if(previousAnalysisActiveWarnings == null) {
-            LOGGER.log(Level.SEVERE, "\"analysisActiveWarnings\" data not found in persisted build.");
+            LOGGER.log(Level.SEVERE, "\"analysisActiveWarnings\" data not found.");
             registerResult(csLogger, CURRENT_BUILD_DATA_NOT_AVAILABLE);
             return Result.FAILURE;
         }
-        Analysis currentAnalysisActiveWarnings = current.getAnalysisActiveWarnings();
+        CodeSonarAnalysisWarningCount currentAnalysisActiveWarnings = current.getNewWarningsCount();
         if(currentAnalysisActiveWarnings == null) {
-            LOGGER.log(Level.SEVERE, "\"analysisNewWarnings\" data not found in persisted build.");
+            LOGGER.log(Level.SEVERE, "\"analysisNewWarnings\" data not found.");
             registerResult(csLogger, CURRENT_BUILD_DATA_NOT_AVAILABLE);
             return Result.FAILURE;
         }    
 
-        int previousCount = previous.getAnalysisActiveWarnings().getWarnings().size();
-        int currentCount = current.getAnalysisActiveWarnings().getWarnings().size();
-        int diff = currentCount - previousCount;
+        long previousCount = previousAnalysisActiveWarnings.getNumberOfWarnings();
+        long currentCount = currentAnalysisActiveWarnings.getNumberOfWarnings();
+        long diff = currentCount - previousCount;
         float thresholdPercentage = Float.parseFloat(percentage);
         
         float result;

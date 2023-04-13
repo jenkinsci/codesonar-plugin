@@ -30,12 +30,11 @@ public class CodeSonarBuildAction implements Action {
     private final CodeSonarBuildActionDTO buildActionDTO;
     private final Run<?, ?> run;
     private final String projectName;
-    private final String analysisUrl;
+    private String analysisUrl;
     
-    public CodeSonarBuildAction(CodeSonarBuildActionDTO buildActionDTO, Run<?, ?> run, String projectName, String analysisUrl) {
+    public CodeSonarBuildAction(CodeSonarBuildActionDTO buildActionDTO, Run<?, ?> run, String projectName) {
         this.buildActionDTO = buildActionDTO;
         this.run = run;
-        this.analysisUrl = analysisUrl;
         this.projectName = projectName;
     }
     

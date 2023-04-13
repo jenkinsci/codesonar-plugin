@@ -17,22 +17,16 @@ import org.jenkinsci.plugins.codesonar.models.procedures.Procedures;
 public class CodeSonarBuildActionDTO {
     private static final Logger LOGGER = Logger.getLogger(CodeSonarBuildActionDTO.class.getName());
 
-    private final Long analysisId;
-    private final Analysis analysisActiveWarnings;
-    private final Analysis analysisNewWarnings;
-    private final Metrics metrics;
-    private final Procedures procedures;
-    private final URI baseHubUri;
+    private Long analysisId;
+    private Analysis analysisActiveWarnings;
+    private Analysis analysisNewWarnings;
+    private Metrics metrics;
+    private Procedures procedures;
+    private URI baseHubUri;
     private List<Pair<String, String>> conditionNamesAndResults;
 
-    public CodeSonarBuildActionDTO(Long analysisId, Analysis analysisActiveWarnings,
-            Analysis analysisNewWarnings, Metrics metrics, Procedures procedures,
-            URI baseHubUri) {
+    public CodeSonarBuildActionDTO(Long analysisId, URI baseHubUri) {
         this.analysisId = analysisId;
-        this.analysisActiveWarnings = analysisActiveWarnings;
-        this.analysisNewWarnings = analysisNewWarnings;
-        this.metrics = metrics;
-        this.procedures = procedures;
         this.baseHubUri = baseHubUri;
     }
     
@@ -77,10 +71,20 @@ public class CodeSonarBuildActionDTO {
         
         if (analysisActiveWarnings == null) {
             LOGGER.log(Level.WARNING, "Found empty analysisActiveWarnings on persisted analysis");
+        } else {
+            if(analysisId == null) {
+                analysisId = Long.valueOf(analysisActiveWarnings.getAnalysisId());
+                LOGGER.log(Level.INFO, "Migrating analysis di {0} from active warnings to analysisId", analysisId.toString());
+            }
         }
         
         if (analysisNewWarnings == null) {
             LOGGER.log(Level.WARNING, "Found empty analysisNewWarnings on persisted analysis");
+        } else {
+            if(analysisId == null) {
+                analysisId = Long.valueOf(analysisNewWarnings.getAnalysisId());
+                LOGGER.log(Level.INFO, "Migrating analysis di {0} from new warnings to analysisId", analysisId.toString());
+            }
         }
         
         if (metrics == null) {

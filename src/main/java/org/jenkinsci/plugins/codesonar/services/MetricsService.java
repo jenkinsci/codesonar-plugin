@@ -6,7 +6,6 @@ import java.net.URI;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import org.jenkinsci.plugins.codesonar.CodeSonarPublisher;
 import org.jenkinsci.plugins.codesonar.models.metrics.Metrics;
 
 /**

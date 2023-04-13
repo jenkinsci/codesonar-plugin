@@ -4,7 +4,7 @@ import java.text.MessageFormat;
 
 import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.plugins.codesonar.CodeSonarLogger;
-import org.jenkinsci.plugins.codesonar.models.CodeSonarBuildActionDTO;
+import org.jenkinsci.plugins.codesonar.models.CodeSonarAnalysisData;
 
 import hudson.DescriptorExtensionList;
 import hudson.ExtensionPoint;
@@ -24,7 +24,7 @@ public abstract class Condition implements Describable<Condition>, ExtensionPoin
     protected static final String PREVIOUS_BUILD_DATA_NOT_AVAILABLE = "previous successful build not found";
     private String resultDescription;
     
-    public abstract Result validate(CodeSonarBuildActionDTO current, CodeSonarBuildActionDTO previous, Launcher launcher, TaskListener listener, CodeSonarLogger logger);
+    public abstract Result validate(CodeSonarAnalysisData current, CodeSonarAnalysisData previous, Launcher launcher, TaskListener listener, CodeSonarLogger logger);
 
     @Override
     public Descriptor<Condition> getDescriptor() {

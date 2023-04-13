@@ -3,6 +3,9 @@ package org.jenkinsci.plugins.codesonar.services;
 import java.io.IOException;
 import java.net.URI;
 import java.util.List;
+
+import org.jenkinsci.plugins.codesonar.CodeSonarPluginException;
+import org.jenkinsci.plugins.codesonar.models.CodeSonarAnalysisWarningCount;
 import org.jenkinsci.plugins.codesonar.models.analysis.Analysis;
 
 public interface IAnalysisService {
@@ -15,9 +18,11 @@ public interface IAnalysisService {
 
     Analysis getAnalysisFromUrl(String analysisUrl) throws IOException;
 
-    Analysis getAnalysisFromUrlWithNewWarnings(String analysisUrl) throws IOException;
+    Analysis getAnalysisFromUrlWithNewWarnings(URI baseHubUri, long analysisId) throws IOException;
 
-    Analysis getAnalysisFromUrlWarningsByFilter(String analysisUrl) throws IOException;
+    Analysis getAnalysisFromUrlWarningsByFilter(URI baseHubUri, long analysisId) throws CodeSonarPluginException;
+    
+    CodeSonarAnalysisWarningCount getNumberOfWarnings(URI baseHubUri, long analysisId, String filter) throws IOException;
 
     void setVisibilityFilter(String visibilityFilter);
 

@@ -8,7 +8,7 @@ import javax.annotation.Nonnull;
 
 import org.jenkinsci.Symbol;
 import org.jenkinsci.plugins.codesonar.CodeSonarLogger;
-import org.jenkinsci.plugins.codesonar.models.CodeSonarBuildActionDTO;
+import org.jenkinsci.plugins.codesonar.models.CodeSonarAnalysisData;
 import org.jenkinsci.plugins.codesonar.models.analysis.Alert;
 import org.jenkinsci.plugins.codesonar.models.analysis.Analysis;
 import org.kohsuke.stapler.DataBoundConstructor;
@@ -58,22 +58,22 @@ public class RedAlertLimitCondition extends Condition {
     }
 
     @Override
-    public Result validate(CodeSonarBuildActionDTO current, CodeSonarBuildActionDTO previous, Launcher launcher, TaskListener listener, CodeSonarLogger csLogger) {
+    public Result validate(CodeSonarAnalysisData current, CodeSonarAnalysisData previous, Launcher launcher, TaskListener listener, CodeSonarLogger csLogger) {
         if (current == null) {
             registerResult(csLogger, CURRENT_BUILD_DATA_NOT_AVAILABLE);
             return Result.SUCCESS;
         }
 
-        Analysis analysisActiveWarnings = current.getAnalysisActiveWarnings();
+        Analysis currentAnalysisActiveWarnings = current.getAnalysisActiveWarnings();
         
         // Going to produce build failure in the case of missing necessary information
-        if(analysisActiveWarnings == null) {
-            LOGGER.log(Level.SEVERE, "\"analysisActiveWarnings\" data not found in persisted build.");
+        if(currentAnalysisActiveWarnings == null) {
+            LOGGER.log(Level.SEVERE, "\"analysisActiveWarnings\" data not found.");
             registerResult(csLogger, CURRENT_BUILD_DATA_NOT_AVAILABLE);
             return Result.FAILURE;
         }
         
-        List<Alert> redAlerts = analysisActiveWarnings.getRedAlerts();
+        List<Alert> redAlerts = currentAnalysisActiveWarnings.getRedAlerts();
         if (redAlerts.size() > alertLimit) {
             registerResult(csLogger, RESULT_DESCRIPTION_MESSAGE_FORMAT, alertLimit, redAlerts.size());
             return Result.fromString(warrantedResult);
