@@ -378,6 +378,8 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
             throw createError("No valid analysis id available");
         }
         
+        csLogger.writeInfo("Loading analysis details for current analysis: analysisId {0} from hub \"{1}\"", lCurrentAnalysisId, baseHubUri);
+        
         CodeSonarAnalysisData currentAnalysisData = cacheService.getCodeSonarAnalysisData(baseHubUri, lCurrentAnalysisId, getVisibilityFilterOrDefault(), getNewWarningsFilterOrDefault());
 
         List<Pair<String, String>> conditionNamesAndResults = new ArrayList<>();
@@ -404,7 +406,8 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
         
         CodeSonarAnalysisData comparisonAnalysisData = null;
         if(compareDTO != null) {
-            csLogger.writeInfo("Loading comparison analysis details");
+            csLogger.writeInfo("Loading comparison analysis details for analysisId {0} from hub \"{1}\"", compareDTO.getAnalysisId(), compareDTO.getBaseHubUri());
+            
             comparisonAnalysisData = cacheService.getCodeSonarAnalysisData(compareDTO.getBaseHubUri(), compareDTO.getAnalysisId(), getVisibilityFilterOrDefault(), getNewWarningsFilterOrDefault());
         }
         

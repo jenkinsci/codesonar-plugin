@@ -31,4 +31,5 @@ public interface IAnalysisService {
     void setNewWarningsFilter(String visibilityFilter);
     
     String getNewWarningsFilter();
+    
 }

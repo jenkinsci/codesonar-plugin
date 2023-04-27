@@ -32,7 +32,7 @@ public class ProceduresServiceTest {
     public void setUp() {
         mockedXmlSerializationService = mock(XmlSerializationService.class);
         mockedHttpService = mock(HttpService.class);
-        proceduresService = new ProceduresService(mockedHttpService, mockedXmlSerializationService);
+        proceduresService = new ProceduresService(mockedHttpService, mockedXmlSerializationService, true);
     }
 
     @Test

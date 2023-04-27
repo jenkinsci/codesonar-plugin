@@ -1,7 +1,5 @@
 package org.jenkinsci.plugins.codesonar.conditions;
 
-import java.util.List;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.annotation.Nonnull;
@@ -9,9 +7,7 @@ import javax.annotation.Nonnull;
 import org.jenkinsci.Symbol;
 import org.jenkinsci.plugins.codesonar.CodeSonarLogger;
 import org.jenkinsci.plugins.codesonar.models.CodeSonarAnalysisData;
-import org.jenkinsci.plugins.codesonar.models.Metric;
-import org.jenkinsci.plugins.codesonar.models.procedures.ProcedureRow;
-import org.jenkinsci.plugins.codesonar.models.procedures.Procedures;
+import org.jenkinsci.plugins.codesonar.models.procedures.ProcedureMetric;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
@@ -65,6 +61,16 @@ public class ProcedureCyclomaticComplexityExceededCondition extends Condition {
             return Result.SUCCESS;
         }
 
+        ProcedureMetric procedureMetric = current.getProcedureWithMaxCyclomaticComplexity();
+        
+        registerResult(csLogger, RESULT_DESCRIPTION_MESSAGE_FORMAT, maxCyclomaticComplexity, procedureMetric.getMetricCyclomaticComplexity(), procedureMetric.getProcedure());
+        
+        if (procedureMetric.getMetricCyclomaticComplexity() > maxCyclomaticComplexity) {
+            return Result.fromString(warrantedResult);
+        }
+        
+        return Result.SUCCESS;
+        /*
         Procedures procedures = current.getProcedures();
         // Going to produce build failure in the case of missing necessary information
         if(procedures == null) {
@@ -84,6 +90,7 @@ public class ProcedureCyclomaticComplexityExceededCondition extends Condition {
         }
         registerResult(csLogger, "All cyclomatic complexity values within threshold {0,number,0}", maxCyclomaticComplexity);
         return Result.SUCCESS;
+         */
     }
     
     @Symbol("cyclomaticComplexity")

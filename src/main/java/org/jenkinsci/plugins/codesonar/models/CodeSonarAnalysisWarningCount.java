@@ -10,7 +10,11 @@ public class CodeSonarAnalysisWarningCount {
     private long numberOfWarnings;
     
     public CodeSonarAnalysisWarningCount() {
-        numberOfWarnings = -1;
+        this(0);
+    }
+    
+    public CodeSonarAnalysisWarningCount(long numberOfWarnings) {
+        this.numberOfWarnings = numberOfWarnings;
     }
 
     public String getAnalysisName() {

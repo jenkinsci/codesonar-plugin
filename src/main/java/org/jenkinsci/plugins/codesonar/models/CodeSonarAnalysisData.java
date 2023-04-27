@@ -2,6 +2,7 @@ package org.jenkinsci.plugins.codesonar.models;
 
 import org.jenkinsci.plugins.codesonar.models.analysis.Analysis;
 import org.jenkinsci.plugins.codesonar.models.metrics.Metrics;
+import org.jenkinsci.plugins.codesonar.models.procedures.ProcedureMetric;
 import org.jenkinsci.plugins.codesonar.models.procedures.Procedures;
 
 /**
@@ -16,6 +17,7 @@ public class CodeSonarAnalysisData {
     private Analysis analysisNewWarnings;
     private Metrics metrics;
     private Procedures procedures;
+    private ProcedureMetric procedureWithMaxCyclomaticComplexity;
     
     public CodeSonarAnalysisData() {
         
@@ -67,6 +69,14 @@ public class CodeSonarAnalysisData {
 
     public void setProcedures(Procedures procedures) {
         this.procedures = procedures;
+    }
+    
+    public ProcedureMetric getProcedureWithMaxCyclomaticComplexity() {
+        return procedureWithMaxCyclomaticComplexity;
+    }
+
+    public void setProcedureWithMaxCyclomaticComplexity(ProcedureMetric procedureWithMaxCyclomaticComplexity) {
+        this.procedureWithMaxCyclomaticComplexity = procedureWithMaxCyclomaticComplexity;
     }
 
 }

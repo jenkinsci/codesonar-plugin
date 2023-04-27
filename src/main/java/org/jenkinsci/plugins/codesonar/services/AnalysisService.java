@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
@@ -106,7 +107,7 @@ public class AnalysisService implements IAnalysisService {
         LOGGER.log(Level.INFO, String.format("Calling getAnalysisFromUrlWithNewWarnings"));
         URIBuilder uriBuilder = new URIBuilder(baseHubUri);
         uriBuilder.setPath(String.format("/analysis/%d.xml", analysisId));
-        String newWarningsFilterOrDefault = formatParameter(getNewWarningsFilterOrDefault());
+        String newWarningsFilterOrDefault = Utils.formatParameter(getNewWarningsFilterOrDefault(), strictQueryParameters);
         LOGGER.log(Level.INFO, "Passing filter = {0}", newWarningsFilterOrDefault);
         uriBuilder.addParameter("filter", newWarningsFilterOrDefault);
 
@@ -139,25 +140,11 @@ public class AnalysisService implements IAnalysisService {
         LOGGER.log(Level.INFO, String.format("Calling getAnalysisFromUrlWarningsByFilter"));
         URIBuilder uriBuilder = new URIBuilder(baseHubUri);
         uriBuilder.setPath(String.format("/analysis/%d.xml", analysisId));
-        String visibilityFilterOrDefault = formatParameter(getVisibilityFilterOrDefault());
+        String visibilityFilterOrDefault = Utils.formatParameter(getVisibilityFilterOrDefault(), strictQueryParameters);
         LOGGER.log(Level.INFO, "Passing filter = {0}", visibilityFilterOrDefault);
         uriBuilder.addParameter("filter", visibilityFilterOrDefault);
 
         return getAnalysisFromUrl(uriBuilder.toString());
-    }
-    
-    private String formatParameter(String parameter) {
-        //Remove any unwanted leading or trailing white space character
-        parameter = StringUtils.strip(parameter);
-        try {
-            Long.parseLong(parameter);
-        } catch(NumberFormatException e) {
-            if(strictQueryParameters) {
-                //Surround with double quotes only if parameter is not numeric and the hub supports strict query parameters
-                parameter = String.format("\"%s\"", parameter);
-            }
-        }
-        return parameter;
     }
     
     @Override
@@ -175,15 +162,23 @@ public class AnalysisService implements IAnalysisService {
         URIBuilder uriBuilder = new URIBuilder(baseHubUri);
         uriBuilder.setPath("/chart_table.json");
         uriBuilder.addParameter("chart", configdata);
-        uriBuilder.addParameter("filter", formatParameter(filter));
+        uriBuilder.addParameter("filter", Utils.formatParameter(filter, strictQueryParameters));
         
-        InputStream jsonContent = httpService.getContentFromUrlAsInputStream(uriBuilder.toString());
+        URI requestUri = null;
+        try {
+            requestUri = uriBuilder.build();
+        } catch (URISyntaxException e) {
+            LOGGER.log(Level.WARNING, "Request URI for Char API contains a syntax error. %nException: {0}%nStack Trace: {1}", new Object[] {e.getMessage(), Throwables.getStackTraceAsString(e)});
+            return null;
+        }
+        
+        InputStream jsonContent = httpService.getContentFromUrlAsInputStream(requestUri.toASCIIString());
 
         Gson gsonDeserializer = new Gson();
         CodeSonarChartData chartData = null;
         try {
             chartData = gsonDeserializer.fromJson(new InputStreamReader(jsonContent, StandardCharsets.UTF_8), CodeSonarChartData.class);
-            LOGGER.log(Level.INFO, CodeSonarLogger.formatMessage(chartData.toString()));
+            LOGGER.log(Level.INFO, "response chartData={0}", chartData.toString());
         } catch(JsonSyntaxException e) {
             LOGGER.log(Level.WARNING, "failed to parse JSON response. %nException: {0}%nStack Trace: {1}", new Object[] {e.getMessage(), Throwables.getStackTraceAsString(e)});
             return null;
@@ -191,10 +186,17 @@ public class AnalysisService implements IAnalysisService {
         
         if(chartData.getRows() == null) {
             LOGGER.log(Level.INFO, "chart data is empty.");
-            return null;
+            //Explicitly returning the warning counter set to zero
+            return new CodeSonarAnalysisWarningCount(0);
         }
         
-        if(chartData.getRows().size() != 1) {
+        if(chartData.getRows().size() == 0) {
+            LOGGER.log(Level.INFO, "chart contains no rows.");
+            //Explicitly returning the warning counter set to zero
+            return new CodeSonarAnalysisWarningCount(0);
+        }
+        
+        if(chartData.getRows().size() > 1) {
             LOGGER.log(Level.INFO, "chart data does not contain a single row ({0,number,integer}).", chartData.getRows().size());
             return null;
         }
@@ -229,27 +231,5 @@ public class AnalysisService implements IAnalysisService {
     public String getNewWarningsFilterOrDefault() {
         return StringUtils.isNotBlank(newWarningsFilter) ? newWarningsFilter : IAnalysisService.VISIBILITY_FILTER_NEW_WARNINGS_DEFAULT;
     }
-
-//    public static void main(String[] args) {
-//      AnalysisServiceFactory f = new AnalysisServiceFactory();
-//      CodeSonarHubInfo info = new CodeSonarHubInfo();
-//      info.setVersion("703");
-//      info.setStrictQueryParametersEnforced(true);
-//      f.setHubInfo(info);
-//      try {
-//          IAnalysisService analysisService = f.getAnalysisService(new HttpService(null, null, null, 0), null);
-//          CodeSonarAnalysisWarningCount numberOfWarnings = analysisService.getNumberOfWarnings(new URI("http://mystery2:47340/"), 12, "active");
-//          System.out.println(numberOfWarnings);
-//      } catch (CodeSonarPluginException e) {
-//          // TODO Auto-generated catch block
-//          e.printStackTrace();
-//      } catch (IOException e) {
-//          // TODO Auto-generated catch block
-//          e.printStackTrace();
-//      } catch (URISyntaxException e) {
-//          // TODO Auto-generated catch block
-//          e.printStackTrace();
-//      }
-//  }
 
 }
