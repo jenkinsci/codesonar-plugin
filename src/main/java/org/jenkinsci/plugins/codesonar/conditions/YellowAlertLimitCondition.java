@@ -1,6 +1,5 @@
 package org.jenkinsci.plugins.codesonar.conditions;
 
-import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -8,9 +7,8 @@ import javax.annotation.Nonnull;
 
 import org.jenkinsci.Symbol;
 import org.jenkinsci.plugins.codesonar.CodeSonarLogger;
+import org.jenkinsci.plugins.codesonar.models.CodeSonarAlertFrequencies;
 import org.jenkinsci.plugins.codesonar.models.CodeSonarAnalysisData;
-import org.jenkinsci.plugins.codesonar.models.analysis.Alert;
-import org.jenkinsci.plugins.codesonar.models.analysis.Analysis;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
@@ -64,6 +62,24 @@ public class YellowAlertLimitCondition extends Condition {
             return Result.SUCCESS;
         }
         
+        CodeSonarAlertFrequencies alertFrequencies = current.getAlertFrequencies();
+        
+        // Going to produce build failure in the case of missing necessary information
+        if(alertFrequencies == null) {
+            LOGGER.log(Level.SEVERE, "\"alertFrequencies\" data not found.");
+            registerResult(csLogger, CURRENT_BUILD_DATA_NOT_AVAILABLE);
+            return Result.FAILURE;
+        }
+
+        int yellowAlerts = alertFrequencies.getYellow();
+        
+        registerResult(csLogger, RESULT_DESCRIPTION_MESSAGE_FORMAT, alertLimit, yellowAlerts);
+        
+        if (yellowAlerts > alertLimit) {
+            return Result.fromString(warrantedResult);
+        }
+
+        /*
         Analysis analysisActiveWarnings = current.getAnalysisActiveWarnings();
         
         // Going to produce build failure in the case of missing necessary information
@@ -80,6 +96,7 @@ public class YellowAlertLimitCondition extends Condition {
         }
 
         registerResult(csLogger, RESULT_DESCRIPTION_MESSAGE_FORMAT, alertLimit, yellowAlerts.size());
+        */
         return Result.SUCCESS;
     }
 

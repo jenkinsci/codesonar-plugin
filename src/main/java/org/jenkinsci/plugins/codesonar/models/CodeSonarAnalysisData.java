@@ -18,9 +18,9 @@ public class CodeSonarAnalysisData {
     private Metrics metrics;
     private Procedures procedures;
     private ProcedureMetric procedureWithMaxCyclomaticComplexity;
+    private CodeSonarAlertFrequencies alertFrequencies;
     
     public CodeSonarAnalysisData() {
-        
     }
 
     public CodeSonarAnalysisWarningCount getActiveWarningsCount() {
@@ -77,6 +77,14 @@ public class CodeSonarAnalysisData {
 
     public void setProcedureWithMaxCyclomaticComplexity(ProcedureMetric procedureWithMaxCyclomaticComplexity) {
         this.procedureWithMaxCyclomaticComplexity = procedureWithMaxCyclomaticComplexity;
+    }
+
+    public CodeSonarAlertFrequencies getAlertFrequencies() {
+        return alertFrequencies;
+    }
+
+    public void setAlertFrequencies(CodeSonarAlertFrequencies alertFrequencies) {
+        this.alertFrequencies = alertFrequencies;
     }
 
 }

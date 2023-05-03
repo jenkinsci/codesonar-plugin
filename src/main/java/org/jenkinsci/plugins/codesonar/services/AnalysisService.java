@@ -10,7 +10,6 @@ import java.net.URISyntaxException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
-import java.util.Scanner;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
@@ -18,7 +17,6 @@ import java.util.regex.Pattern;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.http.client.utils.URIBuilder;
-import org.jenkinsci.plugins.codesonar.CodeSonarLogger;
 import org.jenkinsci.plugins.codesonar.CodeSonarPluginException;
 import org.jenkinsci.plugins.codesonar.models.CodeSonarAnalysisWarningCount;
 import org.jenkinsci.plugins.codesonar.models.CodeSonarChartConfigData;
@@ -114,24 +112,6 @@ public class AnalysisService implements IAnalysisService {
         return getAnalysisFromUrl(uriBuilder.toString());
     }
     
-    private void scanHubResult(InputStream inputStream) throws IOException {
-        Scanner sc = null;
-        try {
-            sc = new Scanner(inputStream, "UTF-8");
-            while (sc.hasNextLine()) {
-                String line = sc.nextLine();
-            }
-            //Scanner by default suppresses exceptions
-            if (sc.ioException() != null) {
-                throw sc.ioException();
-            }
-        } finally {
-            if (sc != null) {
-                sc.close();
-            }
-        }
-    }
-
     /**
      * Retrieves analysis data for "all" warnings, in particular it returns the whole list of warnings.
      */

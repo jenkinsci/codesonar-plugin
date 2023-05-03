@@ -10,6 +10,7 @@ import java.util.logging.Logger;
 import org.javatuples.Pair;
 import org.jenkinsci.plugins.codesonar.AnalysisServiceFactory;
 import org.jenkinsci.plugins.codesonar.CodeSonarPluginException;
+import org.jenkinsci.plugins.codesonar.models.CodeSonarAlertFrequencies;
 import org.jenkinsci.plugins.codesonar.models.CodeSonarAnalysisData;
 import org.jenkinsci.plugins.codesonar.models.CodeSonarAnalysisWarningCount;
 import org.jenkinsci.plugins.codesonar.models.CodeSonarHubInfo;
@@ -28,6 +29,7 @@ public class CodeSonarCacheService {
     private IAnalysisService analysisService;
     private MetricsService metricsService;
     private ProceduresService proceduresService;
+    private AlertsService alertsService;
     private Map<Pair<URI,Long>, CodeSonarAnalysisData> cachedAnalyses;
 
     public CodeSonarCacheService(HttpService httpService, CodeSonarHubInfo hubInfo) {
@@ -70,6 +72,13 @@ public class CodeSonarCacheService {
             proceduresService = new ProceduresService(httpService, getXmlSerializationService(), hubInfo.isStrictQueryParametersEnforced());
         }
         return proceduresService;
+    }
+    
+    private AlertsService getAlertsService() throws CodeSonarPluginException {
+        if (alertsService == null) {
+            alertsService = new AlertsService(httpService);
+        }
+        return alertsService;
     }
     
     private CodeSonarAnalysisData getAnalysisDataFromCache(URI baseHubUri, long analysisId) {
@@ -172,15 +181,28 @@ public class CodeSonarCacheService {
         return procedureWithMaxCyclomaticComplexity;
     }
     
+    public CodeSonarAlertFrequencies getAlerts(URI baseHubUri, long analysisId) throws IOException {
+        LOGGER.log(Level.INFO, "getAlerts");
+        CodeSonarAnalysisData analysisData = getAnalysisDataFromCache(baseHubUri, analysisId);
+        if(analysisData.getAlertFrequencies() == null) {
+            LOGGER.log(Level.INFO, "Alert frequencies not already set, loading from corresponding service");
+            analysisData.setAlertFrequencies(getAlertsService().getAlertFrequencies(baseHubUri, analysisId));
+        }
+        CodeSonarAlertFrequencies frequencies = analysisData.getAlertFrequencies();
+        LOGGER.log(Level.INFO, "CodeSonarAlertFrequencies new instance {0}", frequencies);
+        return frequencies;
+    }
+    
     public CodeSonarAnalysisData getCodeSonarAnalysisData(URI baseHubUri, long analysisId, String visibilityFilterAll, String visibilityFilterNew) throws IOException {
         LOGGER.log(Level.INFO, "getCodeSonarAnalysisData: baseHubUri = {0}, analysisId = {1,number,0}, visibilityFilterAll = {2}, visibilityFilterNew = {3}", new Object[] {baseHubUri, analysisId, visibilityFilterAll, visibilityFilterNew});
         getNumberOfActiveWarnings(baseHubUri, analysisId, visibilityFilterAll);
         getNumberOfNewWarnings(baseHubUri, analysisId, visibilityFilterNew);
         getAnalysisActiveWarnings(baseHubUri, analysisId, visibilityFilterAll);
-        getAnalysisNewWarnings(baseHubUri, analysisId, visibilityFilterNew);
+//        getAnalysisNewWarnings(baseHubUri, analysisId, visibilityFilterNew);
         getMetrics(baseHubUri, analysisId);
         getProcedures(baseHubUri, analysisId);
         getProcedureWithMaxCyclomaticComplexity(baseHubUri, analysisId);
+        getAlerts(baseHubUri, analysisId);
         CodeSonarAnalysisData analysisDataFromCache = getAnalysisDataFromCache(baseHubUri, analysisId);
         LOGGER.log(Level.INFO, "getCodeSonarAnalysisData is returning instance {0}", analysisDataFromCache);
         return analysisDataFromCache;
