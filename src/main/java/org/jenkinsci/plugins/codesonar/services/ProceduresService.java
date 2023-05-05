@@ -9,7 +9,7 @@ import java.util.logging.Logger;
 
 import org.apache.http.client.utils.URIBuilder;
 import org.javatuples.Pair;
-import org.jenkinsci.plugins.codesonar.models.AnalysisProceduresConfigData;
+import org.jenkinsci.plugins.codesonar.models.SearchConfigData;
 import org.jenkinsci.plugins.codesonar.models.PairAdapter;
 import org.jenkinsci.plugins.codesonar.models.procedures.ProcedureMetric;
 import org.jenkinsci.plugins.codesonar.models.procedures.Procedures;
@@ -50,7 +50,7 @@ public class ProceduresService {
     
     public ProcedureMetric getProcedureWithMaxCyclomaticComplexity(URI baseHubUri, long analysisId) throws IOException {
         //Configure search parameters in order to extract the desired data
-        AnalysisProceduresConfigData searchConfig = new AnalysisProceduresConfigData();
+        SearchConfigData searchConfig = new SearchConfigData();
         /*
          * Read a maximum of 100 procedures with potentially the same cyclomatic complexity value,
          * sort them client-side by procedure too, and pick-up the very top element in the list.
@@ -58,7 +58,7 @@ public class ProceduresService {
         searchConfig.setLimit(100);
         searchConfig.getColumns().add("metricCyclomaticComplexity");
         searchConfig.getColumns().add("procedure");
-        searchConfig.addOrderByCondition("metricCyclomaticComplexity", AnalysisProceduresConfigData.SortingOrder.DESCENDING);
+        searchConfig.addOrderByCondition("metricCyclomaticComplexity", SearchConfigData.SortingOrder.DESCENDING);
         
         //Serialize search configuration data as JSON
         Gson gsonSerializer = new GsonBuilder()

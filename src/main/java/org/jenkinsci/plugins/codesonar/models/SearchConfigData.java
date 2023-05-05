@@ -9,7 +9,7 @@ import org.javatuples.Pair;
  * @author aseno
  *
  */
-public class AnalysisProceduresConfigData {
+public class SearchConfigData {
     public enum SortingOrder {ASCENDING, DESCENDING}
     
     public boolean count;
@@ -18,7 +18,7 @@ public class AnalysisProceduresConfigData {
     public List<Pair<String, String>> orderBy;
     public List<String> columns;
     
-    public AnalysisProceduresConfigData() {
+    public SearchConfigData() {
         this.count = false;
         this.offset = 0;
         this.limit = 1;

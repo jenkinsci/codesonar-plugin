@@ -1,6 +1,6 @@
 package org.jenkinsci.plugins.codesonar.conditions;
 
-import java.util.List;
+import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -10,11 +10,13 @@ import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.Symbol;
 import org.jenkinsci.plugins.codesonar.CodeSonarLogger;
 import org.jenkinsci.plugins.codesonar.models.CodeSonarAnalysisData;
-import org.jenkinsci.plugins.codesonar.models.analysis.Analysis;
-import org.jenkinsci.plugins.codesonar.models.analysis.Warning;
+import org.jenkinsci.plugins.codesonar.models.CodeSonarWarningCount;
+import org.jenkinsci.plugins.codesonar.services.CodeSonarCacheService;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
+
+import com.google.common.base.Throwables;
 
 import hudson.Extension;
 import hudson.Launcher;
@@ -73,6 +75,58 @@ public class WarningCountIncreaseSpecifiedScoreAndHigherCondition extends Condit
             return Result.SUCCESS;
         }
         
+        if (previous == null) {
+            registerResult(csLogger, PREVIOUS_BUILD_DATA_NOT_AVAILABLE);
+            return Result.SUCCESS;
+        }
+        
+        CodeSonarCacheService cacheService = CodeSonarCacheService.getInstance();
+        
+        if(cacheService == null) {
+            final String msg = "\"CacheService\" not available.";
+            LOGGER.log(Level.SEVERE, msg);
+            registerResult(csLogger, msg);
+            return Result.FAILURE;
+        }
+        
+        CodeSonarWarningCount warningsAboveThresholdForCurrent = null;
+        try {
+            warningsAboveThresholdForCurrent = cacheService.getWarningCountIncreaseWithScoreAboveThreshold(current.getBaseHubUri(), current.getAnalysisId(), rankOfWarnings);
+        } catch (IOException e) {
+            LOGGER.log(Level.WARNING, "failed to parse JSON response for current build. %nException: {0}%nStack Trace: {1}", new Object[] {e.getMessage(), Throwables.getStackTraceAsString(e)});
+            return Result.FAILURE;
+        }
+
+        if(warningsAboveThresholdForCurrent == null) {
+            LOGGER.log(Level.INFO, "Warning Search service returned an empty response for current build");
+            return Result.FAILURE;          
+        }
+        
+        CodeSonarWarningCount warningsAboveThresholdForPrevious = null;
+        try {
+            warningsAboveThresholdForPrevious = cacheService.getWarningCountIncreaseWithScoreAboveThreshold(previous.getBaseHubUri(), previous.getAnalysisId(), rankOfWarnings);
+        } catch (IOException e) {
+            LOGGER.log(Level.WARNING, "failed to parse JSON response for previous build. %nException: {0}%nStack Trace: {1}", new Object[] {e.getMessage(), Throwables.getStackTraceAsString(e)});
+            return Result.FAILURE;
+        }
+
+        if(warningsAboveThresholdForPrevious == null) {
+            LOGGER.log(Level.INFO, "Warning Search service returned an empty response for previous build");
+            return Result.FAILURE;          
+        }
+        
+        float thresholdPercentage = Float.parseFloat(warningPercentage);
+        float calculatedWarningPercentage = ((float) warningsAboveThresholdForCurrent.getScoreAboveThresholdCounter() / warningsAboveThresholdForPrevious.getScoreAboveThresholdCounter()) * 100;;
+        
+        registerResult(csLogger, RESULT_DESCRIPTION_MESSAGE_FORMAT, rankOfWarnings, thresholdPercentage, calculatedWarningPercentage);
+        
+        if (calculatedWarningPercentage > thresholdPercentage) {
+            return Result.fromString(warrantedResult);
+        }
+        
+        return Result.SUCCESS;
+        
+        /*
         Analysis currentAnalysisActiveWarnings = current.getAnalysisActiveWarnings();
         
         // Going to produce build failure in the case of missing necessary information
@@ -110,6 +164,7 @@ public class WarningCountIncreaseSpecifiedScoreAndHigherCondition extends Condit
         
         registerResult(csLogger, RESULT_DESCRIPTION_MESSAGE_FORMAT, rankOfWarnings, thresholdPercentage, calculatedWarningPercentage);
         return Result.SUCCESS;
+        */
     }
 
     @Symbol("warningCountIncreaseSpecifiedScoreAndHigher")

@@ -1,5 +1,7 @@
 package org.jenkinsci.plugins.codesonar.models;
 
+import java.net.URI;
+
 import org.jenkinsci.plugins.codesonar.models.analysis.Analysis;
 import org.jenkinsci.plugins.codesonar.models.metrics.Metrics;
 import org.jenkinsci.plugins.codesonar.models.procedures.ProcedureMetric;
@@ -10,7 +12,9 @@ import org.jenkinsci.plugins.codesonar.models.procedures.Procedures;
  *
  */
 public class CodeSonarAnalysisData {
-    
+   
+    private URI baseHubUri;
+    private long analysisId;
     private CodeSonarAnalysisWarningCount activeWarningsCount;
     private CodeSonarAnalysisWarningCount newWarningsCount;
     private Analysis analysisActiveWarnings;
@@ -19,8 +23,12 @@ public class CodeSonarAnalysisData {
     private Procedures procedures;
     private ProcedureMetric procedureWithMaxCyclomaticComplexity;
     private CodeSonarAlertFrequencies alertFrequencies;
+    private CodeSonarWarningCount warningCountAbsoluteWithScoreAboveThreshold;
+    private CodeSonarWarningCount warningCountIncreaseWithScoreAboveThreshold;
     
-    public CodeSonarAnalysisData() {
+    public CodeSonarAnalysisData(URI baseHubUri, long analysisId) {
+        this.baseHubUri = baseHubUri;
+        this.analysisId = analysisId;
     }
 
     public CodeSonarAnalysisWarningCount getActiveWarningsCount() {
@@ -85,6 +93,40 @@ public class CodeSonarAnalysisData {
 
     public void setAlertFrequencies(CodeSonarAlertFrequencies alertFrequencies) {
         this.alertFrequencies = alertFrequencies;
+    }
+
+    public CodeSonarWarningCount getWarningCountAbsoluteWithScoreAboveThreshold() {
+        return warningCountAbsoluteWithScoreAboveThreshold;
+    }
+
+    public void setWarningCountAbsoluteWithScoreAboveThreshold(
+            CodeSonarWarningCount warningCountAbsoluteWithScoreAboveThreshold) {
+        this.warningCountAbsoluteWithScoreAboveThreshold = warningCountAbsoluteWithScoreAboveThreshold;
+    }
+    
+    public CodeSonarWarningCount getWarningCountIncreaseWithScoreAboveThreshold() {
+        return warningCountIncreaseWithScoreAboveThreshold;
+    }
+
+    public void setWarningCountIncreaseWithScoreAboveThreshold(
+            CodeSonarWarningCount warningCountIncreaseWithScoreAboveThreshold) {
+        this.warningCountIncreaseWithScoreAboveThreshold = warningCountIncreaseWithScoreAboveThreshold;
+    }
+
+    public URI getBaseHubUri() {
+        return baseHubUri;
+    }
+
+    public void setBaseHubUri(URI baseHubUri) {
+        this.baseHubUri = baseHubUri;
+    }
+
+    public long getAnalysisId() {
+        return analysisId;
+    }
+
+    public void setAnalysisId(long analysisId) {
+        this.analysisId = analysisId;
     }
 
 }

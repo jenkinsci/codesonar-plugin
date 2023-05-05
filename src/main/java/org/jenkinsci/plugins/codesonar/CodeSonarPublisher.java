@@ -604,7 +604,7 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
     
     public CodeSonarCacheService getCodeSonarCacheService(@Nonnull Run<?, ?> run, CodeSonarHubInfo hubInfo) throws CodeSonarPluginException {
         if (codeSonarCacheService  == null) {
-            codeSonarCacheService = new CodeSonarCacheService(getHttpService(run), hubInfo);
+            codeSonarCacheService = CodeSonarCacheService.createInstance(httpService, hubInfo);
         }
         return codeSonarCacheService;
     }

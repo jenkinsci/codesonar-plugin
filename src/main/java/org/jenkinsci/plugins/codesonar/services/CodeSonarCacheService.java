@@ -14,12 +14,14 @@ import org.jenkinsci.plugins.codesonar.models.CodeSonarAlertFrequencies;
 import org.jenkinsci.plugins.codesonar.models.CodeSonarAnalysisData;
 import org.jenkinsci.plugins.codesonar.models.CodeSonarAnalysisWarningCount;
 import org.jenkinsci.plugins.codesonar.models.CodeSonarHubInfo;
+import org.jenkinsci.plugins.codesonar.models.CodeSonarWarningCount;
 import org.jenkinsci.plugins.codesonar.models.analysis.Analysis;
 import org.jenkinsci.plugins.codesonar.models.metrics.Metrics;
 import org.jenkinsci.plugins.codesonar.models.procedures.ProcedureMetric;
 import org.jenkinsci.plugins.codesonar.models.procedures.Procedures;
 
 public class CodeSonarCacheService {
+    private static CodeSonarCacheService instance = null;
     private static final Logger LOGGER = Logger.getLogger(CodeSonarCacheService.class.getName());
     
     private HttpService httpService;
@@ -30,12 +32,24 @@ public class CodeSonarCacheService {
     private MetricsService metricsService;
     private ProceduresService proceduresService;
     private AlertsService alertsService;
+    private WarningsService warningsService;
     private Map<Pair<URI,Long>, CodeSonarAnalysisData> cachedAnalyses;
 
-    public CodeSonarCacheService(HttpService httpService, CodeSonarHubInfo hubInfo) {
+    private CodeSonarCacheService(HttpService httpService, CodeSonarHubInfo hubInfo) {
         this.httpService = httpService;
         this.hubInfo = hubInfo;
         cachedAnalyses = new HashMap<>();
+    }
+    
+    public static CodeSonarCacheService createInstance(HttpService httpService, CodeSonarHubInfo hubInfo) {
+        if(instance == null) {
+            instance = new CodeSonarCacheService(httpService, hubInfo);
+        }
+        return instance;
+    }
+    
+    public static CodeSonarCacheService getInstance() {
+        return instance;
     }
     
     private XmlSerializationService getXmlSerializationService() {
@@ -81,13 +95,20 @@ public class CodeSonarCacheService {
         return alertsService;
     }
     
+    private WarningsService getWarningsService() throws CodeSonarPluginException {
+        if (warningsService == null) {
+            warningsService = new WarningsService(httpService, hubInfo.isStrictQueryParametersEnforced());
+        }
+        return warningsService;
+    }
+    
     private CodeSonarAnalysisData getAnalysisDataFromCache(URI baseHubUri, long analysisId) {
         LOGGER.log(Level.INFO, "Getting analysis from cache: baseHubUri = {0}, analysisId = {1,number,0}", new Object[] {baseHubUri, analysisId});
         Pair<URI, Long> key = Pair.with(baseHubUri, analysisId);
         CodeSonarAnalysisData analysisData = cachedAnalyses.get(key);
         if(analysisData == null) {
             LOGGER.log(Level.INFO, "Analysis data not found from cache, putting new instance into cache");
-            analysisData = new CodeSonarAnalysisData();
+            analysisData = new CodeSonarAnalysisData(baseHubUri, analysisId);
             cachedAnalyses.put(key, analysisData);
         }
         return analysisData;
@@ -193,11 +214,35 @@ public class CodeSonarCacheService {
         return frequencies;
     }
     
+    public CodeSonarWarningCount getWarningCountAbsoluteWithScoreAboveThreshold(URI baseHubUri, long analysisId, int threshold) throws IOException {
+        LOGGER.log(Level.INFO, "getWarningCountAbsoluteWithScoreAboveThreshold threshold={0}", threshold);
+        CodeSonarAnalysisData analysisData = getAnalysisDataFromCache(baseHubUri, analysisId);
+        if(analysisData.getWarningCountAbsoluteWithScoreAboveThreshold() == null) {
+            LOGGER.log(Level.INFO, "Warnings with score above threshold not already set, loading from corresponding service");
+            analysisData.setWarningCountAbsoluteWithScoreAboveThreshold(getWarningsService().getNumberOfWarningsWithScoreAboveThreshold(baseHubUri, analysisId, threshold));
+        }
+        CodeSonarWarningCount warningCountAbsoluteWithScoreAboveThreshold = analysisData.getWarningCountAbsoluteWithScoreAboveThreshold();
+        LOGGER.log(Level.INFO, "CodeSonarWarningCount new instance {0}", warningCountAbsoluteWithScoreAboveThreshold);
+        return warningCountAbsoluteWithScoreAboveThreshold;
+    }
+    
+    public CodeSonarWarningCount getWarningCountIncreaseWithScoreAboveThreshold(URI baseHubUri, long analysisId, int threshold) throws IOException {
+        LOGGER.log(Level.INFO, "getWarningCountIncreaseWithScoreAboveThreshold threshold={0}", threshold);
+        CodeSonarAnalysisData analysisData = getAnalysisDataFromCache(baseHubUri, analysisId);
+        if(analysisData.getWarningCountIncreaseWithScoreAboveThreshold() == null) {
+            LOGGER.log(Level.INFO, "Warnings with score above threshold not already set, loading from corresponding service");
+            analysisData.setWarningCountIncreaseWithScoreAboveThreshold(getWarningsService().getNumberOfWarningsWithScoreAboveThreshold(baseHubUri, analysisId, threshold));
+        }
+        CodeSonarWarningCount warningCountIncreaseWithScoreAboveThreshold = analysisData.getWarningCountIncreaseWithScoreAboveThreshold();
+        LOGGER.log(Level.INFO, "CodeSonarWarningCount new instance {0}", warningCountIncreaseWithScoreAboveThreshold);
+        return warningCountIncreaseWithScoreAboveThreshold;
+    } 
+    
     public CodeSonarAnalysisData getCodeSonarAnalysisData(URI baseHubUri, long analysisId, String visibilityFilterAll, String visibilityFilterNew) throws IOException {
         LOGGER.log(Level.INFO, "getCodeSonarAnalysisData: baseHubUri = {0}, analysisId = {1,number,0}, visibilityFilterAll = {2}, visibilityFilterNew = {3}", new Object[] {baseHubUri, analysisId, visibilityFilterAll, visibilityFilterNew});
         getNumberOfActiveWarnings(baseHubUri, analysisId, visibilityFilterAll);
         getNumberOfNewWarnings(baseHubUri, analysisId, visibilityFilterNew);
-        getAnalysisActiveWarnings(baseHubUri, analysisId, visibilityFilterAll);
+//        getAnalysisActiveWarnings(baseHubUri, analysisId, visibilityFilterAll);
 //        getAnalysisNewWarnings(baseHubUri, analysisId, visibilityFilterNew);
         getMetrics(baseHubUri, analysisId);
         getProcedures(baseHubUri, analysisId);
