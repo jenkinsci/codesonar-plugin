@@ -407,7 +407,7 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
         CodeSonarAnalysisData comparisonAnalysisData = null;
         if(compareDTO != null) {
             csLogger.writeInfo("Loading comparison analysis details for analysisId {0} from hub \"{1}\"", compareDTO.getAnalysisId(), compareDTO.getBaseHubUri());
-            
+            //TODO Signal if there's a mismatch between the hub of the current analysis and the one of the comparison analysis
             comparisonAnalysisData = cacheService.getCodeSonarAnalysisData(compareDTO.getBaseHubUri(), compareDTO.getAnalysisId(), getVisibilityFilterOrDefault(), getNewWarningsFilterOrDefault());
         }
         

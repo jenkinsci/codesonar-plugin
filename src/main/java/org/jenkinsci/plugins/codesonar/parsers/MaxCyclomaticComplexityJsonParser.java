@@ -14,6 +14,7 @@ import org.jenkinsci.plugins.codesonar.models.procedures.ProcedureMetric;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
 
+//TODO This class need to be cleaned up as well as a little bit refactored to avoid repetitions
 public class MaxCyclomaticComplexityJsonParser extends AbstractJsonParser<ProcedureMetric> {
      private static final Logger LOGGER = Logger.getLogger(MaxCyclomaticComplexityJsonParser.class.getName());
 

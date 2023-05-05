@@ -70,6 +70,12 @@ public class ProcedureCyclomaticComplexityExceededCondition extends Condition {
         }
         
         return Result.SUCCESS;
+        
+        /*
+         * Temporarily commented previous implementation, probably until
+         * when backward compatibility theme will be addressed.
+         */
+        
         /*
         Procedures procedures = current.getProcedures();
         // Going to produce build failure in the case of missing necessary information

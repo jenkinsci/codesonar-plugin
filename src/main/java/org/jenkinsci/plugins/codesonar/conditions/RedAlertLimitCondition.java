@@ -78,6 +78,11 @@ public class RedAlertLimitCondition extends Condition {
         if (redAlerts > alertLimit) {
             return Result.fromString(warrantedResult);
         }
+        
+        /*
+         * Temporarily commented previous implementation, probably until
+         * when backward compatibility theme will be addressed.
+         */
 
         /*
         Analysis currentAnalysisActiveWarnings = current.getAnalysisActiveWarnings();

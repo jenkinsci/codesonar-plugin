@@ -13,6 +13,7 @@ import org.jenkinsci.plugins.codesonar.models.procedures.Procedures;
  */
 public class CodeSonarAnalysisData {
    
+    //It's useful to keep both baseHubUri and analysisId in this class for subsequent requests to the hub (i.e. on demand data retrieval).
     private URI baseHubUri;
     private long analysisId;
     private CodeSonarAnalysisWarningCount activeWarningsCount;

@@ -41,6 +41,10 @@ public class CodeSonarCacheService {
         cachedAnalyses = new HashMap<>();
     }
     
+    /*
+     * This is the method that handles the creation of a new instance (first time only)
+     * as well as the one that can return that same instance when already available.
+     */
     public static CodeSonarCacheService createInstance(HttpService httpService, CodeSonarHubInfo hubInfo) {
         if(instance == null) {
             instance = new CodeSonarCacheService(httpService, hubInfo);
@@ -48,6 +52,10 @@ public class CodeSonarCacheService {
         return instance;
     }
     
+    /*
+     * This method is meant for those that need to get the instance, whenever already present,
+     * but which don't have the ability to instantiate a new one if not present.
+     */
     public static CodeSonarCacheService getInstance() {
         return instance;
     }
@@ -108,6 +116,10 @@ public class CodeSonarCacheService {
         CodeSonarAnalysisData analysisData = cachedAnalyses.get(key);
         if(analysisData == null) {
             LOGGER.log(Level.INFO, "Analysis data not found from cache, putting new instance into cache");
+            /*
+             * It's convenient to keep both baseHubUri and analysisId in this object, in order
+             * for subsequent requests to the hub to be satisfied (i.e. on demand data retrieval).
+             */
             analysisData = new CodeSonarAnalysisData(baseHubUri, analysisId);
             cachedAnalyses.put(key, analysisData);
         }
@@ -242,10 +254,14 @@ public class CodeSonarCacheService {
         LOGGER.log(Level.INFO, "getCodeSonarAnalysisData: baseHubUri = {0}, analysisId = {1,number,0}, visibilityFilterAll = {2}, visibilityFilterNew = {3}", new Object[] {baseHubUri, analysisId, visibilityFilterAll, visibilityFilterNew});
         getNumberOfActiveWarnings(baseHubUri, analysisId, visibilityFilterAll);
         getNumberOfNewWarnings(baseHubUri, analysisId, visibilityFilterNew);
+        /*
+         * Temporarily avoided calling the old XML APIs, in order for RAM memory occupation to decrease,
+         * at least until when backward compatibility theme will be addressed.
+         */
 //        getAnalysisActiveWarnings(baseHubUri, analysisId, visibilityFilterAll);
 //        getAnalysisNewWarnings(baseHubUri, analysisId, visibilityFilterNew);
-        getMetrics(baseHubUri, analysisId);
-        getProcedures(baseHubUri, analysisId);
+//        getMetrics(baseHubUri, analysisId);
+//        getProcedures(baseHubUri, analysisId);
         getProcedureWithMaxCyclomaticComplexity(baseHubUri, analysisId);
         getAlerts(baseHubUri, analysisId);
         CodeSonarAnalysisData analysisDataFromCache = getAnalysisDataFromCache(baseHubUri, analysisId);

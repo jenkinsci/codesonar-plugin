@@ -105,6 +105,11 @@ public class WarningCountAbsoluteSpecifiedScoreAndHigherCondition extends Condit
         return Result.SUCCESS;
         
         /*
+         * Temporarily commented previous implementation, probably until
+         * when backward compatibility theme will be addressed.
+         */
+        
+        /*
         Analysis currentAnalysisActiveWarnings = current.getAnalysisActiveWarnings();
         
         // Going to produce build failure in the case of missing necessary information

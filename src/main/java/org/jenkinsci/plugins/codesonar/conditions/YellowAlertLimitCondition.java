@@ -80,6 +80,11 @@ public class YellowAlertLimitCondition extends Condition {
         }
 
         /*
+         * Temporarily commented previous implementation, probably until
+         * when backward compatibility theme will be addressed.
+         */
+        
+        /*
         Analysis analysisActiveWarnings = current.getAnalysisActiveWarnings();
         
         // Going to produce build failure in the case of missing necessary information

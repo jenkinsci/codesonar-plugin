@@ -29,8 +29,8 @@ public class AlertsService {
     
     public CodeSonarAlertFrequencies getAlertFrequencies(URI baseHubUri, long analysisId) throws IOException {
         CodeSonarAlertFrequencies frequencies = new CodeSonarAlertFrequencies();
-        //Loop through all possible kind values, currently from 0 to 26.
-        for(long kind = 0; kind < 26; kind++) {
+        //Loop through all possible kind values, currently from 0 to 26. Upper bound 50 is for future alert kinds.
+        for(long kind = 0; kind < 50; kind++) {
             //Build char_table request URL
             URIBuilder uriBuilder = new URIBuilder(baseHubUri);
             uriBuilder.setPath(String.format("/analysis/%d-alert%d.json", analysisId, kind));
