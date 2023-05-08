@@ -357,34 +357,34 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
 
         CodeSonarCacheService cacheService = getCodeSonarCacheService(run, hubInfo);
 
-        String currentAnalysisId = null;
+        String currentAnalysisIdString = null;
         if(StringUtils.isBlank(aid)) {
             LOGGER.log(Level.INFO, "Determining analysis id...");
-            currentAnalysisId = workspace.act(new DetermineAid(expandedProjectFile));
-            LOGGER.log(Level.INFO, "Found analysis id: {0}", currentAnalysisId);
+            currentAnalysisIdString = workspace.act(new DetermineAid(expandedProjectFile));
+            LOGGER.log(Level.INFO, "Found analysis id: {0}", currentAnalysisIdString);
         } else {
-            currentAnalysisId = aid;
+            currentAnalysisIdString = aid;
             LOGGER.log(Level.INFO, "Using override analysis id: \"" + aid + "\".");
         }
         
-        Long lCurrentAnalysisId = null;
+        Long currentAnalysisId = null;
         try {
-            lCurrentAnalysisId = Long.valueOf(currentAnalysisId);
+            currentAnalysisId = Long.valueOf(currentAnalysisIdString);
         } catch(NumberFormatException e) {
-            LOGGER.log(Level.WARNING, "Unable to parse analysis id \"" + currentAnalysisId + "\" as long integer.");
+            LOGGER.log(Level.WARNING, "Unable to parse analysis id \"" + currentAnalysisIdString + "\" as long integer.");
         }
         
-        if(lCurrentAnalysisId == null) {
+        if(currentAnalysisId == null) {
             throw createError("No valid analysis id available");
         }
         
-        csLogger.writeInfo("Loading analysis details for current analysis: analysisId {0} from hub \"{1}\"", lCurrentAnalysisId, baseHubUri);
+        csLogger.writeInfo("Loading analysis details for current analysis: analysisId {0} from hub \"{1}\"", currentAnalysisId, baseHubUri);
         
-        CodeSonarAnalysisData currentAnalysisData = cacheService.getCodeSonarAnalysisData(baseHubUri, lCurrentAnalysisId, getVisibilityFilterOrDefault(), getNewWarningsFilterOrDefault());
+        CodeSonarAnalysisData currentAnalysisData = cacheService.getCodeSonarAnalysisData(baseHubUri, currentAnalysisId, getVisibilityFilterOrDefault(), getNewWarningsFilterOrDefault());
 
         List<Pair<String, String>> conditionNamesAndResults = new ArrayList<>();
         
-        CodeSonarBuildActionDTO buildActionDTO = new CodeSonarBuildActionDTO(lCurrentAnalysisId, baseHubUri);
+        CodeSonarBuildActionDTO buildActionDTO = new CodeSonarBuildActionDTO(currentAnalysisId, baseHubUri);
         
         CodeSonarBuildAction csba = new CodeSonarBuildAction(buildActionDTO, run, expandedProjectName);
         

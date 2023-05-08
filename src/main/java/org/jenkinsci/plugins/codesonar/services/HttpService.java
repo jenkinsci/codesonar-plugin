@@ -28,6 +28,7 @@ import org.apache.http.impl.client.HttpClients;
 import org.apache.http.ssl.SSLContextBuilder;
 import org.apache.http.util.EntityUtils;
 import org.jenkinsci.plugins.codesonar.CodeSonarPluginException;
+import org.jenkinsci.plugins.codesonar.ResponseErrorException;
 
 import com.google.common.base.Throwables;
 
@@ -96,6 +97,10 @@ public class HttpService {
     private CodeSonarPluginException createError(String msg, Object...args) {
         return new CodeSonarPluginException(msg, args);
     }
+    
+    private CodeSonarPluginException createResponseError(String msg, String url, int status, String reason, String body) {
+        return new ResponseErrorException(msg, url, status, reason, body);
+    }
 
     public void setSocketTimeoutMS(int socketTimeoutMS) {
         LOGGER.log(Level.FINE, "HttpService - setSocketTimeoutMS to {0}", socketTimeoutMS);
@@ -128,7 +133,7 @@ public class HttpService {
             throw createError("Error on url: {0}%nMessage is: {1}", url, e.getMessage());
         }
         if (status != 200) {
-            throw createError("Error communicating with CodeSonar Hub. %nURI: {0}%nHTTP status code: {1} - {2} %nHTTP Body: {3}", url, status, reason, body);
+            throw createResponseError("Error communicating with CodeSonar Hub. %nURI: {0}%nHTTP status code: {1} - {2} %nHTTP Body: {3}", url, status, reason, body);
         }
         return body;
     }

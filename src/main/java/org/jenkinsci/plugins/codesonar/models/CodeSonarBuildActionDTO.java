@@ -66,7 +66,7 @@ public class CodeSonarBuildActionDTO {
         if (analysisId == null) {
             LOGGER.log(Level.WARNING, "Found empty analysis id on persisted analysis");
         } else {
-            LOGGER.log(Level.INFO, "Found analysis di {0} on persisted analysis", analysisId.toString());
+            LOGGER.log(Level.INFO, "Found analysis id {0} on persisted analysis", analysisId.toString());
         }
         
         if (analysisActiveWarnings == null) {
@@ -74,7 +74,7 @@ public class CodeSonarBuildActionDTO {
         } else {
             if(analysisId == null) {
                 analysisId = Long.valueOf(analysisActiveWarnings.getAnalysisId());
-                LOGGER.log(Level.INFO, "Migrating analysis di {0} from active warnings to analysisId", analysisId.toString());
+                LOGGER.log(Level.INFO, "Migrating analysis id {0} from active warnings to analysisId", analysisId.toString());
             }
         }
         
@@ -83,7 +83,7 @@ public class CodeSonarBuildActionDTO {
         } else {
             if(analysisId == null) {
                 analysisId = Long.valueOf(analysisNewWarnings.getAnalysisId());
-                LOGGER.log(Level.INFO, "Migrating analysis di {0} from new warnings to analysisId", analysisId.toString());
+                LOGGER.log(Level.INFO, "Migrating analysis id {0} from new warnings to analysisId", analysisId.toString());
             }
         }
         

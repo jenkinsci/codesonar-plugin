@@ -18,8 +18,4 @@ public class CodeSonarPluginException extends AbortException {
         return CodeSonarLogger.formatMessage(super.getMessage(), args);
     }
 
-    public Object[] getArgs() {
-        return args;
-    }
-
 }

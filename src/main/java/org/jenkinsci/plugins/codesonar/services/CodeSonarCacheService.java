@@ -226,6 +226,10 @@ public class CodeSonarCacheService {
         return frequencies;
     }
     
+    /*
+     * This method cannot be part of the preloading phase, like all the other ones called by method getCodeSonarAnalysisData(), because of
+     * the lack of the "threshold" parameter, which is available only within condition "WarningCountAbsoluteSpecifiedScoreAndHigherCondition"
+     */
     public CodeSonarWarningCount getWarningCountAbsoluteWithScoreAboveThreshold(URI baseHubUri, long analysisId, int threshold) throws IOException {
         LOGGER.log(Level.INFO, "getWarningCountAbsoluteWithScoreAboveThreshold threshold={0}", threshold);
         CodeSonarAnalysisData analysisData = getAnalysisDataFromCache(baseHubUri, analysisId);
@@ -237,7 +241,11 @@ public class CodeSonarCacheService {
         LOGGER.log(Level.INFO, "CodeSonarWarningCount new instance {0}", warningCountAbsoluteWithScoreAboveThreshold);
         return warningCountAbsoluteWithScoreAboveThreshold;
     }
-    
+
+    /*
+     * This method cannot be part of the preloading phase, like all the other ones called by method getCodeSonarAnalysisData(), because of
+     * the lack of the "threshold" parameter, which is available only within condition "WarningCountIncreaseSpecifiedScoreAndHigherCondition"
+     */
     public CodeSonarWarningCount getWarningCountIncreaseWithScoreAboveThreshold(URI baseHubUri, long analysisId, int threshold) throws IOException {
         LOGGER.log(Level.INFO, "getWarningCountIncreaseWithScoreAboveThreshold threshold={0}", threshold);
         CodeSonarAnalysisData analysisData = getAnalysisDataFromCache(baseHubUri, analysisId);
@@ -255,6 +263,7 @@ public class CodeSonarCacheService {
         getNumberOfActiveWarnings(baseHubUri, analysisId, visibilityFilterAll);
         getNumberOfNewWarnings(baseHubUri, analysisId, visibilityFilterNew);
         /*
+         * TODO
          * Temporarily avoided calling the old XML APIs, in order for RAM memory occupation to decrease,
          * at least until when backward compatibility theme will be addressed.
          */
