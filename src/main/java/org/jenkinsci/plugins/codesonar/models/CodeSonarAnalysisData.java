@@ -2,6 +2,7 @@ package org.jenkinsci.plugins.codesonar.models;
 
 import java.net.URI;
 
+import org.jenkinsci.plugins.codesonar.CodeSonarAlertCounter;
 import org.jenkinsci.plugins.codesonar.models.analysis.Analysis;
 import org.jenkinsci.plugins.codesonar.models.metrics.Metrics;
 import org.jenkinsci.plugins.codesonar.models.procedures.ProcedureMetric;
@@ -23,7 +24,7 @@ public class CodeSonarAnalysisData {
     private Metrics metrics;
     private Procedures procedures;
     private ProcedureMetric procedureWithMaxCyclomaticComplexity;
-    private CodeSonarAlertFrequencies alertFrequencies;
+    private CodeSonarAlertCounter alertFrequencies;
     private CodeSonarWarningCount warningCountAbsoluteWithScoreAboveThreshold;
     private CodeSonarWarningCount warningCountIncreaseWithScoreAboveThreshold;
     
@@ -88,11 +89,11 @@ public class CodeSonarAnalysisData {
         this.procedureWithMaxCyclomaticComplexity = procedureWithMaxCyclomaticComplexity;
     }
 
-    public CodeSonarAlertFrequencies getAlertFrequencies() {
+    public CodeSonarAlertCounter getAlertFrequencies() {
         return alertFrequencies;
     }
 
-    public void setAlertFrequencies(CodeSonarAlertFrequencies alertFrequencies) {
+    public void setAlertFrequencies(CodeSonarAlertCounter alertFrequencies) {
         this.alertFrequencies = alertFrequencies;
     }
 

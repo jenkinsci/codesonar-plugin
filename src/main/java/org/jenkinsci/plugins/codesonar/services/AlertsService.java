@@ -6,13 +6,14 @@ import java.io.InputStreamReader;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
+import java.text.MessageFormat;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.apache.http.client.utils.URIBuilder;
+import org.jenkinsci.plugins.codesonar.CodeSonarAlertCounter;
 import org.jenkinsci.plugins.codesonar.CodeSonarPluginException;
 import org.jenkinsci.plugins.codesonar.models.CodeSonarAlertData;
-import org.jenkinsci.plugins.codesonar.models.CodeSonarAlertFrequencies;
 
 import com.google.common.base.Throwables;
 import com.google.gson.Gson;
@@ -27,8 +28,8 @@ public class AlertsService {
         this.httpService = httpService;
     }
     
-    public CodeSonarAlertFrequencies getAlertFrequencies(URI baseHubUri, long analysisId) throws IOException {
-        CodeSonarAlertFrequencies frequencies = new CodeSonarAlertFrequencies();
+    public CodeSonarAlertCounter getAlertFrequencies(URI baseHubUri, long analysisId) throws IOException {
+        CodeSonarAlertCounter frequencies = new CodeSonarAlertCounter();
         //Loop through all possible kind values, currently from 0 to 26. Upper bound 50 is for future alert kinds.
         for(long kind = 0; kind < 50; kind++) {
             //Build char_table request URL
@@ -48,8 +49,43 @@ public class AlertsService {
             try {
                 jsonContent = httpService.getContentFromUrlAsInputStream(requestUri.toASCIIString());
             } catch(CodeSonarPluginException e) {
-                LOGGER.log(Level.INFO, "Error querying alerts, skipping current kind", e);
-                continue;
+                /*
+                 * When method getContentFromUrlAsInputStream() is able to receive the response from
+                 * the server, the second element of this array is expected to contain the http status code.
+                 */
+                Object[] args = e.getArgs();
+                if(args[1] instanceof Integer) {
+                    int httpStatus = ((Integer) args[1]).intValue();
+                    if(httpStatus == 404) {
+                        /*
+                         * A 404 response is returned anytime the request specifies an alert kind that has no
+                         * occurrences on the specified analysis
+                         */
+                        LOGGER.log(Level.INFO, "Skipping current alert kind", e);
+                        continue;
+                    } else if(httpStatus == 500) {
+                        /*
+                         * A 500 response is returned anytime the request specifies an alert kind that is out
+                         * of range with respect to all currently supported alert kinds.
+                         * This makes status 500 the right one to establish when to stop looping through kinds.
+                         */
+                        LOGGER.log(Level.INFO, MessageFormat.format("Stop looping through alert kinds at kind id {0}", kind), e);
+                        break;
+                    } else {
+                        /*
+                         * A server-side error prevented the response from being satisfied, try skipping current alert kind
+                         */
+                        LOGGER.log(Level.INFO, "Found an unexpected error in the response, skipping current alert kind", e);
+                        continue;
+                    }
+                } else {
+                    /*
+                     * An error prevented the response from being received, try skipping current alert kind
+                     */
+                    LOGGER.log(Level.INFO, "Unexpected error querying the hub, skipping current alert kind", e);
+                    continue;
+                }
+                
             }
     
             Gson gsonDeserializer = new Gson();

@@ -6,8 +6,9 @@ import java.util.logging.Logger;
 import javax.annotation.Nonnull;
 
 import org.jenkinsci.Symbol;
+import org.jenkinsci.plugins.codesonar.CodeSonarAlertCounter;
+import org.jenkinsci.plugins.codesonar.CodeSonarAlertLevels;
 import org.jenkinsci.plugins.codesonar.CodeSonarLogger;
-import org.jenkinsci.plugins.codesonar.models.CodeSonarAlertFrequencies;
 import org.jenkinsci.plugins.codesonar.models.CodeSonarAnalysisData;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
@@ -62,7 +63,7 @@ public class YellowAlertLimitCondition extends Condition {
             return Result.SUCCESS;
         }
         
-        CodeSonarAlertFrequencies alertFrequencies = current.getAlertFrequencies();
+        CodeSonarAlertCounter alertFrequencies = current.getAlertFrequencies();
         
         // Going to produce build failure in the case of missing necessary information
         if(alertFrequencies == null) {
@@ -71,7 +72,7 @@ public class YellowAlertLimitCondition extends Condition {
             return Result.FAILURE;
         }
 
-        int yellowAlerts = alertFrequencies.getYellow();
+        int yellowAlerts = alertFrequencies.getAlertCount(CodeSonarAlertLevels.YELLOW);
         
         registerResult(csLogger, RESULT_DESCRIPTION_MESSAGE_FORMAT, alertLimit, yellowAlerts);
         

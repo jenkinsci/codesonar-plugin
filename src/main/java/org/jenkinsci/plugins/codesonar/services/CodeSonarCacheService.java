@@ -9,8 +9,8 @@ import java.util.logging.Logger;
 
 import org.javatuples.Pair;
 import org.jenkinsci.plugins.codesonar.AnalysisServiceFactory;
+import org.jenkinsci.plugins.codesonar.CodeSonarAlertCounter;
 import org.jenkinsci.plugins.codesonar.CodeSonarPluginException;
-import org.jenkinsci.plugins.codesonar.models.CodeSonarAlertFrequencies;
 import org.jenkinsci.plugins.codesonar.models.CodeSonarAnalysisData;
 import org.jenkinsci.plugins.codesonar.models.CodeSonarAnalysisWarningCount;
 import org.jenkinsci.plugins.codesonar.models.CodeSonarHubInfo;
@@ -214,14 +214,14 @@ public class CodeSonarCacheService {
         return procedureWithMaxCyclomaticComplexity;
     }
     
-    public CodeSonarAlertFrequencies getAlerts(URI baseHubUri, long analysisId) throws IOException {
+    public CodeSonarAlertCounter getAlerts(URI baseHubUri, long analysisId) throws IOException {
         LOGGER.log(Level.INFO, "getAlerts");
         CodeSonarAnalysisData analysisData = getAnalysisDataFromCache(baseHubUri, analysisId);
         if(analysisData.getAlertFrequencies() == null) {
             LOGGER.log(Level.INFO, "Alert frequencies not already set, loading from corresponding service");
             analysisData.setAlertFrequencies(getAlertsService().getAlertFrequencies(baseHubUri, analysisId));
         }
-        CodeSonarAlertFrequencies frequencies = analysisData.getAlertFrequencies();
+        CodeSonarAlertCounter frequencies = analysisData.getAlertFrequencies();
         LOGGER.log(Level.INFO, "CodeSonarAlertFrequencies new instance {0}", frequencies);
         return frequencies;
     }

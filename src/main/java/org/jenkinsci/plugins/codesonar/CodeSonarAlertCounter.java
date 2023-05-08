@@ -1,48 +1,38 @@
-package org.jenkinsci.plugins.codesonar.models;
+package org.jenkinsci.plugins.codesonar;
 
 /**
  * @author aseno
  *
  */
-public class CodeSonarAlertFrequencies {
+public class CodeSonarAlertCounter {
     private int red;
     private int yellow;
     private int blue;
     private int green;
     
-    public CodeSonarAlertFrequencies() {
+    public CodeSonarAlertCounter() {
         red = 0;
         yellow = 0;
         blue = 0;
         green = 0;
     }
     
-    public int getRed() {
-        return red;
-    }
-    public void setRed(int red) {
-        this.red = red;
-    }
-    public int getYellow() {
-        return yellow;
-    }
-    public void setYellow(int yellow) {
-        this.yellow = yellow;
-    }
-    public int getBlue() {
-        return blue;
-    }
-    public void setBlue(int blue) {
-        this.blue = blue;
-    }
-    public int getGreen() {
-        return green;
-    }
-    public void setGreen(int green) {
-        this.green = green;
+    public int getAlertCount(CodeSonarAlertLevels color) {
+        switch(color) {
+        case RED:
+            return this.red;
+        case YELLOW:
+            return this.yellow;
+        case BLUE:
+            return this.blue;
+        case GREEN:
+            return this.green;
+        default:
+            return -1;
+        }
     }
     
-    public void incrementOf(CodeSonarAlertData.Color color, int increment) {
+    public void incrementOf(CodeSonarAlertLevels color, int increment) {
         switch(color) {
         case RED:
             this.red += increment;

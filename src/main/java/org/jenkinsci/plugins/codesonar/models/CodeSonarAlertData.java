@@ -2,6 +2,8 @@ package org.jenkinsci.plugins.codesonar.models;
 
 import java.util.List;
 
+import org.jenkinsci.plugins.codesonar.CodeSonarAlertLevels;
+
 import com.google.gson.annotations.SerializedName;
 
 /**
@@ -9,16 +11,9 @@ import com.google.gson.annotations.SerializedName;
  *
  */
 public class CodeSonarAlertData {
-    public enum Color {
-        @SerializedName("RED") RED,
-        @SerializedName("YELLOW") YELLOW,
-        @SerializedName("BLUE") BLUE,
-        @SerializedName("GREEN") GREEN
-    }
-    
     private String message;
     private long analysis_id;
-    private Color color;
+    private CodeSonarAlertLevels color;
     private long id;
     private List<CodeSonarUndefinedFunction> undef_funcs;
     private List<String> issues;
@@ -36,10 +31,10 @@ public class CodeSonarAlertData {
     public void setAnalysis_id(long analysis_id) {
         this.analysis_id = analysis_id;
     }
-    public Color getColor() {
+    public CodeSonarAlertLevels getColor() {
         return color;
     }
-    public void setColor(Color color) {
+    public void setColor(CodeSonarAlertLevels color) {
         this.color = color;
     }
     public long getId() {
