@@ -9,7 +9,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.logging.Logger;
 
-import org.jenkinsci.plugins.codesonar.models.procedures.ProcedureMetric;
+import org.jenkinsci.plugins.codesonar.models.ProcedureMetric;
 
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
@@ -35,8 +35,6 @@ public class MaxCyclomaticComplexityJsonParser extends AbstractJsonParser<Proced
     public ProcedureMetric parseObject() throws IOException {
         ProcedureMetric maxCyclomaticComplexityProcedure = null;
         
-//      String jsonFile = "./maxCyclomaticComplexity.json";
-//      JsonReader jsonReader = new JsonReader(new FileReader(jsonFile , StandardCharsets.UTF_8));
         JsonReader jsonReader = new JsonReader(inputStreamReader);
         jsonReader.setLenient(true);
          

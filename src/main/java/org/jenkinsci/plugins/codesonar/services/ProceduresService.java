@@ -11,7 +11,7 @@ import org.apache.http.client.utils.URIBuilder;
 import org.javatuples.Pair;
 import org.jenkinsci.plugins.codesonar.models.SearchConfigData;
 import org.jenkinsci.plugins.codesonar.models.PairAdapter;
-import org.jenkinsci.plugins.codesonar.models.procedures.ProcedureMetric;
+import org.jenkinsci.plugins.codesonar.models.ProcedureMetric;
 import org.jenkinsci.plugins.codesonar.models.procedures.Procedures;
 import org.jenkinsci.plugins.codesonar.parsers.MaxCyclomaticComplexityJsonParser;
 
@@ -87,21 +87,4 @@ public class ProceduresService {
         return parser.parseObject();
     }
     
-//    public static void main(String[] args) {
-//        //Configure search parameters in order to extract the desired data
-//      AnalysisProceduresConfigData searchConfig = new AnalysisProceduresConfigData();
-//      searchConfig.setLimit(1);
-//      searchConfig.getColumns().add("metricCyclomaticComplexity");
-//      searchConfig.getColumns().add("procedure");
-//      searchConfig.addOrderByCondition("metricCyclomaticComplexity", AnalysisProceduresConfigData.SortingOrder.DESCENDING);
-//      
-//        //Serialize search configuration data as JSON
-//        Gson gsonSerializer = new GsonBuilder()
-//              .registerTypeAdapter(Pair.class, new PairAdapter())
-//              .create();
-//        String searchConfigAsJson = gsonSerializer.toJson(searchConfig);
-//        
-//        
-//        System.out.println("searchConfigAsJson=" + searchConfigAsJson);
-//  }
 }

@@ -7,7 +7,7 @@ import javax.annotation.Nonnull;
 import org.jenkinsci.Symbol;
 import org.jenkinsci.plugins.codesonar.CodeSonarLogger;
 import org.jenkinsci.plugins.codesonar.models.CodeSonarAnalysisData;
-import org.jenkinsci.plugins.codesonar.models.procedures.ProcedureMetric;
+import org.jenkinsci.plugins.codesonar.models.ProcedureMetric;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;

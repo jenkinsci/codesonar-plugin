@@ -1,4 +1,4 @@
-package org.jenkinsci.plugins.codesonar.models.procedures;
+package org.jenkinsci.plugins.codesonar.models;
 
 import java.util.Objects;
 
@@ -65,27 +65,4 @@ public class ProcedureMetric implements Comparable<ProcedureMetric> {
                 && Objects.equals(procedure, other.procedure);
     }
 
-//  public static void main(String[] args) {
-//      List<ProcedureMetric> list = new ArrayList<>();
-//      ProcedureMetric m1 = new ProcedureMetric();
-//      m1.metricCyclomaticComplexity = 30;
-//      m1.procedure = "main";
-//      list.add(m1);
-//      ProcedureMetric m2 = new ProcedureMetric();
-//      m2.metricCyclomaticComplexity = 20;
-//      m2.procedure = "add";
-//      list.add(m2);
-//      ProcedureMetric m3 = new ProcedureMetric();
-//      m3.metricCyclomaticComplexity = 40;
-//      m3.procedure = "alter";
-//      list.add(m3);
-//      ProcedureMetric m4 = new ProcedureMetric();
-//      m4.metricCyclomaticComplexity = 20;
-//      m4.procedure = "added";
-//      list.add(m4);
-//      
-//      System.out.println(list);
-//      Collections.sort(list);
-//      System.out.println(list);
-//  }
 }

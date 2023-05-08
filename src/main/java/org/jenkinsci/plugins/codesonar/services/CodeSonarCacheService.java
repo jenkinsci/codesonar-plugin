@@ -15,9 +15,9 @@ import org.jenkinsci.plugins.codesonar.models.CodeSonarAnalysisData;
 import org.jenkinsci.plugins.codesonar.models.CodeSonarAnalysisWarningCount;
 import org.jenkinsci.plugins.codesonar.models.CodeSonarHubInfo;
 import org.jenkinsci.plugins.codesonar.models.CodeSonarWarningCount;
+import org.jenkinsci.plugins.codesonar.models.ProcedureMetric;
 import org.jenkinsci.plugins.codesonar.models.analysis.Analysis;
 import org.jenkinsci.plugins.codesonar.models.metrics.Metrics;
-import org.jenkinsci.plugins.codesonar.models.procedures.ProcedureMetric;
 import org.jenkinsci.plugins.codesonar.models.procedures.Procedures;
 
 public class CodeSonarCacheService {
