@@ -1,6 +1,6 @@
 package org.jenkinsci.plugins.codesonar.services;
 
-import static org.jenkinsci.plugins.codesonar.models.CodeSonarChartConfigData.CHART_KIND_BAR;
+import static org.jenkinsci.plugins.codesonar.models.json.CodeSonarChartConfigData.CHART_KIND_BAR;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -18,13 +18,13 @@ import java.util.regex.Pattern;
 import org.apache.commons.lang.StringUtils;
 import org.apache.http.client.utils.URIBuilder;
 import org.jenkinsci.plugins.codesonar.CodeSonarPluginException;
-import org.jenkinsci.plugins.codesonar.models.CodeSonarAnalysisWarningCount;
-import org.jenkinsci.plugins.codesonar.models.CodeSonarChartConfigData;
-import org.jenkinsci.plugins.codesonar.models.CodeSonarChartData;
-import org.jenkinsci.plugins.codesonar.models.CodeSonarChartGroup;
-import org.jenkinsci.plugins.codesonar.models.CodeSonarChartSearchAxis;
 import org.jenkinsci.plugins.codesonar.models.SearchResults;
 import org.jenkinsci.plugins.codesonar.models.analysis.Analysis;
+import org.jenkinsci.plugins.codesonar.models.json.CodeSonarAnalysisWarningCount;
+import org.jenkinsci.plugins.codesonar.models.json.CodeSonarChartConfigData;
+import org.jenkinsci.plugins.codesonar.models.json.CodeSonarChartData;
+import org.jenkinsci.plugins.codesonar.models.json.CodeSonarChartGroup;
+import org.jenkinsci.plugins.codesonar.models.json.CodeSonarChartSearchAxis;
 import org.jenkinsci.plugins.codesonar.models.projects.Project;
 
 import com.google.common.base.Throwables;

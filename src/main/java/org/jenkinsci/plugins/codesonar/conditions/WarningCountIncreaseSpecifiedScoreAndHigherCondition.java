@@ -69,7 +69,7 @@ public class WarningCountIncreaseSpecifiedScoreAndHigherCondition extends Condit
     }
 
     @Override
-    public Result validate(CodeSonarAnalysisData current, CodeSonarAnalysisData previous, Launcher launcher, TaskListener listener, CodeSonarLogger csLogger) {
+    public Result validate(CodeSonarAnalysisData current, CodeSonarAnalysisData previous, Launcher launcher, TaskListener listener, CodeSonarLogger csLogger, CodeSonarCacheService cacheService) {
         if (current == null) {
             registerResult(csLogger, CURRENT_BUILD_DATA_NOT_AVAILABLE);
             return Result.SUCCESS;
@@ -79,8 +79,6 @@ public class WarningCountIncreaseSpecifiedScoreAndHigherCondition extends Condit
             registerResult(csLogger, PREVIOUS_BUILD_DATA_NOT_AVAILABLE);
             return Result.SUCCESS;
         }
-        
-        CodeSonarCacheService cacheService = CodeSonarCacheService.getInstance();
         
         if(cacheService == null) {
             final String msg = "\"CacheService\" not available.";

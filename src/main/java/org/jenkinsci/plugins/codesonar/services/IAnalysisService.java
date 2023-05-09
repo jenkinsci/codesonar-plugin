@@ -5,8 +5,8 @@ import java.net.URI;
 import java.util.List;
 
 import org.jenkinsci.plugins.codesonar.CodeSonarPluginException;
-import org.jenkinsci.plugins.codesonar.models.CodeSonarAnalysisWarningCount;
 import org.jenkinsci.plugins.codesonar.models.analysis.Analysis;
+import org.jenkinsci.plugins.codesonar.models.json.CodeSonarAnalysisWarningCount;
 
 public interface IAnalysisService {
     public static final String VISIBILITY_FILTER_ALL_WARNINGS_DEFAULT = "active";

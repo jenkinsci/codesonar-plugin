@@ -9,9 +9,9 @@ import java.util.logging.Logger;
 
 import org.apache.http.client.utils.URIBuilder;
 import org.javatuples.Pair;
-import org.jenkinsci.plugins.codesonar.models.SearchConfigData;
 import org.jenkinsci.plugins.codesonar.models.PairAdapter;
 import org.jenkinsci.plugins.codesonar.models.ProcedureMetric;
+import org.jenkinsci.plugins.codesonar.models.json.SearchConfigData;
 import org.jenkinsci.plugins.codesonar.models.procedures.Procedures;
 import org.jenkinsci.plugins.codesonar.parsers.MaxCyclomaticComplexityJsonParser;
 

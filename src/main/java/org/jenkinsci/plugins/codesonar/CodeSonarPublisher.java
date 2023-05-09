@@ -407,14 +407,17 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
         CodeSonarAnalysisData comparisonAnalysisData = null;
         if(compareDTO != null) {
             csLogger.writeInfo("Loading comparison analysis details for analysisId {0} from hub \"{1}\"", compareDTO.getAnalysisId(), compareDTO.getBaseHubUri());
-            //TODO Signal if there's a mismatch between the hub of the current analysis and the one of the comparison analysis
+            //Signal on the Jenkins' console if there's a mismatch between the hub of the current analysis and the one of the comparison analysis
+            if(!currentAnalysisData.getBaseHubUri().equals(compareDTO.getBaseHubUri())) {
+                csLogger.writeInfo("Attention, comparison analysis was done against a different CodeSonar HUB (current HUB: {0}, comparison HUB: {1}", currentAnalysisData.getBaseHubUri(), compareDTO.getBaseHubUri());
+            }
             comparisonAnalysisData = cacheService.getCodeSonarAnalysisData(compareDTO.getBaseHubUri(), compareDTO.getAnalysisId(), getVisibilityFilterOrDefault(), getNewWarningsFilterOrDefault());
         }
         
         csLogger.writeInfo("Evaluating conditions");
 
         for (Condition condition : conditions) {
-            Result validationResult = condition.validate(currentAnalysisData, comparisonAnalysisData, launcher, listener, csLogger);
+            Result validationResult = condition.validate(currentAnalysisData, comparisonAnalysisData, launcher, listener, csLogger, cacheService);
             Pair<String, String> pair = Pair.with(condition.describeResult(), validationResult.toString());
             conditionNamesAndResults.add(pair);
             run.setResult(validationResult);
@@ -604,7 +607,7 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
     
     public CodeSonarCacheService getCodeSonarCacheService(@Nonnull Run<?, ?> run, CodeSonarHubInfo hubInfo) throws CodeSonarPluginException {
         if (codeSonarCacheService  == null) {
-            codeSonarCacheService = CodeSonarCacheService.createInstance(httpService, hubInfo);
+            codeSonarCacheService = new CodeSonarCacheService(httpService, hubInfo);
         }
         return codeSonarCacheService;
     }

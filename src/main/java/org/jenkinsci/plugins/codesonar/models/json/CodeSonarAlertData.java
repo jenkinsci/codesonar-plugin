@@ -1,10 +1,9 @@
-package org.jenkinsci.plugins.codesonar.models;
+package org.jenkinsci.plugins.codesonar.models.json;
 
 import java.util.List;
 
 import org.jenkinsci.plugins.codesonar.CodeSonarAlertLevels;
-
-import com.google.gson.annotations.SerializedName;
+import org.jenkinsci.plugins.codesonar.models.CodeSonarUndefinedFunction;
 
 /**
  * @author aseno

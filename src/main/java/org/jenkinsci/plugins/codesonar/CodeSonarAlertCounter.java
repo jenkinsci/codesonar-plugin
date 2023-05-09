@@ -1,60 +1,41 @@
 package org.jenkinsci.plugins.codesonar;
 
+import java.util.Arrays;
+import java.util.stream.Collectors;
+
 /**
  * @author aseno
  *
  */
 public class CodeSonarAlertCounter {
-    private int red;
-    private int yellow;
-    private int blue;
-    private int green;
+    private int[] counterByLevel;
     
     public CodeSonarAlertCounter() {
-        red = 0;
-        yellow = 0;
-        blue = 0;
-        green = 0;
+        counterByLevel = new int[CodeSonarAlertLevels.values().length];
     }
     
-    public int getAlertCount(CodeSonarAlertLevels color) {
-        switch(color) {
-        case RED:
-            return this.red;
-        case YELLOW:
-            return this.yellow;
-        case BLUE:
-            return this.blue;
-        case GREEN:
-            return this.green;
-        default:
-            return -1;
-        }
+    public int getAlertCount(CodeSonarAlertLevels level) {
+        return counterByLevel[level.ordinal()];
     }
     
-    public void incrementOf(CodeSonarAlertLevels color, int increment) {
-        switch(color) {
-        case RED:
-            this.red += increment;
-            break;
-        case YELLOW:
-            this.yellow += increment;
-            break;
-        case BLUE:
-            this.blue += increment;
-            break;
-        case GREEN:
-            this.green += increment;
-            break;
-        default:
-            // Do nothing
-        }
+    public void incrementOf(CodeSonarAlertLevels level, int increment) {
+        counterByLevel[level.ordinal()] += increment;
     }
     
     @Override
     public String toString() {
-        return "CodeSonarAlertCounter [red=" + red + ", yellow=" + yellow + ", blue=" + blue + ", green=" + green
-                + "]";
+        StringBuilder sb = new StringBuilder();
+        sb.append("CodeSonarAlertCounter levels=[");
+        sb.append(Arrays.asList(CodeSonarAlertLevels.values())
+            .stream()
+            .map(x -> x.name())
+            .collect(Collectors.joining(", ")));
+        sb.append("], counters=[");
+        sb.append(Arrays.stream(counterByLevel)
+                .mapToObj(i -> String.valueOf(i))
+                .collect(Collectors.joining(", ")));
+        sb.append("]");
+        return sb.toString();
     }
 
 }

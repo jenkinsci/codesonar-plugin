@@ -12,16 +12,15 @@ import org.jenkinsci.plugins.codesonar.AnalysisServiceFactory;
 import org.jenkinsci.plugins.codesonar.CodeSonarAlertCounter;
 import org.jenkinsci.plugins.codesonar.CodeSonarPluginException;
 import org.jenkinsci.plugins.codesonar.models.CodeSonarAnalysisData;
-import org.jenkinsci.plugins.codesonar.models.CodeSonarAnalysisWarningCount;
 import org.jenkinsci.plugins.codesonar.models.CodeSonarHubInfo;
 import org.jenkinsci.plugins.codesonar.models.CodeSonarWarningCount;
 import org.jenkinsci.plugins.codesonar.models.ProcedureMetric;
 import org.jenkinsci.plugins.codesonar.models.analysis.Analysis;
+import org.jenkinsci.plugins.codesonar.models.json.CodeSonarAnalysisWarningCount;
 import org.jenkinsci.plugins.codesonar.models.metrics.Metrics;
 import org.jenkinsci.plugins.codesonar.models.procedures.Procedures;
 
 public class CodeSonarCacheService {
-    private static CodeSonarCacheService instance = null;
     private static final Logger LOGGER = Logger.getLogger(CodeSonarCacheService.class.getName());
     
     private HttpService httpService;
@@ -35,29 +34,10 @@ public class CodeSonarCacheService {
     private WarningsService warningsService;
     private Map<Pair<URI,Long>, CodeSonarAnalysisData> cachedAnalyses;
 
-    private CodeSonarCacheService(HttpService httpService, CodeSonarHubInfo hubInfo) {
+    public CodeSonarCacheService(HttpService httpService, CodeSonarHubInfo hubInfo) {
         this.httpService = httpService;
         this.hubInfo = hubInfo;
         cachedAnalyses = new HashMap<>();
-    }
-    
-    /*
-     * This is the method that handles the creation of a new instance (first time only)
-     * as well as the one that can return that same instance when already available.
-     */
-    public static CodeSonarCacheService createInstance(HttpService httpService, CodeSonarHubInfo hubInfo) {
-        if(instance == null) {
-            instance = new CodeSonarCacheService(httpService, hubInfo);
-        }
-        return instance;
-    }
-    
-    /*
-     * This method is meant for those that need to get the instance, whenever already present,
-     * but which don't have the ability to instantiate a new one if not present.
-     */
-    public static CodeSonarCacheService getInstance() {
-        return instance;
     }
     
     private XmlSerializationService getXmlSerializationService() {
