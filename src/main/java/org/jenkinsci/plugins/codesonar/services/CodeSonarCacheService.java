@@ -217,13 +217,13 @@ public class CodeSonarCacheService {
     public CodeSonarAlertCounter getAlerts(URI baseHubUri, long analysisId) throws IOException {
         LOGGER.log(Level.INFO, "getAlerts");
         CodeSonarAnalysisData analysisData = getAnalysisDataFromCache(baseHubUri, analysisId);
-        if(analysisData.getAlertFrequencies() == null) {
-            LOGGER.log(Level.INFO, "Alert frequencies not already set, loading from corresponding service");
-            analysisData.setAlertFrequencies(getAlertsService().getAlertFrequencies(baseHubUri, analysisId));
+        if(analysisData.getAlertCounter() == null) {
+            LOGGER.log(Level.INFO, "Alert counter not already set, loading from corresponding service");
+            analysisData.setAlertCounter(getAlertsService().getAlertCounter(baseHubUri, analysisId));
         }
-        CodeSonarAlertCounter frequencies = analysisData.getAlertFrequencies();
-        LOGGER.log(Level.INFO, "CodeSonarAlertFrequencies new instance {0}", frequencies);
-        return frequencies;
+        CodeSonarAlertCounter counter = analysisData.getAlertCounter();
+        LOGGER.log(Level.INFO, "CodeSonarAlertCounter new instance {0}", counter);
+        return counter;
     }
     
     /*

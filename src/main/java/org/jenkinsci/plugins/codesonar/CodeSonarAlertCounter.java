@@ -53,7 +53,7 @@ public class CodeSonarAlertCounter {
     
     @Override
     public String toString() {
-        return "CodeSonarAlertFrequencies [red=" + red + ", yellow=" + yellow + ", blue=" + blue + ", green=" + green
+        return "CodeSonarAlertCounter [red=" + red + ", yellow=" + yellow + ", blue=" + blue + ", green=" + green
                 + "]";
     }
 

@@ -29,8 +29,8 @@ public class AlertsService {
         this.httpService = httpService;
     }
     
-    public CodeSonarAlertCounter getAlertFrequencies(URI baseHubUri, long analysisId) throws IOException {
-        CodeSonarAlertCounter frequencies = new CodeSonarAlertCounter();
+    public CodeSonarAlertCounter getAlertCounter(URI baseHubUri, long analysisId) throws IOException {
+        CodeSonarAlertCounter counter = new CodeSonarAlertCounter();
         //Loop through all possible kind values, currently from 0 to 26. Upper bound 50 is for future alert kinds.
         for(long kind = 0; kind < 50; kind++) {
             //Build char_table request URL
@@ -92,19 +92,19 @@ public class AlertsService {
             
             if(alertData.getUndef_funcs() != null && alertData.getUndef_funcs().size() > 0) {
                 LOGGER.log(Level.INFO, "Counting {0} new alerts from \"undef_funcs\" for color {1}", new Object[] {alertData.getUndef_funcs().size(), alertData.getColor()});
-                frequencies.incrementOf(alertData.getColor(), alertData.getUndef_funcs().size());
+                counter.incrementOf(alertData.getColor(), alertData.getUndef_funcs().size());
             }
             if(alertData.getIssues() != null && alertData.getIssues().size() > 0) {
                 LOGGER.log(Level.INFO, "Counting {0} new alerts from \"issues\" for color {1}", new Object[] {alertData.getIssues().size(), alertData.getColor()});
-                frequencies.incrementOf(alertData.getColor(), alertData.getIssues().size());
+                counter.incrementOf(alertData.getColor(), alertData.getIssues().size());
             }
             if(alertData.getFacts() != null && alertData.getFacts().size() > 0) {
                 LOGGER.log(Level.INFO, "Counting {0} new alerts from \"facts\" for color {1}", new Object[] {alertData.getFacts().size(), alertData.getColor()});
-                frequencies.incrementOf(alertData.getColor(), alertData.getFacts().size());
+                counter.incrementOf(alertData.getColor(), alertData.getFacts().size());
             }
         }
         
-        return frequencies;
+        return counter;
     }
 
 }

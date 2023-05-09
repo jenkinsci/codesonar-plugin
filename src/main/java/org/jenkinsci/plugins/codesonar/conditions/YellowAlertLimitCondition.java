@@ -63,16 +63,16 @@ public class YellowAlertLimitCondition extends Condition {
             return Result.SUCCESS;
         }
         
-        CodeSonarAlertCounter alertFrequencies = current.getAlertFrequencies();
+        CodeSonarAlertCounter alertCounter = current.getAlertCounter();
         
         // Going to produce build failure in the case of missing necessary information
-        if(alertFrequencies == null) {
-            LOGGER.log(Level.SEVERE, "\"alertFrequencies\" data not found.");
+        if(alertCounter == null) {
+            LOGGER.log(Level.SEVERE, "\"alertCounter\" data not found.");
             registerResult(csLogger, CURRENT_BUILD_DATA_NOT_AVAILABLE);
             return Result.FAILURE;
         }
 
-        int yellowAlerts = alertFrequencies.getAlertCount(CodeSonarAlertLevels.YELLOW);
+        int yellowAlerts = alertCounter.getAlertCount(CodeSonarAlertLevels.YELLOW);
         
         registerResult(csLogger, RESULT_DESCRIPTION_MESSAGE_FORMAT, alertLimit, yellowAlerts);
         
