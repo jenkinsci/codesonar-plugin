@@ -1,6 +1,8 @@
 package org.jenkinsci.plugins.codesonar.models;
 
 import java.net.URI;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.jenkinsci.plugins.codesonar.CodeSonarAlertCounter;
 import org.jenkinsci.plugins.codesonar.models.analysis.Analysis;
@@ -25,12 +27,14 @@ public class CodeSonarAnalysisData {
     private Procedures procedures;
     private ProcedureMetric procedureWithMaxCyclomaticComplexity;
     private CodeSonarAlertCounter alertCounter;
-    private CodeSonarWarningCount warningCountAbsoluteWithScoreAboveThreshold;
-    private CodeSonarWarningCount warningCountIncreaseWithScoreAboveThreshold;
+//    private CodeSonarWarningCount warningCountAbsoluteWithScoreAboveThreshold;
+//    private CodeSonarWarningCount warningCountIncreaseWithScoreAboveThreshold;
+    private Map<Integer,Long> numberOfWarningsAboveThreshold;
     
     public CodeSonarAnalysisData(URI baseHubUri, long analysisId) {
         this.baseHubUri = baseHubUri;
         this.analysisId = analysisId;
+        this.numberOfWarningsAboveThreshold = new HashMap<>();
     }
 
     public CodeSonarAnalysisWarningCount getActiveWarningsCount() {
@@ -97,22 +101,32 @@ public class CodeSonarAnalysisData {
         this.alertCounter = alertCounter;
     }
 
-    public CodeSonarWarningCount getWarningCountAbsoluteWithScoreAboveThreshold() {
-        return warningCountAbsoluteWithScoreAboveThreshold;
+//    public CodeSonarWarningCount getWarningCountAbsoluteWithScoreAboveThreshold() {
+//        return warningCountAbsoluteWithScoreAboveThreshold;
+//    }
+//
+//    public void setWarningCountAbsoluteWithScoreAboveThreshold(
+//            CodeSonarWarningCount warningCountAbsoluteWithScoreAboveThreshold) {
+//        this.warningCountAbsoluteWithScoreAboveThreshold = warningCountAbsoluteWithScoreAboveThreshold;
+//    }
+//    
+//    public CodeSonarWarningCount getWarningCountIncreaseWithScoreAboveThreshold() {
+//        return warningCountIncreaseWithScoreAboveThreshold;
+//    }
+//
+//    public void setWarningCountIncreaseWithScoreAboveThreshold(
+//            CodeSonarWarningCount warningCountIncreaseWithScoreAboveThreshold) {
+//        this.warningCountIncreaseWithScoreAboveThreshold = warningCountIncreaseWithScoreAboveThreshold;
+//    }
+
+    public Long getNumberOfWarningsAboveThreshold(int threshold) {
+        return numberOfWarningsAboveThreshold.get(threshold);
     }
 
-    public void setWarningCountAbsoluteWithScoreAboveThreshold(
-            CodeSonarWarningCount warningCountAbsoluteWithScoreAboveThreshold) {
-        this.warningCountAbsoluteWithScoreAboveThreshold = warningCountAbsoluteWithScoreAboveThreshold;
-    }
-    
-    public CodeSonarWarningCount getWarningCountIncreaseWithScoreAboveThreshold() {
-        return warningCountIncreaseWithScoreAboveThreshold;
-    }
-
-    public void setWarningCountIncreaseWithScoreAboveThreshold(
-            CodeSonarWarningCount warningCountIncreaseWithScoreAboveThreshold) {
-        this.warningCountIncreaseWithScoreAboveThreshold = warningCountIncreaseWithScoreAboveThreshold;
+    public void setNumberOfWarningsAboveThreshold(int threshold, Long numberOfWarnings) {
+        if(numberOfWarnings != null) {
+            numberOfWarningsAboveThreshold.put(threshold, numberOfWarnings);
+        }
     }
 
     public URI getBaseHubUri() {

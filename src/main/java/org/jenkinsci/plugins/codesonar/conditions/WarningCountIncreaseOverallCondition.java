@@ -1,5 +1,6 @@
 package org.jenkinsci.plugins.codesonar.conditions;
 
+import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -8,12 +9,13 @@ import javax.annotation.Nonnull;
 import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.Symbol;
 import org.jenkinsci.plugins.codesonar.CodeSonarLogger;
-import org.jenkinsci.plugins.codesonar.models.CodeSonarAnalysisData;
-import org.jenkinsci.plugins.codesonar.models.json.CodeSonarAnalysisWarningCount;
-import org.jenkinsci.plugins.codesonar.services.CodeSonarCacheService;
+import org.jenkinsci.plugins.codesonar.api.CodeSonarDTOAnalysisDataLoader;
+import org.jenkinsci.plugins.codesonar.api.CodeSonarHubAnalysisDataLoader;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
+
+import com.google.common.base.Throwables;
 
 import hudson.Extension;
 import hudson.Launcher;
@@ -58,7 +60,7 @@ public class WarningCountIncreaseOverallCondition extends Condition {
     }
 
     @Override
-    public Result validate(CodeSonarAnalysisData current, CodeSonarAnalysisData previous, Launcher launcher, TaskListener listener, CodeSonarLogger csLogger, CodeSonarCacheService cacheService) {
+    public Result validate(CodeSonarHubAnalysisDataLoader current, CodeSonarDTOAnalysisDataLoader previous, String visibilityFilter, String newVisibilityFilter, Launcher launcher, TaskListener listener, CodeSonarLogger csLogger) {
         if (current == null) {
             registerResult(csLogger, CURRENT_BUILD_DATA_NOT_AVAILABLE);
             return Result.SUCCESS;
@@ -69,32 +71,38 @@ public class WarningCountIncreaseOverallCondition extends Condition {
             return Result.SUCCESS;
         }
         
-        // Going to produce build failures in the case of missing necessary information
-        CodeSonarAnalysisWarningCount previousAnalysisActiveWarnings = previous.getActiveWarningsCount();
-        if(previousAnalysisActiveWarnings == null) {
-            LOGGER.log(Level.SEVERE, "\"analysisActiveWarnings\" data not found.");
-            registerResult(csLogger, CURRENT_BUILD_DATA_NOT_AVAILABLE);
+        Long previousCount = null;
+        Long currentCount = null;
+        try {
+            previousCount = previous.getNumberOfActiveWarnings();
+            currentCount = current.getNumberOfActiveWarnings();
+        } catch (IOException e) {
+            LOGGER.log(Level.WARNING, "Error calling number of active warnings on HUB API. %nException: {0}%nStack Trace: {1}", new Object[] {e.getMessage(), Throwables.getStackTraceAsString(e)});
             return Result.FAILURE;
         }
-        CodeSonarAnalysisWarningCount currentAnalysisActiveWarnings = current.getNewWarningsCount();
-        if(currentAnalysisActiveWarnings == null) {
-            LOGGER.log(Level.SEVERE, "\"analysisNewWarnings\" data not found.");
-            registerResult(csLogger, CURRENT_BUILD_DATA_NOT_AVAILABLE);
+        
+        // Going to produce build failures in the case of missing necessary information
+        if(previousCount == null) {
+            LOGGER.log(Level.SEVERE, "\"previousAnalysisActiveWarningsCount\" not available.");
+            registerResult(csLogger, DATA_LOADER_EMPTY_RESPONSE);
             return Result.FAILURE;
-        }    
-
-        long previousCount = previousAnalysisActiveWarnings.getNumberOfWarnings();
-        long currentCount = currentAnalysisActiveWarnings.getNumberOfWarnings();
-        long diff = currentCount - previousCount;
+        }
+        if(currentCount == null) {
+            LOGGER.log(Level.SEVERE, "\"currentAnalysisActiveWarningsCount\" not available.");
+            registerResult(csLogger, DATA_LOADER_EMPTY_RESPONSE);
+            return Result.FAILURE;
+        }        
+        
+        long diff = currentCount.longValue() - previousCount.longValue();
         float thresholdPercentage = Float.parseFloat(percentage);
         
         float result;
         //If there are no warnings, redefine percentage of new warnings
-        if(previousCount == 0) {
+        if(previousCount.longValue() == 0) {
             result = diff > 0 ? 100f : 0f;
             LOGGER.log(Level.INFO, "no active warnings found, forcing warning percentage to {0,number,0.00}%", result);
         } else {
-            result = (((float) diff) / previousCount) * 100;
+            result = (((float) diff) / previousCount.longValue()) * 100;
             LOGGER.log(Level.INFO, "warnings increment percentage = {0,number,0.00}%", result);
         }
         

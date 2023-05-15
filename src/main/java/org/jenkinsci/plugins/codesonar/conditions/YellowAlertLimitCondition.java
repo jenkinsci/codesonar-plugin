@@ -1,19 +1,21 @@
 package org.jenkinsci.plugins.codesonar.conditions;
 
+import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.annotation.Nonnull;
 
 import org.jenkinsci.Symbol;
-import org.jenkinsci.plugins.codesonar.CodeSonarAlertCounter;
 import org.jenkinsci.plugins.codesonar.CodeSonarAlertLevels;
 import org.jenkinsci.plugins.codesonar.CodeSonarLogger;
-import org.jenkinsci.plugins.codesonar.models.CodeSonarAnalysisData;
-import org.jenkinsci.plugins.codesonar.services.CodeSonarCacheService;
+import org.jenkinsci.plugins.codesonar.api.CodeSonarDTOAnalysisDataLoader;
+import org.jenkinsci.plugins.codesonar.api.CodeSonarHubAnalysisDataLoader;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
+
+import com.google.common.base.Throwables;
 
 import hudson.Extension;
 import hudson.Launcher;
@@ -58,52 +60,26 @@ public class YellowAlertLimitCondition extends Condition {
     }
 
     @Override
-    public Result validate(CodeSonarAnalysisData current, CodeSonarAnalysisData previous, Launcher launcher, TaskListener listener, CodeSonarLogger csLogger, CodeSonarCacheService cacheService) {
+    public Result validate(CodeSonarHubAnalysisDataLoader current, CodeSonarDTOAnalysisDataLoader previous, String visibilityFilter, String newVisibilityFilter, Launcher launcher, TaskListener listener, CodeSonarLogger csLogger) {
         if (current == null) {
             registerResult(csLogger, CURRENT_BUILD_DATA_NOT_AVAILABLE);
             return Result.SUCCESS;
         }
         
-        CodeSonarAlertCounter alertCounter = current.getAlertCounter();
-        
-        // Going to produce build failure in the case of missing necessary information
-        if(alertCounter == null) {
-            LOGGER.log(Level.SEVERE, "\"alertCounter\" data not found.");
-            registerResult(csLogger, CURRENT_BUILD_DATA_NOT_AVAILABLE);
+        Integer yellowAlerts = null;
+        try {
+            yellowAlerts = current.getNumberOfAlerts(CodeSonarAlertLevels.YELLOW);      
+        } catch (IOException e) {
+            LOGGER.log(Level.WARNING, "Error calling yellow alerts on HUB API. %nException: {0}%nStack Trace: {1}", new Object[] {e.getMessage(), Throwables.getStackTraceAsString(e)});
             return Result.FAILURE;
         }
 
-        int yellowAlerts = alertCounter.getAlertCount(CodeSonarAlertLevels.YELLOW);
-        
         registerResult(csLogger, RESULT_DESCRIPTION_MESSAGE_FORMAT, alertLimit, yellowAlerts);
         
-        if (yellowAlerts > alertLimit) {
+        if (yellowAlerts.intValue() > alertLimit) {
             return Result.fromString(warrantedResult);
         }
 
-        /*
-         * Temporarily commented previous implementation, probably until
-         * when backward compatibility theme will be addressed.
-         */
-        
-        /*
-        Analysis analysisActiveWarnings = current.getAnalysisActiveWarnings();
-        
-        // Going to produce build failure in the case of missing necessary information
-        if(analysisActiveWarnings == null) {
-            LOGGER.log(Level.SEVERE, "\"analysisActiveWarnings\" data not found.");
-            registerResult(csLogger, CURRENT_BUILD_DATA_NOT_AVAILABLE);
-            return Result.FAILURE;
-        }
-        
-        List<Alert> yellowAlerts = analysisActiveWarnings.getYellowAlerts();
-        if (yellowAlerts.size() > alertLimit) {
-            registerResult(csLogger, RESULT_DESCRIPTION_MESSAGE_FORMAT, alertLimit, yellowAlerts.size());
-            return Result.fromString(warrantedResult);
-        }
-
-        registerResult(csLogger, RESULT_DESCRIPTION_MESSAGE_FORMAT, alertLimit, yellowAlerts.size());
-        */
         return Result.SUCCESS;
     }
 

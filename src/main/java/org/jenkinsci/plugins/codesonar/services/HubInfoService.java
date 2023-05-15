@@ -53,6 +53,7 @@ public class HubInfoService {
             if(checkClientOk(cci)) {
                 hubInfo.setOpenAPISupported(supportsOpenAPI(cci));
                 hubInfo.setStrictQueryParametersEnforced(supportsStrictQueryParameters(cci));
+                hubInfo.setGridConfigJson(supportsGridConfigJson(cci));
             } else {
                 //In this case this client has been rejected by the hub
                 throw createError("client rejected by the hub. %nclientOK={0}", cci.getClientOK().toString());
@@ -82,7 +83,7 @@ public class HubInfoService {
         
         URI resolvedURI = baseHubUri;
         
-        resolvedURI = baseHubUri.resolve(String.format("/command/check_version/%s/?version=%d&capability=openapi&capability=strictQueryParameters", clientName, clientVersion));
+        resolvedURI = baseHubUri.resolve(String.format("/command/check_version/%s/?version=%d&capability=openapi&capability=strictQueryParameters&capability=gridConfigJson", clientName, clientVersion));
         LOGGER.log(Level.INFO, "Calling " + resolvedURI.toString());
         
         HttpResponse resp;
@@ -158,6 +159,12 @@ public class HubInfoService {
         return cci.getCapabilities() != null
                 && cci.getCapabilities().getStrictQueryParameters() != null
                 && cci.getCapabilities().getStrictQueryParameters().booleanValue();
+    }
+    
+    private boolean supportsGridConfigJson(CodeSonarHubClientCompatibilityInfo cci) {
+        return cci.getCapabilities() != null
+                && cci.getCapabilities().getGridConfigJson() != null
+                && cci.getCapabilities().getGridConfigJson().booleanValue();
     }
 
     private boolean checkClientOk(CodeSonarHubClientCompatibilityInfo cci) {

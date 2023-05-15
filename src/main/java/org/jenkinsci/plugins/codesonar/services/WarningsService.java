@@ -12,7 +12,6 @@ import java.util.logging.Logger;
 import org.apache.http.client.utils.URIBuilder;
 import org.javatuples.Pair;
 import org.jenkinsci.plugins.codesonar.CodeSonarPluginException;
-import org.jenkinsci.plugins.codesonar.models.CodeSonarWarningCount;
 import org.jenkinsci.plugins.codesonar.models.PairAdapter;
 import org.jenkinsci.plugins.codesonar.models.json.CodeSonarWarningSearchData;
 import org.jenkinsci.plugins.codesonar.models.json.SearchConfigData;
@@ -33,9 +32,7 @@ public class WarningsService {
         this.strictQueryParameters = strictQueryParameters;
     }
     
-    public CodeSonarWarningCount getNumberOfWarningsWithScoreAboveThreshold(URI baseHubUri, long analysisId, int threshold) throws IOException {
-        CodeSonarWarningCount result = new CodeSonarWarningCount();
-        
+    public Long getNumberOfWarningsWithScoreAboveThreshold(URI baseHubUri, long analysisId, int threshold) throws IOException {
         //Configure search parameters in order to extract the desired data
         SearchConfigData searchConfig = new SearchConfigData();
         //Avoid returning rows, only rows counter is needed.
@@ -82,8 +79,7 @@ public class WarningsService {
             return null;
         }
         
-        result.setScoreAboveThresholdCounter(warningSearchData.getCount());
-        return result;
+        return warningSearchData.getCount();
     }
 
 }

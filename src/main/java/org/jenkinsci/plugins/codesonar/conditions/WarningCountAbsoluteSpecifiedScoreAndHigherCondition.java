@@ -8,9 +8,8 @@ import javax.annotation.Nonnull;
 
 import org.jenkinsci.Symbol;
 import org.jenkinsci.plugins.codesonar.CodeSonarLogger;
-import org.jenkinsci.plugins.codesonar.models.CodeSonarAnalysisData;
-import org.jenkinsci.plugins.codesonar.models.CodeSonarWarningCount;
-import org.jenkinsci.plugins.codesonar.services.CodeSonarCacheService;
+import org.jenkinsci.plugins.codesonar.api.CodeSonarDTOAnalysisDataLoader;
+import org.jenkinsci.plugins.codesonar.api.CodeSonarHubAnalysisDataLoader;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
@@ -68,71 +67,33 @@ public class WarningCountAbsoluteSpecifiedScoreAndHigherCondition extends Condit
     }
 
     @Override
-    public Result validate(CodeSonarAnalysisData current, CodeSonarAnalysisData previous, Launcher launcher, TaskListener listener, CodeSonarLogger csLogger, CodeSonarCacheService cacheService) {
+    public Result validate(CodeSonarHubAnalysisDataLoader current, CodeSonarDTOAnalysisDataLoader previous, String visibilityFilter, String newVisibilityFilter, Launcher launcher, TaskListener listener, CodeSonarLogger csLogger) {
         if (current == null) {
             registerResult(csLogger, CURRENT_BUILD_DATA_NOT_AVAILABLE);
             return Result.SUCCESS;
         }
         
-        if(cacheService == null) {
-            final String msg = "\"CacheService\" not available.";
-            LOGGER.log(Level.SEVERE, msg);
-            registerResult(csLogger, msg);
-            return Result.FAILURE;
-        }
-        
-        CodeSonarWarningCount warningsAboveThreshold = null;
+        Long warningsAboveThreshold = null;
         try {
-            warningsAboveThreshold = cacheService.getWarningCountAbsoluteWithScoreAboveThreshold(current.getBaseHubUri(), current.getAnalysisId(), rankOfWarnings);
+            warningsAboveThreshold = current.getNumberOfWarningsWithScoreAboveThreshold(rankOfWarnings);
         } catch (IOException e) {
-            LOGGER.log(Level.WARNING, "failed to parse JSON response. %nException: {0}%nStack Trace: {1}", new Object[] {e.getMessage(), Throwables.getStackTraceAsString(e)});
+            LOGGER.log(Level.WARNING, "Error calling number of warnings above threshold on HUB API. %nException: {0}%nStack Trace: {1}", new Object[] {e.getMessage(), Throwables.getStackTraceAsString(e)});
             return Result.FAILURE;
         }
 
         if(warningsAboveThreshold == null) {
-            LOGGER.log(Level.INFO, "Warning Search service returned an empty response");
+            LOGGER.log(Level.SEVERE, "\"warningsAboveThreshold\" not available.");
+            registerResult(csLogger, DATA_LOADER_EMPTY_RESPONSE);
             return Result.FAILURE;          
         }
         
-        registerResult(csLogger, RESULT_DESCRIPTION_MESSAGE_FORMAT, rankOfWarnings, warningCountThreshold, warningsAboveThreshold.getScoreAboveThresholdCounter());
+        registerResult(csLogger, RESULT_DESCRIPTION_MESSAGE_FORMAT, rankOfWarnings, warningCountThreshold, warningsAboveThreshold);
         
-        if (warningsAboveThreshold.getScoreAboveThresholdCounter() > warningCountThreshold) {
+        if (warningsAboveThreshold > warningCountThreshold) {
             return Result.fromString(warrantedResult);
         }
 
         return Result.SUCCESS;
-        
-        /*
-         * Temporarily commented previous implementation, probably until
-         * when backward compatibility theme will be addressed.
-         */
-        
-        /*
-        Analysis currentAnalysisActiveWarnings = current.getAnalysisActiveWarnings();
-        
-        // Going to produce build failure in the case of missing necessary information
-        if(currentAnalysisActiveWarnings == null) {
-            LOGGER.log(Level.SEVERE, "\"analysisActiveWarnings\" data not found.");
-            registerResult(csLogger, CURRENT_BUILD_DATA_NOT_AVAILABLE);
-            return Result.FAILURE;
-        }
-
-        int severeWarnings = 0;
-        List<Warning> warnings = currentAnalysisActiveWarnings.getWarnings();
-        for (Warning warning : warnings) {
-            if (warning.getScore() >= rankOfWarnings) {
-                severeWarnings++;
-            }
-        }
-
-        if (severeWarnings > warningCountThreshold) {
-            registerResult(csLogger, RESULT_DESCRIPTION_MESSAGE_FORMAT, rankOfWarnings, warningCountThreshold, severeWarnings);
-            return Result.fromString(warrantedResult);
-        }
-
-        registerResult(csLogger, RESULT_DESCRIPTION_MESSAGE_FORMAT, rankOfWarnings, warningCountThreshold, severeWarnings);
-        return Result.SUCCESS;
-        */
     }
 
     @Symbol("warningCountAbsoluteSpecifiedScoreAndHigher")

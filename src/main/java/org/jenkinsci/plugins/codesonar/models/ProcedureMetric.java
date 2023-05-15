@@ -7,6 +7,12 @@ public class ProcedureMetric implements Comparable<ProcedureMetric> {
     private String procedure;
     
     public ProcedureMetric() {
+        this(0, null);
+    }
+    
+    public ProcedureMetric(int metricCyclomaticComplexity, String procedure) {
+        this.metricCyclomaticComplexity = 0;
+        this.procedure = procedure;
     }
     
     public int getMetricCyclomaticComplexity() {
