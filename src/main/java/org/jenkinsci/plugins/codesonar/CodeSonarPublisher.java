@@ -382,10 +382,6 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
 
         List<Pair<String, String>> conditionNamesAndResults = new ArrayList<>();
         
-        CodeSonarBuildActionDTO buildActionDTO = new CodeSonarBuildActionDTO(currentAnalysisId, baseHubUri);
-        
-        CodeSonarBuildAction csba = new CodeSonarBuildAction(buildActionDTO, run, expandedProjectName);
-        
         csLogger.writeInfo("Finding previous builds for comparison");
         
         CodeSonarBuildActionDTO compareDTO = null;
@@ -412,6 +408,18 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
             }
         }
         
+        CodeSonarBuildActionDTO currentBuildActionDTO = null;
+        if(storeFatDTO(hubInfo, previousDataLoader)) {
+            LOGGER.log(Level.INFO, "Fat DTO for currect build, preloading all fields.");
+            //Preload all the fields that have to be persisted in the current build
+            currentBuildActionDTO = currentDataLoader.preloadAll();
+        } else {
+            LOGGER.log(Level.INFO, "Thin DTO for currect build, fields will be loaded on demand.");
+            //Keep minimal the amount of persisted data for current build
+            currentBuildActionDTO = new CodeSonarBuildActionDTO(CodeSonarBuildActionDTO.VERSION_THIN, currentAnalysisId, baseHubUri);
+        }
+        CodeSonarBuildAction csba = new CodeSonarBuildAction(currentBuildActionDTO, run, expandedProjectName);
+        
         csLogger.writeInfo("Evaluating conditions");
 
         for (Condition condition : conditions) {
@@ -430,7 +438,20 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
             
         csLogger.writeInfo("Done performing codesonar actions");
     }
-
+    
+    /**
+     * A DTO has to be persisted in fat DTO style only in the case when
+     * the previous successful build was stored in that style too, and
+     * when the CodeSonar hub we are making requests to does not support
+     * the JSON API.
+     * @return
+     */
+    private boolean storeFatDTO(CodeSonarHubInfo hubInfo, CodeSonarDTOAnalysisDataLoader previousDataLoader) {
+        return previousDataLoader!= null
+                && previousDataLoader.isLoadFromDTOSupported()
+                && !hubInfo.isJsonGridConfigSupported();
+    }
+    
     private void authenticate(Run<?, ?> run, URI baseHubUri, boolean supportsOpenAPI) throws CodeSonarPluginException {
         //If clientCertificateCredentials is null, then authenticate as anonymous
         if(clientCertificateCredentials != null) {

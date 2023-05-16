@@ -53,7 +53,7 @@ public class HubInfoService {
             if(checkClientOk(cci)) {
                 hubInfo.setOpenAPISupported(supportsOpenAPI(cci));
                 hubInfo.setStrictQueryParametersEnforced(supportsStrictQueryParameters(cci));
-                hubInfo.setGridConfigJson(supportsGridConfigJson(cci));
+                hubInfo.setJsonGridConfigSupported(supportsJsonGridConfig(cci));
             } else {
                 //In this case this client has been rejected by the hub
                 throw createError("client rejected by the hub. %nclientOK={0}", cci.getClientOK().toString());
@@ -161,7 +161,7 @@ public class HubInfoService {
                 && cci.getCapabilities().getStrictQueryParameters().booleanValue();
     }
     
-    private boolean supportsGridConfigJson(CodeSonarHubClientCompatibilityInfo cci) {
+    private boolean supportsJsonGridConfig(CodeSonarHubClientCompatibilityInfo cci) {
         return cci.getCapabilities() != null
                 && cci.getCapabilities().getGridConfigJson() != null
                 && cci.getCapabilities().getGridConfigJson().booleanValue();

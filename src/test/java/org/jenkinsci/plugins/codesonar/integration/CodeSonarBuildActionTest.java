@@ -38,7 +38,7 @@ public class CodeSonarBuildActionTest {
          Procedures p = new Procedures();
          Pair<String, String> pp = new Pair<>("hello","there");
 
-         CodeSonarBuildActionDTO dto = new CodeSonarBuildActionDTO(analysisId, URI.create("http://localhost"));
+         CodeSonarBuildActionDTO dto = new CodeSonarBuildActionDTO(CodeSonarBuildActionDTO.VERSION_FAT, analysisId, URI.create("http://localhost"));
          dto.setConditionNamesAndResults(Arrays.asList(pp));
 
          r.addAction(new CodeSonarBuildAction(dto, r, "dummy"));
