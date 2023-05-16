@@ -16,15 +16,15 @@ import org.jenkinsci.plugins.codesonar.models.procedures.Procedures;
  */
 public class CodeSonarBuildActionDTO {
     /*
-     *  This is the legacy version of this DTO, which implies that all its fields have
-     *  to be populated and persisted.
+     *  This is the legacy version of this DTO, which implies that all its fields are
+     *  populated and thus persisted.
      */
-    public static final int VERSION_FAT = 1;
+    public static final int MEMORY_GREEDY_VERSION = 1;
     /*
      *  This is the new memory optimized version of this DTO, which requires only fields
      *  "dtoVersion", "analysisId" and "baseHubUri" to be populated and persisted.
      */
-    public static final int VERSION_THIN = 2;
+    public static final int MEMORY_OPTIMIZED_VERSION = 2;
 
     private static final Logger LOGGER = Logger.getLogger(CodeSonarBuildActionDTO.class.getName());
 
@@ -37,11 +37,16 @@ public class CodeSonarBuildActionDTO {
     private URI baseHubUri;
     private List<Pair<String, String>> conditionNamesAndResults;
     
-    public CodeSonarBuildActionDTO(int dtoVersion, Long analysisId, URI baseHubUri) {
-        this(dtoVersion, analysisId, null, null, null, null, baseHubUri);
+    public CodeSonarBuildActionDTO(Long analysisId, URI baseHubUri) {
+        this(MEMORY_OPTIMIZED_VERSION, analysisId, null, null, null, null, baseHubUri);
     }
     
-    public CodeSonarBuildActionDTO(int dtoVersion, Long analysisId, Analysis analysisActiveWarnings, Analysis analysisNewWarnings,
+    public CodeSonarBuildActionDTO(Long analysisId, Analysis analysisActiveWarnings, Analysis analysisNewWarnings,
+            Metrics metrics, Procedures procedures, URI baseHubUri) {
+        this(MEMORY_GREEDY_VERSION, analysisId, analysisActiveWarnings, analysisNewWarnings, metrics, procedures, baseHubUri);
+    }
+    
+    private CodeSonarBuildActionDTO(int dtoVersion, Long analysisId, Analysis analysisActiveWarnings, Analysis analysisNewWarnings,
             Metrics metrics, Procedures procedures, URI baseHubUri) {
         this.dtoVersion = dtoVersion;
         this.analysisId = analysisId;
@@ -90,8 +95,8 @@ public class CodeSonarBuildActionDTO {
 
     protected Object readResolve() {
         if (dtoVersion == 0) {
-            LOGGER.log(Level.WARNING, "Found unassigned DTO version on persisted build, setting it to {0}", VERSION_FAT);
-            dtoVersion = VERSION_FAT;
+            LOGGER.log(Level.WARNING, "Found unassigned DTO version on persisted build, setting it to {0}", MEMORY_GREEDY_VERSION);
+            dtoVersion = MEMORY_GREEDY_VERSION;
         }
         
         if (analysisId == null) {

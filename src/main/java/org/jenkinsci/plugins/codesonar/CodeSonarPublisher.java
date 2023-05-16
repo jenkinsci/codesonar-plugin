@@ -28,7 +28,6 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.math.NumberUtils;
 import org.javatuples.Pair;
 import org.jenkinsci.Symbol;
-import org.jenkinsci.plugins.codesonar.api.CodeSonarDTOAnalysisDataLoader;
 import org.jenkinsci.plugins.codesonar.api.CodeSonarHubAnalysisDataLoader;
 import org.jenkinsci.plugins.codesonar.api.CodeSonarServices;
 import org.jenkinsci.plugins.codesonar.conditions.Condition;
@@ -380,6 +379,10 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
         csLogger.writeInfo("Current analysis: analysisId {0} from hub \"{1}\"", currentAnalysisId, baseHubUri);
         CodeSonarHubAnalysisDataLoader currentDataLoader = new CodeSonarHubAnalysisDataLoader(httpService, hubInfo, baseHubUri, currentAnalysisId, visibilityFilter, newWarningsFilter);
 
+        //Always keep minimal the amount of persisted data for current build
+        CodeSonarBuildActionDTO currentBuildActionDTO = new CodeSonarBuildActionDTO(currentAnalysisId, baseHubUri);
+        CodeSonarBuildAction csba = new CodeSonarBuildAction(currentBuildActionDTO, run, expandedProjectName);
+
         List<Pair<String, String>> conditionNamesAndResults = new ArrayList<>();
         
         csLogger.writeInfo("Finding previous builds for comparison");
@@ -398,27 +401,15 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
             }
         }
 
-        CodeSonarDTOAnalysisDataLoader previousDataLoader = null;
+        CodeSonarHubAnalysisDataLoader previousDataLoader = null;
         if(compareDTO != null) {
-            previousDataLoader = new CodeSonarDTOAnalysisDataLoader(httpService, hubInfo, compareDTO, visibilityFilter, newWarningsFilter);
+            previousDataLoader = new CodeSonarHubAnalysisDataLoader(httpService, hubInfo, compareDTO.getBaseHubUri(), compareDTO.getAnalysisId(), visibilityFilter, newWarningsFilter);
             csLogger.writeInfo("Comparison analysis: analysisId {0} from hub \"{1}\"", compareDTO.getAnalysisId(), compareDTO.getBaseHubUri());
             //Signal on the Jenkins' console if there's a mismatch between the hub of the current analysis and the one of the comparison analysis
             if(!currentDataLoader.getBaseHubUri().equals(previousDataLoader.getBaseHubUri())) {
                 csLogger.writeInfo("Attention, comparison analysis was done against a different CodeSonar HUB (current HUB: {0}, comparison HUB: {1}", currentDataLoader.getBaseHubUri(), previousDataLoader.getBaseHubUri());
             }
         }
-        
-        CodeSonarBuildActionDTO currentBuildActionDTO = null;
-        if(storeFatDTO(hubInfo, previousDataLoader)) {
-            LOGGER.log(Level.INFO, "Fat DTO for currect build, preloading all fields.");
-            //Preload all the fields that have to be persisted in the current build
-            currentBuildActionDTO = currentDataLoader.preloadAll();
-        } else {
-            LOGGER.log(Level.INFO, "Thin DTO for currect build, fields will be loaded on demand.");
-            //Keep minimal the amount of persisted data for current build
-            currentBuildActionDTO = new CodeSonarBuildActionDTO(CodeSonarBuildActionDTO.VERSION_THIN, currentAnalysisId, baseHubUri);
-        }
-        CodeSonarBuildAction csba = new CodeSonarBuildAction(currentBuildActionDTO, run, expandedProjectName);
         
         csLogger.writeInfo("Evaluating conditions");
 
@@ -437,19 +428,6 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
         authenticationService.signOut(baseHubUri);
             
         csLogger.writeInfo("Done performing codesonar actions");
-    }
-    
-    /**
-     * A DTO has to be persisted in fat DTO style only in the case when
-     * the previous successful build was stored in that style too, and
-     * when the CodeSonar hub we are making requests to does not support
-     * the JSON API.
-     * @return
-     */
-    private boolean storeFatDTO(CodeSonarHubInfo hubInfo, CodeSonarDTOAnalysisDataLoader previousDataLoader) {
-        return previousDataLoader!= null
-                && previousDataLoader.isLoadFromDTOSupported()
-                && !hubInfo.isJsonGridConfigSupported();
     }
     
     private void authenticate(Run<?, ?> run, URI baseHubUri, boolean supportsOpenAPI) throws CodeSonarPluginException {

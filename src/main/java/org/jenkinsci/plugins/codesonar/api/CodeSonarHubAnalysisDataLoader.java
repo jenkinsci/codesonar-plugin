@@ -10,7 +10,6 @@ import java.util.logging.Logger;
 
 import org.jenkinsci.plugins.codesonar.CodeSonarAlertCounter;
 import org.jenkinsci.plugins.codesonar.CodeSonarAlertLevels;
-import org.jenkinsci.plugins.codesonar.models.CodeSonarBuildActionDTO;
 import org.jenkinsci.plugins.codesonar.models.CodeSonarHubInfo;
 import org.jenkinsci.plugins.codesonar.models.Metric;
 import org.jenkinsci.plugins.codesonar.models.ProcedureMetric;
@@ -70,26 +69,26 @@ public class CodeSonarHubAnalysisDataLoader {
         return newWarningsVisibilityFilter;
     }
     
-    protected Analysis getAnalysisViewActive() throws IOException {
-        LOGGER.log(Level.INFO, "AnalysisViewActive not already set, loading from corresponding service");
+    protected Analysis getLegacyAnalysisViewActive() throws IOException {
+        LOGGER.log(Level.INFO, "AnalysisViewActive not already set, loading from corresponding legacy service");
         services.getAnalysisService().setVisibilityFilter(visibilityFilter);
         return services.getAnalysisService().getAnalysisFromUrlWarningsByFilter(getBaseHubUri(), getAnalysisId());
     }
 
-    protected Analysis getAnalysisViewNew() throws IOException {
-        LOGGER.log(Level.INFO, "AnalysisViewNew not already set, loading from corresponding service");
+    protected Analysis getLegacyAnalysisViewNew() throws IOException {
+        LOGGER.log(Level.INFO, "AnalysisViewNew not already set, loading from corresponding legacy service");
         services.getAnalysisService().setVisibilityFilter(newWarningsVisibilityFilter);
         return services.getAnalysisService().getAnalysisFromUrlWithNewWarnings(getBaseHubUri(), getAnalysisId());
     }
 
-    protected Procedures getProcedures() throws IOException {
-        LOGGER.log(Level.INFO, "Procedures not already set, loading from corresponding service");
+    protected Procedures getLegacyProcedures() throws IOException {
+        LOGGER.log(Level.INFO, "Procedures not already set, loading from corresponding legacy service");
         URI proceduresUri = services.getProceduresService().getProceduresUriFromAnAnalysisId(baseHubUri, String.valueOf(analysisId));
         return services.getProceduresService().getProceduresFromUri(proceduresUri);
     }
     
-    protected Metrics getMetrics() throws IOException {
-        LOGGER.log(Level.INFO, "Metrics not already set, loading from corresponding service");
+    protected Metrics getLegacyMetrics() throws IOException {
+        LOGGER.log(Level.INFO, "Metrics not already set, loading from corresponding legacy service");
         URI metricsUri = services.getMetricsService().getMetricsUriFromAnAnalysisId(getBaseHubUri(), String.valueOf(analysisId));
         return services.getMetricsService().getMetricsFromUri(metricsUri);
     }
@@ -108,8 +107,8 @@ public class CodeSonarHubAnalysisDataLoader {
             return activeWarningsCount.getNumberOfWarnings();
         } else {
             if(analysisViewActive == null) {
-                analysisViewActive = getAnalysisViewActive();
-                LOGGER.log(Level.INFO, "AnalysisViewActive new instance {0}", analysisViewActive);
+                analysisViewActive = getLegacyAnalysisViewActive();
+                LOGGER.log(Level.INFO, "Legacy AnalysisViewActive new instance {0}", analysisViewActive);
                 if(analysisViewActive == null) {
                     return null;
                 }
@@ -132,8 +131,8 @@ public class CodeSonarHubAnalysisDataLoader {
             return newWarningsCount.getNumberOfWarnings();
         } else {
             if(analysisViewNew == null) {
-                analysisViewNew = getAnalysisViewNew();
-                LOGGER.log(Level.INFO, "AnalysisViewNew new instance {0}", analysisViewNew);
+                analysisViewNew = getLegacyAnalysisViewNew();
+                LOGGER.log(Level.INFO, "Legacy AnalysisViewNew new instance {0}", analysisViewNew);
                 if(analysisViewNew == null) {
                     return null;
                 }
@@ -153,8 +152,8 @@ public class CodeSonarHubAnalysisDataLoader {
             return procedureWithMaxCyclomaticComplexity;
         } else {
             if(procedures == null) {
-                procedures = getProcedures();
-                LOGGER.log(Level.INFO, "Procedures new instance {0}", procedures);
+                procedures = getLegacyProcedures();
+                LOGGER.log(Level.INFO, "Legacy Procedures new instance {0}", procedures);
                 if(procedures == null) {
                     return null;
                 }
@@ -195,7 +194,7 @@ public class CodeSonarHubAnalysisDataLoader {
         } else {
             if(analysisViewActive == null) {
                 LOGGER.log(Level.INFO, "AnalysisViewActive not already set, loading from corresponding service");
-                analysisViewActive = getAnalysisViewActive();
+                analysisViewActive = getLegacyAnalysisViewActive();
                 LOGGER.log(Level.INFO, "AnalysisViewActive new instance {0}", analysisViewActive);
                 if(analysisViewActive == null) {
                     return null;
@@ -218,7 +217,7 @@ public class CodeSonarHubAnalysisDataLoader {
         } else {
             if(analysisViewActive == null) {
                 LOGGER.log(Level.INFO, "AnalysisViewActive not already set, loading from corresponding service");
-                analysisViewActive = getAnalysisViewActive();
+                analysisViewActive = getLegacyAnalysisViewActive();
                 LOGGER.log(Level.INFO, "AnalysisViewActive new instance {0}", analysisViewActive);
                 if(analysisViewActive == null) {
                     return null;
@@ -236,42 +235,4 @@ public class CodeSonarHubAnalysisDataLoader {
         }
     }
 
-    /**
-     * Preemptive loading is necessary only when a CodeSonar hub with JSON capabilities
-     * is not available and we want to keep compatibility with legacy fat style DTOs from
-     * previous Jenkins' builds.
-     * @return A <code>CodeSonarBuildActionDTO</code> fat style object containing all
-     * the data that need to be persisted on disk.
-     * @throws IOException
-     */
-    public CodeSonarBuildActionDTO preloadAll() throws IOException {
-        //Preload analysis view active
-        if(analysisViewActive == null) {
-            analysisViewActive = getAnalysisViewActive();
-            LOGGER.log(Level.INFO, "AnalysisViewActive new instance {0}", analysisViewActive);
-        }
-        //Preload analysis view new
-        if(analysisViewNew == null) {
-            analysisViewNew = getAnalysisViewNew();
-            LOGGER.log(Level.INFO, "AnalysisViewNew new instance {0}", analysisViewNew);
-        }
-        //Preload metrics
-        if(metrics == null) {
-            metrics = getMetrics();
-            LOGGER.log(Level.INFO, "Metrics new instance {0}", metrics);
-        }
-        //Preload procedures
-        if(procedures == null) {
-            procedures = getProcedures();
-            LOGGER.log(Level.INFO, "Procedures new instance {0}", procedures);
-        }
-        
-        return new CodeSonarBuildActionDTO(CodeSonarBuildActionDTO.VERSION_FAT,
-                analysisId,
-                analysisViewActive,
-                analysisViewNew,
-                metrics,
-                procedures,
-                baseHubUri);
-    }
 }
