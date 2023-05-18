@@ -1,7 +1,9 @@
-package org.jenkinsci.plugins.codesonar;
+package org.jenkinsci.plugins.codesonar.api;
 
 import java.util.Arrays;
 import java.util.stream.Collectors;
+
+import org.jenkinsci.plugins.codesonar.models.CodeSonarAlertLevels;
 
 /**
  * @author aseno

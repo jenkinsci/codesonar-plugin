@@ -2,8 +2,7 @@ package org.jenkinsci.plugins.codesonar.models.json;
 
 import java.util.List;
 
-import org.jenkinsci.plugins.codesonar.CodeSonarAlertLevels;
-import org.jenkinsci.plugins.codesonar.models.CodeSonarUndefinedFunction;
+import org.jenkinsci.plugins.codesonar.models.CodeSonarAlertLevels;
 
 /**
  * @author aseno

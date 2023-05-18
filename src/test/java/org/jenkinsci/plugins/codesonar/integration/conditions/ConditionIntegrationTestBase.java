@@ -9,7 +9,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.jenkinsci.plugins.codesonar.AnalysisServiceFactory;
-import org.jenkinsci.plugins.codesonar.api.CodeSonarServices;
 import org.jenkinsci.plugins.codesonar.models.analysis.Analysis;
 import org.jenkinsci.plugins.codesonar.models.analysis.Warning;
 import org.jenkinsci.plugins.codesonar.models.metrics.Metrics;
@@ -36,7 +35,6 @@ public abstract class ConditionIntegrationTestBase {
     protected MetricsService mockedMetricsService;
     protected ProceduresService mockedProceduresService;
     protected AuthenticationService mockedAuthenticationService;
-    protected CodeSonarServices mockedCodeSonarCacheService;
     
     protected HttpService mockedHttpService;
     
@@ -53,7 +51,6 @@ public abstract class ConditionIntegrationTestBase {
         mockedAuthenticationService = mock(AuthenticationService.class);
         mockedAnalysisServiceFactory = mock(AnalysisServiceFactory.class);
         mockedHttpService = mock(HttpService.class);
-        mockedCodeSonarCacheService = mock(CodeSonarServices.class);
         
         final URI VALID_ANALYSIS_URL = URI.create("http://10.10.1.102/VALID_ANALYSIS_URL");
         final URI BASE_HUB_URI = URI.create("http://10.10.1.102");

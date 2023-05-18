@@ -1,4 +1,4 @@
-package org.jenkinsci.plugins.codesonar;
+package org.jenkinsci.plugins.codesonar.models;
 
 import com.google.gson.annotations.SerializedName;
 

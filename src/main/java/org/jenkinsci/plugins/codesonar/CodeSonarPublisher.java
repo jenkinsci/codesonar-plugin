@@ -29,7 +29,6 @@ import org.apache.commons.lang.math.NumberUtils;
 import org.javatuples.Pair;
 import org.jenkinsci.Symbol;
 import org.jenkinsci.plugins.codesonar.api.CodeSonarHubAnalysisDataLoader;
-import org.jenkinsci.plugins.codesonar.api.CodeSonarServices;
 import org.jenkinsci.plugins.codesonar.conditions.Condition;
 import org.jenkinsci.plugins.codesonar.conditions.ConditionDescriptor;
 import org.jenkinsci.plugins.codesonar.models.CodeSonarBuildActionDTO;
@@ -100,7 +99,6 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
     private HttpService httpService = null;
     private AuthenticationService authenticationService = null;
     private HubInfoService hubInfoService = null;
-    private CodeSonarServices codeSonarCacheService = null;
     
     private List<Condition> conditions;
 
@@ -379,7 +377,6 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
         csLogger.writeInfo("Current analysis: analysisId {0} from hub \"{1}\"", currentAnalysisId, baseHubUri);
         CodeSonarHubAnalysisDataLoader currentDataLoader = new CodeSonarHubAnalysisDataLoader(httpService, hubInfo, baseHubUri, currentAnalysisId, visibilityFilter, newWarningsFilter);
 
-        //Always keep minimal the amount of persisted data for current build
         CodeSonarBuildActionDTO currentBuildActionDTO = new CodeSonarBuildActionDTO(currentAnalysisId, baseHubUri);
         CodeSonarBuildAction csba = new CodeSonarBuildAction(currentBuildActionDTO, run, expandedProjectName);
 
@@ -407,7 +404,8 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
             csLogger.writeInfo("Comparison analysis: analysisId {0} from hub \"{1}\"", compareDTO.getAnalysisId(), compareDTO.getBaseHubUri());
             //Signal on the Jenkins' console if there's a mismatch between the hub of the current analysis and the one of the comparison analysis
             if(!currentDataLoader.getBaseHubUri().equals(previousDataLoader.getBaseHubUri())) {
-                csLogger.writeInfo("Attention, comparison analysis was done against a different CodeSonar HUB (current HUB: {0}, comparison HUB: {1}", currentDataLoader.getBaseHubUri(), previousDataLoader.getBaseHubUri());
+                csLogger.writeInfo("Warning: hub URI for previous build does not match current build.  previous='{1}', current='{0}'", previousDataLoader.getBaseHubUri(), currentDataLoader.getBaseHubUri());
+                
             }
         }
         
@@ -516,10 +514,6 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
         this.httpService = httpService;
     }
     
-    public void setCodeSonarCacheService(CodeSonarServices cacheService) {
-        this.codeSonarCacheService = cacheService;
-    }
-
     public void setAuthenticationService(AuthenticationService authenticationService) {
         this.authenticationService = authenticationService;
     }
@@ -602,13 +596,6 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
         return hubInfoService;
     }
     
-    public CodeSonarServices getCodeSonarCacheService(CodeSonarHubInfo hubInfo) throws CodeSonarPluginException {
-        if (codeSonarCacheService  == null) {
-            codeSonarCacheService = new CodeSonarServices(httpService, hubInfo);
-        }
-        return codeSonarCacheService;
-    }
-
     @Symbol("codesonar")
     @Extension
     public static class DescriptorImpl extends BuildStepDescriptor<Publisher> {

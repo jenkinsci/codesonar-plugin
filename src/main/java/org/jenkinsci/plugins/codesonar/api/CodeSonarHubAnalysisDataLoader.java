@@ -8,8 +8,7 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import org.jenkinsci.plugins.codesonar.CodeSonarAlertCounter;
-import org.jenkinsci.plugins.codesonar.CodeSonarAlertLevels;
+import org.jenkinsci.plugins.codesonar.models.CodeSonarAlertLevels;
 import org.jenkinsci.plugins.codesonar.models.CodeSonarHubInfo;
 import org.jenkinsci.plugins.codesonar.models.Metric;
 import org.jenkinsci.plugins.codesonar.models.ProcedureMetric;

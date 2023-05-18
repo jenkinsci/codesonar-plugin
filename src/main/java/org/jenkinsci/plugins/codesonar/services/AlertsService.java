@@ -11,9 +11,9 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.apache.http.client.utils.URIBuilder;
-import org.jenkinsci.plugins.codesonar.CodeSonarAlertCounter;
 import org.jenkinsci.plugins.codesonar.CodeSonarPluginException;
 import org.jenkinsci.plugins.codesonar.ResponseErrorException;
+import org.jenkinsci.plugins.codesonar.api.CodeSonarAlertCounter;
 import org.jenkinsci.plugins.codesonar.models.json.CodeSonarAlertData;
 
 import com.google.common.base.Throwables;
