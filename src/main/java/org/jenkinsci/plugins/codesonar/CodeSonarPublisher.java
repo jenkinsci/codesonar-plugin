@@ -404,7 +404,7 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
             csLogger.writeInfo("Comparison analysis: analysisId {0} from hub \"{1}\"", compareDTO.getAnalysisId(), compareDTO.getBaseHubUri());
             //Signal on the Jenkins' console if there's a mismatch between the hub of the current analysis and the one of the comparison analysis
             if(!currentDataLoader.getBaseHubUri().equals(previousDataLoader.getBaseHubUri())) {
-                csLogger.writeInfo("Warning: hub URI for previous build does not match current build.  previous='{1}', current='{0}'", previousDataLoader.getBaseHubUri(), currentDataLoader.getBaseHubUri());
+                csLogger.writeInfo("Warning: hub URI for previous build does not match current build. previous=\"{0}\", current=\"{1}\"", previousDataLoader.getBaseHubUri(), currentDataLoader.getBaseHubUri());
                 
             }
         }

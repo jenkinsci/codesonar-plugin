@@ -69,7 +69,10 @@ public class ProcedureCyclomaticComplexityExceededCondition extends Condition {
         try {
             procedureMetric = current.getProcedureWithMaxCyclomaticComplexity();
         } catch (IOException e) {
-            LOGGER.log(Level.WARNING, "Error calling max cyclomatic complexity on HUB API. %nException: {0}%nStack Trace: {1}", new Object[] {e.getMessage(), Throwables.getStackTraceAsString(e)});
+            final String applicationMsg = "Error calling max cyclomatic complexity on HUB API for current analysis.";
+            LOGGER.log(Level.WARNING, applicationMsg);
+            registerResult(csLogger, applicationMsg);
+            csLogger.writeInfo("Exception: {0}%nStack Trace: {1}", e.getMessage(), Throwables.getStackTraceAsString(e));
             return Result.FAILURE;
         }
         

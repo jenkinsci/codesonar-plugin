@@ -67,12 +67,24 @@ public class NewWarningsIncreasedByPercentageCondition extends Condition {
         }
         
         Long numberOfActiveWarnings = null;
-        Long numberOfNewWarnings = null;
         try {
             numberOfActiveWarnings = current.getNumberOfActiveWarnings();
+        } catch (IOException e) {
+            final String applicationMsg = "Error calling number of active warnings on HUB API for current analysis.";
+            LOGGER.log(Level.WARNING, applicationMsg);
+            registerResult(csLogger, applicationMsg);
+            csLogger.writeInfo("Exception: {0}%nStack Trace: {1}", e.getMessage(), Throwables.getStackTraceAsString(e));
+            return Result.FAILURE;
+        }
+        
+        Long numberOfNewWarnings = null;
+        try {
             numberOfNewWarnings = current.getNumberOfNewWarnings();
         } catch (IOException e) {
-            LOGGER.log(Level.WARNING, "Error calling number of active warnings on HUB API. %nException: {0}%nStack Trace: {1}", new Object[] {e.getMessage(), Throwables.getStackTraceAsString(e)});
+            final String applicationMsg = "Error calling number of new warnings on HUB API for current analysis.";
+            LOGGER.log(Level.WARNING, applicationMsg);
+            registerResult(csLogger, applicationMsg);
+            csLogger.writeInfo("Exception: {0}%nStack Trace: {1}", e.getMessage(), Throwables.getStackTraceAsString(e));
             return Result.FAILURE;
         }
         

@@ -9,7 +9,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
 
-public class PairAdapter implements JsonSerializer<Pair<String, String>> {
+public class JsonStringPairSerializer implements JsonSerializer<Pair<String, String>> {
 
  @Override
  public JsonElement serialize(Pair<String, String> src, Type typeOfSrc, JsonSerializationContext context) {

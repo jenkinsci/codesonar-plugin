@@ -1,7 +1,6 @@
 package org.jenkinsci.plugins.codesonar.services;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.logging.Level;
@@ -9,7 +8,9 @@ import java.util.logging.Logger;
 
 import org.apache.http.client.utils.URIBuilder;
 import org.javatuples.Pair;
-import org.jenkinsci.plugins.codesonar.models.PairAdapter;
+import org.jenkinsci.plugins.codesonar.CodeSonarPluginException;
+import org.jenkinsci.plugins.codesonar.models.HttpServiceResponse;
+import org.jenkinsci.plugins.codesonar.models.JsonStringPairSerializer;
 import org.jenkinsci.plugins.codesonar.models.ProcedureMetric;
 import org.jenkinsci.plugins.codesonar.models.json.SearchConfigData;
 import org.jenkinsci.plugins.codesonar.models.procedures.Procedures;
@@ -40,15 +41,23 @@ public class ProceduresService {
         return baseHubUri.resolve(String.format("/analysis/%s-procedures.xml", analysisId));
     }
     
-    public Procedures getProceduresFromUri(URI proceduresUri) throws IOException {
+    public Procedures getProceduresFromUri(URI proceduresUri) throws CodeSonarPluginException {
         LOGGER.log(Level.INFO, String.format("Calling getProceduresFromUri"));
         
-        InputStream xmlContent = httpService.getContentFromUrlAsInputStream(proceduresUri);
+        HttpServiceResponse response = httpService.getResponseFromUrl(proceduresUri);
+        
+        if(response.getStatusCode() != 200) {
+            try {
+                throw new CodeSonarPluginException("Unexpected error in the response communicating with CodeSonar Hub. %nURI: {0}%nHTTP status code: {1} - {2} %nHTTP Body: {3}", proceduresUri, response.getStatusCode(), response.getReasonPhrase(), response.readContent());
+            } catch (IOException e) {
+                throw new CodeSonarPluginException("Unable to read response content. %nURI: {0}%nException: {1}%nStack Trace: {2}", proceduresUri, e.getMessage(), Throwables.getStackTraceAsString(e));
+            }
+        }
 
-        return xmlSerializationService.deserialize(xmlContent, Procedures.class);
+        return xmlSerializationService.deserialize(response.getContentInputStream(), Procedures.class);
     }
     
-    public ProcedureMetric getProcedureWithMaxCyclomaticComplexity(URI baseHubUri, long analysisId) throws IOException {
+    public ProcedureMetric getProcedureWithMaxCyclomaticComplexity(URI baseHubUri, long analysisId) throws CodeSonarPluginException {
         //Configure search parameters in order to extract the desired data
         SearchConfigData searchConfig = new SearchConfigData();
         /*
@@ -62,7 +71,7 @@ public class ProceduresService {
         
         //Serialize search configuration data as JSON
         Gson gsonSerializer = new GsonBuilder()
-                .registerTypeAdapter(Pair.class, new PairAdapter())
+                .registerTypeAdapter(Pair.class, new JsonStringPairSerializer())
                 .create();
         String searchConfigAsJson = gsonSerializer.toJson(searchConfig);
 
@@ -79,12 +88,25 @@ public class ProceduresService {
             LOGGER.log(Level.WARNING, "Request URI for retrieving max cyclomatic complexity contains a syntax error. %nException: {0}%nStack Trace: {1}", new Object[] {e.getMessage(), Throwables.getStackTraceAsString(e)});
             return null;
         }
+        String requestUriString = requestUri.toASCIIString();
         
-        InputStream contentInputStream = httpService.getContentFromUrlAsInputStream(requestUri.toASCIIString());
+        HttpServiceResponse response = httpService.getResponseFromUrl(requestUriString);
         
-        MaxCyclomaticComplexityJsonParser parser = new MaxCyclomaticComplexityJsonParser(contentInputStream);
+        if(response.getStatusCode() != 200) {
+            try {
+                throw new CodeSonarPluginException("Unexpected error in the response communicating with CodeSonar Hub. %nURI: {0}%nHTTP status code: {1} - {2} %nHTTP Body: {3}", requestUriString, response.getStatusCode(), response.getReasonPhrase(), response.readContent());
+            } catch (IOException e) {
+                throw new CodeSonarPluginException("Unable to read response content. %nURI: {0}%nException: {1}%nStack Trace: {2}", requestUriString, e.getMessage(), Throwables.getStackTraceAsString(e));
+            }
+        }
+        
+        MaxCyclomaticComplexityJsonParser parser = new MaxCyclomaticComplexityJsonParser(response.getContentInputStream());
 
-        return parser.parseObject();
+        try {
+            return parser.parseObject();
+        } catch (IOException e) {
+            throw new CodeSonarPluginException("Unable to parse response content. %nURI: {0}%nException: {1}%nStack Trace: {2}", requestUriString, e.getMessage(), Throwables.getStackTraceAsString(e));
+        }
     }
     
 }

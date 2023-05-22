@@ -4,16 +4,16 @@ package org.jenkinsci.plugins.codesonar.models.json;
  * @author aseno
  *
  */
-public class CodeSonarAnalysisWarningCount {
+public class CodeSonarWarningCountChartRow {
     
     private String analysisName;
     private long numberOfWarnings;
     
-    public CodeSonarAnalysisWarningCount() {
+    public CodeSonarWarningCountChartRow() {
         this(0);
     }
     
-    public CodeSonarAnalysisWarningCount(long numberOfWarnings) {
+    public CodeSonarWarningCountChartRow(long numberOfWarnings) {
         this.numberOfWarnings = numberOfWarnings;
     }
 

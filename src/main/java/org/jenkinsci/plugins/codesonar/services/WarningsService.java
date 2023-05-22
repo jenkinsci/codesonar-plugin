@@ -1,7 +1,6 @@
 package org.jenkinsci.plugins.codesonar.services;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -12,7 +11,8 @@ import java.util.logging.Logger;
 import org.apache.http.client.utils.URIBuilder;
 import org.javatuples.Pair;
 import org.jenkinsci.plugins.codesonar.CodeSonarPluginException;
-import org.jenkinsci.plugins.codesonar.models.PairAdapter;
+import org.jenkinsci.plugins.codesonar.models.HttpServiceResponse;
+import org.jenkinsci.plugins.codesonar.models.JsonStringPairSerializer;
 import org.jenkinsci.plugins.codesonar.models.json.CodeSonarWarningSearchData;
 import org.jenkinsci.plugins.codesonar.models.json.SearchConfigData;
 
@@ -41,7 +41,7 @@ public class WarningsService {
         
         //Serialize search configuration data as JSON
         Gson gsonSerializer = new GsonBuilder()
-                .registerTypeAdapter(Pair.class, new PairAdapter())
+                .registerTypeAdapter(Pair.class, new JsonStringPairSerializer())
                 .create();
         String searchConfigAsJson = gsonSerializer.toJson(searchConfig);
         
@@ -57,22 +57,20 @@ public class WarningsService {
         try {
             requestUri = uriBuilder.build();
         } catch (URISyntaxException e) {
-            LOGGER.log(Level.WARNING, "Request URI for Warning Seach API contains a syntax error. %nException: {0}%nStack Trace: {1}", new Object[] {e.getMessage(), Throwables.getStackTraceAsString(e)});
-            return null;
+            throw new CodeSonarPluginException("Request URI for Warning Seach API contains a syntax error. %nException: {0}%nStack Trace: {1}", e.getMessage(), Throwables.getStackTraceAsString(e));
         }
+        String requestUriString = requestUri.toASCIIString();
         
-        InputStream jsonContent = null;
-        try {
-            jsonContent = httpService.getContentFromUrlAsInputStream(requestUri.toASCIIString());
-        } catch(CodeSonarPluginException e) {
-            LOGGER.log(Level.INFO, "Error querying Warning Search API", e);
-            return null;
+        HttpServiceResponse response = httpService.getResponseFromUrl(requestUriString);
+        
+        if(response.getStatusCode() != 200) {
+            throw new CodeSonarPluginException("Unexpected error in the response communicating with CodeSonar Hub. %nURI: {0}%nHTTP status code: {1} - {2} %nHTTP Body: {3}", requestUriString, response.getStatusCode(), response.getReasonPhrase(), response.readContent());
         }
 
         Gson gsonDeserializer = new Gson();
         CodeSonarWarningSearchData warningSearchData = null;
         try {
-            warningSearchData = gsonDeserializer.fromJson(new InputStreamReader(jsonContent, StandardCharsets.UTF_8), CodeSonarWarningSearchData.class);
+            warningSearchData = gsonDeserializer.fromJson(new InputStreamReader(response.getContentInputStream(), StandardCharsets.UTF_8), CodeSonarWarningSearchData.class);
             LOGGER.log(Level.INFO, "response warningSearchData={0}", warningSearchData.toString());
         } catch(JsonSyntaxException e) {
             LOGGER.log(Level.WARNING, "failed to parse JSON response. %nException: {0}%nStack Trace: {1}", new Object[] {e.getMessage(), Throwables.getStackTraceAsString(e)});

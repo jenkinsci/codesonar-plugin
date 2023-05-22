@@ -71,12 +71,24 @@ public class WarningCountIncreaseOverallCondition extends Condition {
         }
         
         Long previousCount = null;
-        Long currentCount = null;
         try {
             previousCount = previous.getNumberOfActiveWarnings();
+        } catch (IOException e) {
+            final String applicationMsg = "Error calling number of active warnings on HUB API for previous analysis.";
+            LOGGER.log(Level.WARNING, applicationMsg);
+            registerResult(csLogger, applicationMsg);
+            csLogger.writeInfo("Exception: {0}%nStack Trace: {1}", e.getMessage(), Throwables.getStackTraceAsString(e));
+            return Result.FAILURE;
+        }
+        
+        Long currentCount = null;
+        try {
             currentCount = current.getNumberOfActiveWarnings();
         } catch (IOException e) {
-            LOGGER.log(Level.WARNING, "Error calling number of active warnings on HUB API. %nException: {0}%nStack Trace: {1}", new Object[] {e.getMessage(), Throwables.getStackTraceAsString(e)});
+            final String applicationMsg = "Error calling number of active warnings on HUB API for current analysis.";
+            LOGGER.log(Level.WARNING, applicationMsg);
+            registerResult(csLogger, applicationMsg);
+            csLogger.writeInfo("Exception: {0}%nStack Trace: {1}", e.getMessage(), Throwables.getStackTraceAsString(e));
             return Result.FAILURE;
         }
         
@@ -145,4 +157,5 @@ public class WarningCountIncreaseOverallCondition extends Condition {
         }
 
     }
+    
 }

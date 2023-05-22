@@ -6,15 +6,15 @@ import java.util.List;
  * @author aseno
  *
  */
-public class CodeSonarChartData {
+public class CodeSonarWarningCountChartData {
     
-    private List<CodeSonarAnalysisWarningCount> rows;
+    private List<CodeSonarWarningCountChartRow> rows;
 
-    public List<CodeSonarAnalysisWarningCount> getRows() {
+    public List<CodeSonarWarningCountChartRow> getRows() {
         return rows;
     }
 
-    public void setRows(List<CodeSonarAnalysisWarningCount> rows) {
+    public void setRows(List<CodeSonarWarningCountChartRow> rows) {
         this.rows = rows;
     }
 

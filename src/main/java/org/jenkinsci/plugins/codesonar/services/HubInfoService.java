@@ -18,6 +18,7 @@ import org.jenkinsci.plugins.codesonar.CodeSonarLogger;
 import org.jenkinsci.plugins.codesonar.CodeSonarPluginException;
 import org.jenkinsci.plugins.codesonar.models.CodeSonarHubClientCompatibilityInfo;
 import org.jenkinsci.plugins.codesonar.models.CodeSonarHubInfo;
+import org.jenkinsci.plugins.codesonar.models.HttpServiceResponse;
 
 import com.google.common.base.Throwables;
 import com.google.gson.Gson;
@@ -180,28 +181,35 @@ public class HubInfoService {
      * @throws CodeSonarPluginException 
      */
     private String fetchHubSignatureVersionString(URI baseHubUri) throws CodeSonarPluginException {
-        String info;
+        URI endpoint = baseHubUri.resolve("/command/anon_info/");
+        LOGGER.log(Level.INFO, "Calling " + endpoint.toString());
+        HttpServiceResponse response;
         try {
-            URI endpoint = baseHubUri.resolve("/command/anon_info/");
-            LOGGER.log(Level.INFO, "Calling " + endpoint.toString());
-            info = httpService.getContentFromUrlAsString(endpoint);
-        } catch (CodeSonarPluginException e) {
-            // /command/anon_info/ is not available. Assume hub is older than v4.2
-            return "4.0";
-        }
-
-        Pattern pattern = Pattern.compile("Version:\\s(\\d+\\.\\d+)");
-
-        Matcher matcher = pattern.matcher(info);
-        if (matcher.find()) {
-            String version = matcher.group(1);
-            if(StringUtils.isBlank(version)) {
-                throw createError(CodeSonarLogger.formatMessage("Hub version cannot be parsed"));
+            try {
+                response = httpService.getResponseFromUrl(endpoint);
+    
+                if(response.getStatusCode() != 200) {
+                    throw new CodeSonarPluginException("Unexpected error in the response communicating with CodeSonar Hub. %nURI: {0}%nHTTP status code: {1} - {2} %nHTTP Body: {3}", endpoint, response.getStatusCode(), response.getReasonPhrase(), response.readContent());
+                }
+            } catch (CodeSonarPluginException e) {
+                // /command/anon_info/ is not available. Assume hub is older than v4.2
+                return "4.0";
             }
-            return version;
+        
+            Pattern pattern = Pattern.compile("Version:\\s(\\d+\\.\\d+)");
+            Matcher matcher = pattern.matcher(response.readContent());
+            if (matcher.find()) {
+                String version = matcher.group(1);
+                if(StringUtils.isBlank(version)) {
+                    throw createError(CodeSonarLogger.formatMessage("Hub version cannot be parsed"));
+                }
+                return version;
+            }
+        } catch(IOException e) {
+            throw new CodeSonarPluginException("Unable to read response content. %nURI: {0}%nException: {1}%nStack Trace: {2}", endpoint, e.getMessage(), Throwables.getStackTraceAsString(e));
         }
 
-        LOGGER.log(Level.WARNING, "Version info could not be determined by data:\n"+info); // No version could be found
+        LOGGER.log(Level.WARNING, "Version info could not be determined by data:\n"+response); // No version could be found
 
         throw createError(CodeSonarLogger.formatMessage("Hub version could not be determined"));
     }

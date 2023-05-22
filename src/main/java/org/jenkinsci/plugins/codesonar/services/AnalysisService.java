@@ -3,8 +3,8 @@ package org.jenkinsci.plugins.codesonar.services;
 import static org.jenkinsci.plugins.codesonar.models.json.CodeSonarChartConfigData.CHART_KIND_BAR;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URLEncoder;
@@ -18,11 +18,12 @@ import java.util.regex.Pattern;
 import org.apache.commons.lang.StringUtils;
 import org.apache.http.client.utils.URIBuilder;
 import org.jenkinsci.plugins.codesonar.CodeSonarPluginException;
+import org.jenkinsci.plugins.codesonar.models.HttpServiceResponse;
 import org.jenkinsci.plugins.codesonar.models.SearchResults;
 import org.jenkinsci.plugins.codesonar.models.analysis.Analysis;
-import org.jenkinsci.plugins.codesonar.models.json.CodeSonarAnalysisWarningCount;
+import org.jenkinsci.plugins.codesonar.models.json.CodeSonarWarningCountChartRow;
 import org.jenkinsci.plugins.codesonar.models.json.CodeSonarChartConfigData;
-import org.jenkinsci.plugins.codesonar.models.json.CodeSonarChartData;
+import org.jenkinsci.plugins.codesonar.models.json.CodeSonarWarningCountChartData;
 import org.jenkinsci.plugins.codesonar.models.json.CodeSonarChartGroup;
 import org.jenkinsci.plugins.codesonar.models.json.CodeSonarChartSearchAxis;
 import org.jenkinsci.plugins.codesonar.models.projects.Project;
@@ -78,13 +79,26 @@ public class AnalysisService implements IAnalysisService {
     }
 
     @Override
-    public String getLatestAnalysisUrlForAProject(URI baseHubUri, String projectName) throws IOException {
-        String encode = URLEncoder.encode("\"" + projectName + "\"", "UTF-8");
+    public String getLatestAnalysisUrlForAProject(URI baseHubUri, String projectName) throws CodeSonarPluginException {
+        String encode;
+        try {
+            encode = URLEncoder.encode("\"" + projectName + "\"", "UTF-8");
+        } catch (UnsupportedEncodingException e) {
+            throw new CodeSonarPluginException("Request URI for analysis url for a project contains a syntax error. %nException: {0}%nStack Trace: {1}", e.getMessage(), Throwables.getStackTraceAsString(e));
+        }
         URI uri = baseHubUri.resolve("/project_search.xml?query=" + encode + "&scope=all");
 
-        InputStream xmlContent = httpService.getContentFromUrlAsInputStream(uri);
+        HttpServiceResponse response = httpService.getResponseFromUrl(uri);
+        
+        if(response.getStatusCode() != 200) {
+            try {
+                throw new CodeSonarPluginException("Unexpected error in the response communicating with CodeSonar Hub. %nURI: {0}%nHTTP status code: {1} - {2} %nHTTP Body: {3}", uri, response.getStatusCode(), response.getReasonPhrase(), response.readContent());
+            } catch (IOException e) {
+                throw new CodeSonarPluginException("Unable to read response content. %nURI: {0}%nException: {1}%nStack Trace: {2}", uri, e.getMessage(), Throwables.getStackTraceAsString(e));
+            }
+        }
 
-        SearchResults searchResults = xmlSerializationService.deserialize(xmlContent, SearchResults.class);
+        SearchResults searchResults = xmlSerializationService.deserialize(response.getContentInputStream(), SearchResults.class);
         Project project = searchResults.getProjectByName(projectName);
 
         return baseHubUri.resolve(project.getUrl()).toString();
@@ -92,9 +106,17 @@ public class AnalysisService implements IAnalysisService {
 
     @Override
     public Analysis getAnalysisFromUrl(String analysisUrl) throws CodeSonarPluginException {
-        InputStream xmlContent = httpService.getContentFromUrlAsInputStream(analysisUrl);
+        HttpServiceResponse response = httpService.getResponseFromUrl(analysisUrl);
+        
+        if(response.getStatusCode() != 200) {
+            try {
+                throw new CodeSonarPluginException("Unexpected error in the response communicating with CodeSonar Hub. %nURI: {0}%nHTTP status code: {1} - {2} %nHTTP Body: {3}", analysisUrl, response.getStatusCode(), response.getReasonPhrase(), response.readContent());
+            } catch (IOException e) {
+                throw new CodeSonarPluginException("Unable to read response content. %nURI: {0}%nException: {1}%nStack Trace: {2}", analysisUrl, e.getMessage(), Throwables.getStackTraceAsString(e));
+            }
+        }
 
-        return xmlSerializationService.deserialize(xmlContent, Analysis.class);
+        return xmlSerializationService.deserialize(response.getContentInputStream(), Analysis.class);
     }
 
     /**
@@ -128,7 +150,7 @@ public class AnalysisService implements IAnalysisService {
     }
     
     @Override
-    public CodeSonarAnalysisWarningCount getNumberOfWarnings(URI baseHubUri, long analysisId, String filter) throws IOException {
+    public CodeSonarWarningCountChartRow getNumberOfWarnings(URI baseHubUri, long analysisId, String filter) throws CodeSonarPluginException {
         //Configure chart data in order to extract desired data
         CodeSonarChartConfigData chartConfigData = new CodeSonarChartConfigData(CHART_KIND_BAR, "Number of Warnings", "", "");
         chartConfigData.getSearch_axes().add(new CodeSonarChartSearchAxis("Warnings", null, String.format("aid:%s",analysisId), ""));
@@ -151,13 +173,22 @@ public class AnalysisService implements IAnalysisService {
             LOGGER.log(Level.WARNING, "Request URI for Char API contains a syntax error. %nException: {0}%nStack Trace: {1}", new Object[] {e.getMessage(), Throwables.getStackTraceAsString(e)});
             return null;
         }
+        String requestUriString = requestUri.toASCIIString();
         
-        InputStream jsonContent = httpService.getContentFromUrlAsInputStream(requestUri.toASCIIString());
+        HttpServiceResponse response = httpService.getResponseFromUrl(requestUriString);
+        
+        if(response.getStatusCode() != 200) {
+            try {
+                throw new CodeSonarPluginException("Unexpected error in the response communicating with CodeSonar Hub. %nURI: {0}%nHTTP status code: {1} - {2} %nHTTP Body: {3}", requestUriString, response.getStatusCode(), response.getReasonPhrase(), response.readContent());
+            } catch (IOException e) {
+                throw new CodeSonarPluginException("Unable to read response content. %nURI: {0}%nException: {1}%nStack Trace: {2}", requestUriString, e.getMessage(), Throwables.getStackTraceAsString(e));
+            }
+        }
 
         Gson gsonDeserializer = new Gson();
-        CodeSonarChartData chartData = null;
+        CodeSonarWarningCountChartData chartData = null;
         try {
-            chartData = gsonDeserializer.fromJson(new InputStreamReader(jsonContent, StandardCharsets.UTF_8), CodeSonarChartData.class);
+            chartData = gsonDeserializer.fromJson(new InputStreamReader(response.getContentInputStream(), StandardCharsets.UTF_8), CodeSonarWarningCountChartData.class);
             LOGGER.log(Level.INFO, "response chartData={0}", chartData.toString());
         } catch(JsonSyntaxException e) {
             LOGGER.log(Level.WARNING, "failed to parse JSON response. %nException: {0}%nStack Trace: {1}", new Object[] {e.getMessage(), Throwables.getStackTraceAsString(e)});
@@ -167,13 +198,13 @@ public class AnalysisService implements IAnalysisService {
         if(chartData.getRows() == null) {
             LOGGER.log(Level.INFO, "chart data is empty.");
             //Explicitly returning the warning counter set to zero
-            return new CodeSonarAnalysisWarningCount(0);
+            return new CodeSonarWarningCountChartRow(0);
         }
         
         if(chartData.getRows().size() == 0) {
             LOGGER.log(Level.INFO, "chart contains no rows.");
             //Explicitly returning the warning counter set to zero
-            return new CodeSonarAnalysisWarningCount(0);
+            return new CodeSonarWarningCountChartRow(0);
         }
         
         if(chartData.getRows().size() > 1) {

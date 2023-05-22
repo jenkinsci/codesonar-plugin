@@ -23,9 +23,9 @@ public class HttpServiceTest {
     }
 
     @Test(expected = AbortException.class)
-    public void testGetContentFromURLAsString() throws Exception {
+    public void testgetResponseFromUrl() throws Exception {
         final String INVALID_URL = "invalidurl";
        
-        httpService.getContentFromUrlAsString(INVALID_URL);
+        httpService.getResponseFromUrl(INVALID_URL).readContent();
     }
 }

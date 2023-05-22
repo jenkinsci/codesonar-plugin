@@ -14,12 +14,23 @@ import org.jenkinsci.plugins.codesonar.models.Metric;
 import org.jenkinsci.plugins.codesonar.models.ProcedureMetric;
 import org.jenkinsci.plugins.codesonar.models.analysis.Analysis;
 import org.jenkinsci.plugins.codesonar.models.analysis.Warning;
-import org.jenkinsci.plugins.codesonar.models.json.CodeSonarAnalysisWarningCount;
+import org.jenkinsci.plugins.codesonar.models.json.CodeSonarWarningCountChartRow;
 import org.jenkinsci.plugins.codesonar.models.metrics.Metrics;
 import org.jenkinsci.plugins.codesonar.models.procedures.ProcedureRow;
 import org.jenkinsci.plugins.codesonar.models.procedures.Procedures;
 import org.jenkinsci.plugins.codesonar.services.HttpService;
 
+/**
+ * Loads and caches data related to a single analysis, for use by "Condition" classes.
+ * This class implements two distinct modes for loading data: a "legacy" mode, and the current mode.
+ * The legacy mode loads large lists of warnings and procedures into main memory.
+ * This was the only mode implemented through plugin version 3.3.x.
+ * The current mode fetches analysis data in a more memory-safe way, but it requires CodeSonar hub JSON APIs,
+ * available only in CodeSonar 7.3 and later (i.e. with the "gridConfigJson" capability).
+ * 
+ * @author aseno
+ *
+ */
 public class CodeSonarHubAnalysisDataLoader {
     private static final Logger LOGGER = Logger.getLogger(CodeSonarHubAnalysisDataLoader.class.getName());
     
@@ -32,8 +43,8 @@ public class CodeSonarHubAnalysisDataLoader {
     //------------------------------------------------------------
     //Set of fields that will be loaded through CodeSonar services
     //------------------------------------------------------------
-    private CodeSonarAnalysisWarningCount activeWarningsCount;
-    private CodeSonarAnalysisWarningCount newWarningsCount;
+    private CodeSonarWarningCountChartRow activeWarningsForAnalysis;
+    private CodeSonarWarningCountChartRow newWarningsForAnalysis;
     private Analysis analysisViewActive;
     private Analysis analysisViewNew;
     private Metrics metrics;
@@ -95,15 +106,15 @@ public class CodeSonarHubAnalysisDataLoader {
     public Long getNumberOfActiveWarnings() throws IOException {
         LOGGER.log(Level.INFO, "getNumberOfActiveWarnings");
         if(hubInfo.isJsonGridConfigSupported()) {
-            if(activeWarningsCount == null) {
+            if(activeWarningsForAnalysis == null) {
                 LOGGER.log(Level.INFO, "ActiveWarningsCount not already set, loading from corresponding service");
-                activeWarningsCount = services.getAnalysisService().getNumberOfWarnings(getBaseHubUri(), getAnalysisId(), getVisibilityFilter());
-                LOGGER.log(Level.INFO, "ActiveWarningsCount new instance {0}", activeWarningsCount);
-                if(activeWarningsCount == null) {
+                activeWarningsForAnalysis = services.getAnalysisService().getNumberOfWarnings(getBaseHubUri(), getAnalysisId(), getVisibilityFilter());
+                LOGGER.log(Level.INFO, "ActiveWarningsCount new instance {0}", activeWarningsForAnalysis);
+                if(activeWarningsForAnalysis == null) {
                     return null;
                 }
             }
-            return activeWarningsCount.getNumberOfWarnings();
+            return activeWarningsForAnalysis.getNumberOfWarnings();
         } else {
             if(analysisViewActive == null) {
                 analysisViewActive = getLegacyAnalysisViewActive();
@@ -119,15 +130,15 @@ public class CodeSonarHubAnalysisDataLoader {
     public Long getNumberOfNewWarnings() throws IOException {
         LOGGER.log(Level.INFO, "getNumberOfNewWarnings");
         if(hubInfo.isJsonGridConfigSupported()) {
-            if(newWarningsCount == null) {
+            if(newWarningsForAnalysis == null) {
                 LOGGER.log(Level.INFO, "NewWarningsCount not already set, loading from corresponding service");
-                newWarningsCount = services.getAnalysisService().getNumberOfWarnings(getBaseHubUri(), getAnalysisId(), getNewWarningsVisibilityFilter());
-                LOGGER.log(Level.INFO, "NewWarningsCount new instance {0}", newWarningsCount);
-                if(newWarningsCount == null) {
+                newWarningsForAnalysis = services.getAnalysisService().getNumberOfWarnings(getBaseHubUri(), getAnalysisId(), getNewWarningsVisibilityFilter());
+                LOGGER.log(Level.INFO, "NewWarningsCount new instance {0}", newWarningsForAnalysis);
+                if(newWarningsForAnalysis == null) {
                     return null;
                 }
             }
-            return newWarningsCount.getNumberOfWarnings();
+            return newWarningsForAnalysis.getNumberOfWarnings();
         } else {
             if(analysisViewNew == null) {
                 analysisViewNew = getLegacyAnalysisViewNew();

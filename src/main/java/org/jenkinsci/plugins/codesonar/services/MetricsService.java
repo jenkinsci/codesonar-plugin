@@ -1,12 +1,15 @@
 package org.jenkinsci.plugins.codesonar.services;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.URI;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.jenkinsci.plugins.codesonar.CodeSonarPluginException;
+import org.jenkinsci.plugins.codesonar.models.HttpServiceResponse;
 import org.jenkinsci.plugins.codesonar.models.metrics.Metrics;
+
+import com.google.common.base.Throwables;
 
 /**
  *
@@ -27,9 +30,18 @@ public class MetricsService {
         return baseHubUri.resolve(String.format("/metrics/%s.xml", analysisId));
     }
     
-    public Metrics getMetricsFromUri(URI metricsUri) throws IOException {
+    public Metrics getMetricsFromUri(URI metricsUri) throws CodeSonarPluginException {
         LOGGER.log(Level.INFO, String.format("Calling getMetricsFromUri"));
-        InputStream xmlContent = httpService.getContentFromUrlAsInputStream(metricsUri);
-        return  xmlSerializationService.deserialize(xmlContent, Metrics.class);
+        HttpServiceResponse response = httpService.getResponseFromUrl(metricsUri);
+        
+        if(response.getStatusCode() != 200) {
+            try {
+                throw new CodeSonarPluginException("Unexpected error in the response communicating with CodeSonar Hub. %nURI: {0}%nHTTP status code: {1} - {2} %nHTTP Body: {3}", metricsUri, response.getStatusCode(), response.getReasonPhrase(), response.readContent());
+            } catch (IOException e) {
+                throw new CodeSonarPluginException("Unable to read response content. %nURI: {0}%nException: {1}%nStack Trace: {2}", metricsUri, e.getMessage(), Throwables.getStackTraceAsString(e));
+            }
+        }
+        
+        return  xmlSerializationService.deserialize(response.getContentInputStream(), Metrics.class);
     }
 }

@@ -107,7 +107,7 @@ public abstract class ConditionIntegrationTestBase {
         when(mockedAnalysisService.getAnalysisFromUrlWithNewWarnings(BASE_HUB_URI, ANALYSIS_ID))
                 .thenReturn(VALID_ANALYSIS_NEW_WARNINGS);
         
-        when(mockedHttpService.getContentFromUrlAsString(any(URI.class)))
+        when(mockedHttpService.getResponseFromUrl(any(URI.class)).readContent())
                 .thenReturn("Version: 4.2");
     }
 }
