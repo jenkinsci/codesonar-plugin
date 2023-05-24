@@ -96,11 +96,11 @@ public class WarningCountIncreaseOverallCondition extends Condition {
             LOGGER.log(Level.INFO, "warnings increment percentage = {0,number,0.00}%", result);
         }
         
+        registerResult(csLogger, RESULT_DESCRIPTION_MESSAGE_FORMAT, thresholdPercentage, result, currentCount, previousCount);
+        
         if (result > thresholdPercentage) {
-            registerResult(csLogger, RESULT_DESCRIPTION_MESSAGE_FORMAT, thresholdPercentage, result, diff, previousCount);
             return Result.fromString(warrantedResult);
         }
-        registerResult(csLogger, RESULT_DESCRIPTION_MESSAGE_FORMAT, thresholdPercentage, result, diff, previousCount);
         return Result.SUCCESS;
     }
 

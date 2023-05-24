@@ -94,13 +94,12 @@ public class NewWarningsIncreasedByPercentageCondition extends Condition {
         
         float thresholdPercentage = Float.parseFloat(percentage);
         LOGGER.log(Level.INFO, "threshold percentage = {0,number,0.00}%", thresholdPercentage);
-        if (result > thresholdPercentage) {
-            registerResult(csLogger, RESULT_DESCRIPTION_MESSAGE_FORMAT, thresholdPercentage, result, newWarningCount, activeWarningCount);
-            return Result.fromString(warrantedResult);
-        }
         
         registerResult(csLogger, RESULT_DESCRIPTION_MESSAGE_FORMAT, thresholdPercentage, result, newWarningCount, activeWarningCount);
-
+        
+        if (result > thresholdPercentage) {
+            return Result.fromString(warrantedResult);
+        }
         return Result.SUCCESS;
     }
     
