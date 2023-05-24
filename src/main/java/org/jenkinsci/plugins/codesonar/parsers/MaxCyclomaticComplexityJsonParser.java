@@ -185,14 +185,8 @@ public class MaxCyclomaticComplexityJsonParser extends AbstractJsonParser<Proced
                     });
                 }
             }
-        } catch (IOException e) {
-            e.printStackTrace();
         } finally {
-            try {
-                jsonReader.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+            jsonReader.close();
         }
         return maxCyclomaticComplexityProcedure;
     }

@@ -1,9 +1,9 @@
 package org.jenkinsci.plugins.codesonar;
 
-import hudson.util.*;
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.io.IOException;
+
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.axis.CategoryAxis;
@@ -18,6 +18,12 @@ import org.jfree.ui.RectangleEdge;
 import org.jfree.ui.RectangleInsets;
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.StaplerResponse;
+
+import hudson.util.ChartUtil;
+import hudson.util.ColorPalette;
+import hudson.util.DataSetBuilder;
+import hudson.util.Graph;
+import hudson.util.ShiftedCategoryAxis;
 
 /**
  * @author andrius

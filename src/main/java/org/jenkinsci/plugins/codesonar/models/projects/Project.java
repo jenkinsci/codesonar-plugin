@@ -1,13 +1,15 @@
 package org.jenkinsci.plugins.codesonar.models.projects;
 
-import org.jenkinsci.plugins.codesonar.models.Metric;
 import java.io.Serializable;
 import java.util.Objects;
+
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
+
+import org.jenkinsci.plugins.codesonar.models.Metric;
 
 @XmlRootElement(name = "project")
 @XmlAccessorType(XmlAccessType.FIELD)

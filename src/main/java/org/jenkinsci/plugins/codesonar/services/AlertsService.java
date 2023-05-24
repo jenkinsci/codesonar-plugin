@@ -1,6 +1,5 @@
 package org.jenkinsci.plugins.codesonar.services;
 
-import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -10,16 +9,17 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.apache.http.client.utils.URIBuilder;
+import org.jenkinsci.plugins.codesonar.CodeSonarJsonSyntaxException;
 import org.jenkinsci.plugins.codesonar.CodeSonarPluginException;
+import org.jenkinsci.plugins.codesonar.CodeSonarRequestURISyntaxException;
 import org.jenkinsci.plugins.codesonar.api.CodeSonarAlertCounter;
-import org.jenkinsci.plugins.codesonar.models.HttpServiceResponse;
 import org.jenkinsci.plugins.codesonar.models.json.CodeSonarAlertData;
 
 import com.google.common.base.Throwables;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 
-public class AlertsService {
+public class AlertsService extends AbstractService {
     private static final Logger LOGGER = Logger.getLogger(AlertsService.class.getName());
     
     final private HttpService httpService;
@@ -42,7 +42,7 @@ public class AlertsService {
             try {
                 requestUri = uriBuilder.build();
             } catch (URISyntaxException e) {
-                throw new CodeSonarPluginException("Request URI for Alerts API contains a syntax error. %nException: {0}%nStack Trace: {1}", e.getMessage(), Throwables.getStackTraceAsString(e));
+                throw new CodeSonarRequestURISyntaxException(e);
             }
             String requestUriString = requestUri.toASCIIString();
             
@@ -58,7 +58,7 @@ public class AlertsService {
                      * A 404 response is expected to be returned anytime the request specifies an alert kind that has no
                      * occurrences on the specified analysis
                      */
-                    LOGGER.log(Level.INFO, "Skipping current alert kind");
+                    LOGGER.log(Level.INFO, "HTTP 404: no alerts found for kind={0}", kind);
                     foundExpectedResponse = true;
                     continue;
                 } else if(response.getStatusCode() == 500) {
@@ -77,14 +77,14 @@ public class AlertsService {
                     unexpectedErrorCounter++;
                     if(foundExpectedResponse) {
                         if(unexpectedErrorCounter  > 2) {
-                            throw new CodeSonarPluginException("Too many unexpected errors found communicating with CodeSonar Hub. %nURI: {0}%nHTTP status code: {1} - {2} %nHTTP Body: {3}", requestUriString, response.getStatusCode(), response.getReasonPhrase(), response.readContent());
+                            throw new CodeSonarPluginException("Too many unexpected errors found communicating with CodeSonar Hub. %nURI: {0}%nHTTP status code: {1} - {2} %nHTTP Body: {3}", requestUriString, response.getStatusCode(), response.getReasonPhrase(), readResponseContent(response, requestUriString));
                         } else {
-                            LOGGER.log(Level.INFO, "Found an unexpected error in the response, skipping current alert kind");
+                            LOGGER.log(Level.INFO, "Found an unexpected error in the response, try skipping current alert kind {0}", kind);
                             continue;
                         }
                     } else {
                         LOGGER.log(Level.INFO, "Unexpected error in the response without earlier expected ones, stop looping.");
-                        throw new CodeSonarPluginException("Unexpected error in the response without earlier expected ones communicating with CodeSonar Hub. %nURI: {0}%nHTTP status code: {1} - {2} %nHTTP Body: {3}", requestUriString, response.getStatusCode(), response.getReasonPhrase(), response.readContent());
+                        throw new CodeSonarPluginException("Unexpected error in the response without earlier expected ones communicating with CodeSonar Hub. %nURI: {0}%nHTTP status code: {1} - {2} %nHTTP Body: {3}", requestUriString, response.getStatusCode(), response.getReasonPhrase(), readResponseContent(response, requestUriString));
                     }
                 }
             } catch(CodeSonarPluginException e) {
@@ -98,8 +98,6 @@ public class AlertsService {
                     LOGGER.log(Level.INFO, "Exception querying the hub, skipping current alert kind", e);
                     continue;
                 }
-            } catch (IOException e) {
-                throw new CodeSonarPluginException("Unable to read unexpected response content. %nURI: {0}%nException: {1}%nStack Trace: {2}", requestUriString, e.getMessage(), Throwables.getStackTraceAsString(e));
             }
     
             Gson gsonDeserializer = new Gson();
@@ -108,8 +106,7 @@ public class AlertsService {
                 alertData = gsonDeserializer.fromJson(new InputStreamReader(response.getContentInputStream(), StandardCharsets.UTF_8), CodeSonarAlertData.class);
                 LOGGER.log(Level.INFO, "response alertData={0}", alertData.toString());
             } catch(JsonSyntaxException e) {
-                LOGGER.log(Level.WARNING, "failed to parse JSON response. %nException: {0}%nStack Trace: {1}", new Object[] {e.getMessage(), Throwables.getStackTraceAsString(e)});
-                return null;
+                throw new CodeSonarJsonSyntaxException(e);
             }
             
             if(alertData.getUndef_funcs() != null && alertData.getUndef_funcs().size() > 0) {

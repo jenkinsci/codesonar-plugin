@@ -10,9 +10,9 @@ import java.io.InputStream;
 import java.net.URI;
 
 import org.apache.commons.io.IOUtils;
-import org.jenkinsci.plugins.codesonar.models.HttpServiceResponse;
 import org.jenkinsci.plugins.codesonar.models.metrics.Metrics;
 import org.jenkinsci.plugins.codesonar.services.HttpService;
+import org.jenkinsci.plugins.codesonar.services.HttpServiceResponse;
 import org.jenkinsci.plugins.codesonar.services.MetricsService;
 import org.jenkinsci.plugins.codesonar.services.XmlSerializationService;
 import org.junit.Assert;

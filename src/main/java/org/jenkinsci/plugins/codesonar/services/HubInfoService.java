@@ -14,17 +14,18 @@ import org.apache.http.HttpResponse;
 import org.apache.http.ParseException;
 import org.apache.http.client.fluent.Request;
 import org.apache.http.util.EntityUtils;
+import org.jenkinsci.plugins.codesonar.CodeSonarHubCommunicationException;
+import org.jenkinsci.plugins.codesonar.CodeSonarJsonSyntaxException;
 import org.jenkinsci.plugins.codesonar.CodeSonarLogger;
 import org.jenkinsci.plugins.codesonar.CodeSonarPluginException;
 import org.jenkinsci.plugins.codesonar.models.CodeSonarHubClientCompatibilityInfo;
 import org.jenkinsci.plugins.codesonar.models.CodeSonarHubInfo;
-import org.jenkinsci.plugins.codesonar.models.HttpServiceResponse;
 
 import com.google.common.base.Throwables;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 
-public class HubInfoService {
+public class HubInfoService extends AbstractService {
     private static final Logger LOGGER = Logger.getLogger(HubInfoService.class.getName());
     
     public static final String CODESONAR_HUB_CLIENT_NAME = "jenkins";
@@ -128,8 +129,7 @@ public class HubInfoService {
             cci = gson.fromJson(responseBody, CodeSonarHubClientCompatibilityInfo.class);
             LOGGER.log(Level.INFO, CodeSonarLogger.formatMessage(cci.toString()));
         } catch(JsonSyntaxException e) {
-            LOGGER.log(Level.WARNING, "failed to parse JSON response. %nException: {0}%nStack Trace: {1}", new Object[] {e.getMessage(), Throwables.getStackTraceAsString(e)});
-            return null;
+            throw new CodeSonarJsonSyntaxException(e);
         }
         
         return cci;
@@ -184,29 +184,26 @@ public class HubInfoService {
         URI endpoint = baseHubUri.resolve("/command/anon_info/");
         LOGGER.log(Level.INFO, "Calling " + endpoint.toString());
         HttpServiceResponse response;
+        String bodyContent = null;
         try {
-            try {
-                response = httpService.getResponseFromUrl(endpoint);
+            response = httpService.getResponseFromUrl(endpoint);
+            bodyContent = readResponseContent(response, endpoint);
+            if(response.getStatusCode() != 200) {
+                throw new CodeSonarHubCommunicationException(endpoint, response.getStatusCode(), response.getReasonPhrase(), bodyContent);
+            }
+        } catch (CodeSonarPluginException e) {
+            // /command/anon_info/ is not available. Assume hub is older than v4.2
+            return "4.0";
+        }
     
-                if(response.getStatusCode() != 200) {
-                    throw new CodeSonarPluginException("Unexpected error in the response communicating with CodeSonar Hub. %nURI: {0}%nHTTP status code: {1} - {2} %nHTTP Body: {3}", endpoint, response.getStatusCode(), response.getReasonPhrase(), response.readContent());
-                }
-            } catch (CodeSonarPluginException e) {
-                // /command/anon_info/ is not available. Assume hub is older than v4.2
-                return "4.0";
+        Pattern pattern = Pattern.compile("Version:\\s(\\d+\\.\\d+)");
+        Matcher matcher = pattern.matcher(bodyContent);
+        if (matcher.find()) {
+            String version = matcher.group(1);
+            if(StringUtils.isBlank(version)) {
+                throw createError(CodeSonarLogger.formatMessage("Hub version cannot be parsed"));
             }
-        
-            Pattern pattern = Pattern.compile("Version:\\s(\\d+\\.\\d+)");
-            Matcher matcher = pattern.matcher(response.readContent());
-            if (matcher.find()) {
-                String version = matcher.group(1);
-                if(StringUtils.isBlank(version)) {
-                    throw createError(CodeSonarLogger.formatMessage("Hub version cannot be parsed"));
-                }
-                return version;
-            }
-        } catch(IOException e) {
-            throw new CodeSonarPluginException("Unable to read response content. %nURI: {0}%nException: {1}%nStack Trace: {2}", endpoint, e.getMessage(), Throwables.getStackTraceAsString(e));
+            return version;
         }
 
         LOGGER.log(Level.WARNING, "Version info could not be determined by data:\n"+response); // No version could be found

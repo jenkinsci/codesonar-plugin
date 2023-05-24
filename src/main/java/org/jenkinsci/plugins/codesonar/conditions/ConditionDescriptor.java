@@ -1,12 +1,13 @@
 package org.jenkinsci.plugins.codesonar.conditions;
 
+import javax.annotation.Nonnull;
+
+import org.kohsuke.stapler.StaplerRequest;
+
 import hudson.model.Descriptor;
 import hudson.model.Result;
 import hudson.util.ListBoxModel;
 import net.sf.json.JSONObject;
-import org.kohsuke.stapler.StaplerRequest;
-
-import javax.annotation.Nonnull;
 
 /**
  *

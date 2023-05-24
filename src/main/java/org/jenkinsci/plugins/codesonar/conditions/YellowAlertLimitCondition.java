@@ -1,20 +1,17 @@
 package org.jenkinsci.plugins.codesonar.conditions;
 
-import java.io.IOException;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.annotation.Nonnull;
 
 import org.jenkinsci.Symbol;
 import org.jenkinsci.plugins.codesonar.CodeSonarLogger;
+import org.jenkinsci.plugins.codesonar.CodeSonarPluginException;
 import org.jenkinsci.plugins.codesonar.api.CodeSonarHubAnalysisDataLoader;
 import org.jenkinsci.plugins.codesonar.models.CodeSonarAlertLevels;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
-
-import com.google.common.base.Throwables;
 
 import hudson.Extension;
 import hudson.Launcher;
@@ -59,22 +56,13 @@ public class YellowAlertLimitCondition extends Condition {
     }
 
     @Override
-    public Result validate(CodeSonarHubAnalysisDataLoader current, CodeSonarHubAnalysisDataLoader previous, String visibilityFilter, String newVisibilityFilter, Launcher launcher, TaskListener listener, CodeSonarLogger csLogger) {
+    public Result validate(CodeSonarHubAnalysisDataLoader current, CodeSonarHubAnalysisDataLoader previous, String visibilityFilter, String newVisibilityFilter, Launcher launcher, TaskListener listener, CodeSonarLogger csLogger) throws CodeSonarPluginException {
         if (current == null) {
             registerResult(csLogger, CURRENT_BUILD_DATA_NOT_AVAILABLE);
             return Result.SUCCESS;
         }
         
-        Integer yellowAlerts = null;
-        try {
-            yellowAlerts = current.getNumberOfAlerts(CodeSonarAlertLevels.YELLOW);      
-        } catch (IOException e) {
-            final String applicationMsg = "Error calling yellow alerts on HUB API for current analysis.";
-            LOGGER.log(Level.WARNING, applicationMsg);
-            registerResult(csLogger, applicationMsg);
-            csLogger.writeInfo("Exception: {0}%nStack Trace: {1}", e.getMessage(), Throwables.getStackTraceAsString(e));
-            return Result.FAILURE;
-        }
+        Integer yellowAlerts = current.getNumberOfAlerts(CodeSonarAlertLevels.YELLOW);      
 
         registerResult(csLogger, RESULT_DESCRIPTION_MESSAGE_FORMAT, alertLimit, yellowAlerts);
         

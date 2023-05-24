@@ -1,6 +1,5 @@
 package org.jenkinsci.plugins.codesonar.api;
 
-import java.io.IOException;
 import java.net.URI;
 import java.util.HashMap;
 import java.util.List;
@@ -8,6 +7,7 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.jenkinsci.plugins.codesonar.CodeSonarPluginException;
 import org.jenkinsci.plugins.codesonar.models.CodeSonarAlertLevels;
 import org.jenkinsci.plugins.codesonar.models.CodeSonarHubInfo;
 import org.jenkinsci.plugins.codesonar.models.Metric;
@@ -79,31 +79,31 @@ public class CodeSonarHubAnalysisDataLoader {
         return newWarningsVisibilityFilter;
     }
     
-    protected Analysis getLegacyAnalysisViewActive() throws IOException {
+    protected Analysis getLegacyAnalysisViewActive() throws CodeSonarPluginException {
         LOGGER.log(Level.INFO, "AnalysisViewActive not already set, loading from corresponding legacy service");
         services.getAnalysisService().setVisibilityFilter(visibilityFilter);
         return services.getAnalysisService().getAnalysisFromUrlWarningsByFilter(getBaseHubUri(), getAnalysisId());
     }
 
-    protected Analysis getLegacyAnalysisViewNew() throws IOException {
+    protected Analysis getLegacyAnalysisViewNew() throws CodeSonarPluginException {
         LOGGER.log(Level.INFO, "AnalysisViewNew not already set, loading from corresponding legacy service");
         services.getAnalysisService().setVisibilityFilter(newWarningsVisibilityFilter);
         return services.getAnalysisService().getAnalysisFromUrlWithNewWarnings(getBaseHubUri(), getAnalysisId());
     }
 
-    protected Procedures getLegacyProcedures() throws IOException {
+    protected Procedures getLegacyProcedures() throws CodeSonarPluginException {
         LOGGER.log(Level.INFO, "Procedures not already set, loading from corresponding legacy service");
         URI proceduresUri = services.getProceduresService().getProceduresUriFromAnAnalysisId(baseHubUri, String.valueOf(analysisId));
         return services.getProceduresService().getProceduresFromUri(proceduresUri);
     }
     
-    protected Metrics getLegacyMetrics() throws IOException {
+    protected Metrics getLegacyMetrics() throws CodeSonarPluginException {
         LOGGER.log(Level.INFO, "Metrics not already set, loading from corresponding legacy service");
         URI metricsUri = services.getMetricsService().getMetricsUriFromAnAnalysisId(getBaseHubUri(), String.valueOf(analysisId));
         return services.getMetricsService().getMetricsFromUri(metricsUri);
     }
     
-    public Long getNumberOfActiveWarnings() throws IOException {
+    public Long getNumberOfActiveWarnings() throws CodeSonarPluginException {
         LOGGER.log(Level.INFO, "getNumberOfActiveWarnings");
         if(hubInfo.isJsonGridConfigSupported()) {
             if(activeWarningsForAnalysis == null) {
@@ -127,7 +127,7 @@ public class CodeSonarHubAnalysisDataLoader {
         }
     }
     
-    public Long getNumberOfNewWarnings() throws IOException {
+    public Long getNumberOfNewWarnings() throws CodeSonarPluginException {
         LOGGER.log(Level.INFO, "getNumberOfNewWarnings");
         if(hubInfo.isJsonGridConfigSupported()) {
             if(newWarningsForAnalysis == null) {
@@ -151,7 +151,7 @@ public class CodeSonarHubAnalysisDataLoader {
         }
     }
 
-    public ProcedureMetric getProcedureWithMaxCyclomaticComplexity() throws IOException {
+    public ProcedureMetric getProcedureWithMaxCyclomaticComplexity() throws CodeSonarPluginException {
         LOGGER.log(Level.INFO, "getProcedureWithMaxCyclomaticComplexity");
         if(hubInfo.isJsonGridConfigSupported()) {
             if(procedureWithMaxCyclomaticComplexity == null) {
@@ -189,16 +189,13 @@ public class CodeSonarHubAnalysisDataLoader {
         }
     }
 
-    public Integer getNumberOfAlerts(CodeSonarAlertLevels level) throws IOException {
+    public Integer getNumberOfAlerts(CodeSonarAlertLevels level) throws CodeSonarPluginException {
         LOGGER.log(Level.INFO, "getNumberOfAlerts");
         if(hubInfo.isJsonGridConfigSupported()) {
             if(alertCounter == null) {
                 LOGGER.log(Level.INFO, "AlertCounter not already set, loading from corresponding service");
                 alertCounter = services.getAlertsService().getAlertCounter(getBaseHubUri(), getAnalysisId());
                 LOGGER.log(Level.INFO, "AlertCounter new instance {0}", alertCounter);
-                if(alertCounter == null) {
-                    return null;
-                }
             }
             return alertCounter.getAlertCount(level);
         } else {
@@ -214,7 +211,7 @@ public class CodeSonarHubAnalysisDataLoader {
         }
     }
 
-    public Long getNumberOfWarningsWithScoreAboveThreshold(int threshold) throws IOException {
+    public Long getNumberOfWarningsWithScoreAboveThreshold(int threshold) throws CodeSonarPluginException {
         LOGGER.log(Level.INFO, "getNumberOfWarningsWithScoreAboveThreshold");
         if(hubInfo.isJsonGridConfigSupported()) {
             if(numberOfWarningsAboveThreshold.get(threshold) == null) {

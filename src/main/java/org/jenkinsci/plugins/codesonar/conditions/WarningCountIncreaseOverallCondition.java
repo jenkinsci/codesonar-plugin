@@ -1,6 +1,5 @@
 package org.jenkinsci.plugins.codesonar.conditions;
 
-import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -9,12 +8,11 @@ import javax.annotation.Nonnull;
 import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.Symbol;
 import org.jenkinsci.plugins.codesonar.CodeSonarLogger;
+import org.jenkinsci.plugins.codesonar.CodeSonarPluginException;
 import org.jenkinsci.plugins.codesonar.api.CodeSonarHubAnalysisDataLoader;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
-
-import com.google.common.base.Throwables;
 
 import hudson.Extension;
 import hudson.Launcher;
@@ -59,7 +57,7 @@ public class WarningCountIncreaseOverallCondition extends Condition {
     }
 
     @Override
-    public Result validate(CodeSonarHubAnalysisDataLoader current, CodeSonarHubAnalysisDataLoader previous, String visibilityFilter, String newVisibilityFilter, Launcher launcher, TaskListener listener, CodeSonarLogger csLogger) {
+    public Result validate(CodeSonarHubAnalysisDataLoader current, CodeSonarHubAnalysisDataLoader previous, String visibilityFilter, String newVisibilityFilter, Launcher launcher, TaskListener listener, CodeSonarLogger csLogger) throws CodeSonarPluginException {
         if (current == null) {
             registerResult(csLogger, CURRENT_BUILD_DATA_NOT_AVAILABLE);
             return Result.SUCCESS;
@@ -70,27 +68,8 @@ public class WarningCountIncreaseOverallCondition extends Condition {
             return Result.SUCCESS;
         }
         
-        Long previousCount = null;
-        try {
-            previousCount = previous.getNumberOfActiveWarnings();
-        } catch (IOException e) {
-            final String applicationMsg = "Error calling number of active warnings on HUB API for previous analysis.";
-            LOGGER.log(Level.WARNING, applicationMsg);
-            registerResult(csLogger, applicationMsg);
-            csLogger.writeInfo("Exception: {0}%nStack Trace: {1}", e.getMessage(), Throwables.getStackTraceAsString(e));
-            return Result.FAILURE;
-        }
-        
-        Long currentCount = null;
-        try {
-            currentCount = current.getNumberOfActiveWarnings();
-        } catch (IOException e) {
-            final String applicationMsg = "Error calling number of active warnings on HUB API for current analysis.";
-            LOGGER.log(Level.WARNING, applicationMsg);
-            registerResult(csLogger, applicationMsg);
-            csLogger.writeInfo("Exception: {0}%nStack Trace: {1}", e.getMessage(), Throwables.getStackTraceAsString(e));
-            return Result.FAILURE;
-        }
+        Long previousCount = previous.getNumberOfActiveWarnings();
+        Long currentCount = current.getNumberOfActiveWarnings();
         
         // Going to produce build failures in the case of missing necessary information
         if(previousCount == null) {

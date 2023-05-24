@@ -4,6 +4,7 @@ import java.text.MessageFormat;
 
 import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.plugins.codesonar.CodeSonarLogger;
+import org.jenkinsci.plugins.codesonar.CodeSonarPluginException;
 import org.jenkinsci.plugins.codesonar.api.CodeSonarHubAnalysisDataLoader;
 
 import hudson.DescriptorExtensionList;
@@ -25,7 +26,7 @@ public abstract class Condition implements Describable<Condition>, ExtensionPoin
     protected static final String DATA_LOADER_EMPTY_RESPONSE = "Data loader returned an empty response";
     private String resultDescription;
     
-    public abstract Result validate(CodeSonarHubAnalysisDataLoader current, CodeSonarHubAnalysisDataLoader previous, String visibilityFilter, String newWarningsVisibilityFilter, Launcher launcher, TaskListener listener, CodeSonarLogger logger);
+    public abstract Result validate(CodeSonarHubAnalysisDataLoader current, CodeSonarHubAnalysisDataLoader previous, String visibilityFilter, String newWarningsVisibilityFilter, Launcher launcher, TaskListener listener, CodeSonarLogger logger) throws CodeSonarPluginException;
 
     @Override
     public Descriptor<Condition> getDescriptor() {

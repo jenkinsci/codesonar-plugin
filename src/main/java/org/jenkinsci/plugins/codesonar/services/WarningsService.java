@@ -1,6 +1,5 @@
 package org.jenkinsci.plugins.codesonar.services;
 
-import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -10,18 +9,19 @@ import java.util.logging.Logger;
 
 import org.apache.http.client.utils.URIBuilder;
 import org.javatuples.Pair;
+import org.jenkinsci.plugins.codesonar.CodeSonarHubCommunicationException;
+import org.jenkinsci.plugins.codesonar.CodeSonarJsonSyntaxException;
 import org.jenkinsci.plugins.codesonar.CodeSonarPluginException;
-import org.jenkinsci.plugins.codesonar.models.HttpServiceResponse;
+import org.jenkinsci.plugins.codesonar.CodeSonarRequestURISyntaxException;
 import org.jenkinsci.plugins.codesonar.models.JsonStringPairSerializer;
 import org.jenkinsci.plugins.codesonar.models.json.CodeSonarWarningSearchData;
 import org.jenkinsci.plugins.codesonar.models.json.SearchConfigData;
 
-import com.google.common.base.Throwables;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;
 
-public class WarningsService {
+public class WarningsService extends AbstractService {
     private static final Logger LOGGER = Logger.getLogger(WarningsService.class.getName());
     
     final private HttpService httpService;
@@ -32,7 +32,7 @@ public class WarningsService {
         this.strictQueryParameters = strictQueryParameters;
     }
     
-    public Long getNumberOfWarningsWithScoreAboveThreshold(URI baseHubUri, long analysisId, int threshold) throws IOException {
+    public Long getNumberOfWarningsWithScoreAboveThreshold(URI baseHubUri, long analysisId, int threshold) throws CodeSonarPluginException {
         //Configure search parameters in order to extract the desired data
         SearchConfigData searchConfig = new SearchConfigData();
         //Avoid returning rows, only rows counter is needed.
@@ -57,14 +57,14 @@ public class WarningsService {
         try {
             requestUri = uriBuilder.build();
         } catch (URISyntaxException e) {
-            throw new CodeSonarPluginException("Request URI for Warning Seach API contains a syntax error. %nException: {0}%nStack Trace: {1}", e.getMessage(), Throwables.getStackTraceAsString(e));
+            throw new CodeSonarRequestURISyntaxException(e);
         }
         String requestUriString = requestUri.toASCIIString();
         
         HttpServiceResponse response = httpService.getResponseFromUrl(requestUriString);
         
         if(response.getStatusCode() != 200) {
-            throw new CodeSonarPluginException("Unexpected error in the response communicating with CodeSonar Hub. %nURI: {0}%nHTTP status code: {1} - {2} %nHTTP Body: {3}", requestUriString, response.getStatusCode(), response.getReasonPhrase(), response.readContent());
+            throw new CodeSonarHubCommunicationException(requestUriString, response.getStatusCode(), response.getReasonPhrase(), readResponseContent(response, requestUriString));
         }
 
         Gson gsonDeserializer = new Gson();
@@ -73,8 +73,7 @@ public class WarningsService {
             warningSearchData = gsonDeserializer.fromJson(new InputStreamReader(response.getContentInputStream(), StandardCharsets.UTF_8), CodeSonarWarningSearchData.class);
             LOGGER.log(Level.INFO, "response warningSearchData={0}", warningSearchData.toString());
         } catch(JsonSyntaxException e) {
-            LOGGER.log(Level.WARNING, "failed to parse JSON response. %nException: {0}%nStack Trace: {1}", new Object[] {e.getMessage(), Throwables.getStackTraceAsString(e)});
-            return null;
+            throw new CodeSonarJsonSyntaxException(e);
         }
         
         return warningSearchData.getCount();

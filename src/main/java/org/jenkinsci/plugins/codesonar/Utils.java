@@ -1,7 +1,7 @@
 package org.jenkinsci.plugins.codesonar;
 
-import hudson.model.Run;
 import hudson.model.Job;
+import hudson.model.Run;
 
 /**
  *

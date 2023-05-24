@@ -3,6 +3,7 @@ package org.jenkinsci.plugins.codesonar.models.report;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
