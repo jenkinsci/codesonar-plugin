@@ -17,7 +17,6 @@ import org.jenkinsci.plugins.codesonar.models.json.SearchConfigData;
 import org.jenkinsci.plugins.codesonar.models.procedures.Procedures;
 import org.jenkinsci.plugins.codesonar.parsers.MaxCyclomaticComplexityJsonParser;
 
-import com.google.common.base.Throwables;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
@@ -97,7 +96,7 @@ public class ProceduresService extends AbstractService {
         try {
             return parser.parseObject();
         } catch (IOException e) {
-            throw new CodeSonarPluginException("Unable to parse response content. %nURI: {0}%nException: {1}%nStack Trace: {2}", requestUriString, e.getMessage(), Throwables.getStackTraceAsString(e));
+            throw new CodeSonarPluginException("Unable to parse response content. %nURI: {0}", e, requestUriString);
         }
     }
     

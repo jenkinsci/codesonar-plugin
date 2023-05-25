@@ -93,7 +93,7 @@ public class AlertsService extends AbstractService {
                  */
                 unexpectedErrorCounter++;
                 if(unexpectedErrorCounter > 2) {
-                    throw new CodeSonarPluginException("Too many exeptions communicating with CodeSonar Hub. %nURI: {0}%nException: {1}%nStack Trace: {2}", requestUriString, e.getMessage(), Throwables.getStackTraceAsString(e));
+                    throw new CodeSonarPluginException("Too many exeptions communicating with CodeSonar Hub. %nURI: {0}", e, requestUriString);
                 } else {
                     LOGGER.log(Level.INFO, "Exception querying the hub, skipping current alert kind", e);
                     continue;

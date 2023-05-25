@@ -3,8 +3,6 @@ package org.jenkinsci.plugins.codesonar;
 import java.io.PrintStream;
 import java.text.MessageFormat;
 
-import com.google.common.base.Throwables;
-
 public class CodeSonarLogger {
     private PrintStream printStream = null;
     private static final String LOG_PREFIX = "[CodeSonar]";
@@ -15,10 +13,6 @@ public class CodeSonarLogger {
     
     public void writeInfo(String message, Object...args) {
         printStream.println(formatMessage(message, args));
-    }
-    
-    public void writeException(Exception e) {
-        printStream.println(formatMessage("Exception: {0}%nStack Trace: {1}", e.getMessage(), Throwables.getStackTraceAsString(e)));
     }
     
     public static String formatMessage(String message, Object...args) {

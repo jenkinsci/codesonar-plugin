@@ -29,7 +29,6 @@ import org.jenkinsci.plugins.codesonar.models.json.CodeSonarWarningCountChartDat
 import org.jenkinsci.plugins.codesonar.models.json.CodeSonarWarningCountChartRow;
 import org.jenkinsci.plugins.codesonar.models.projects.Project;
 
-import com.google.common.base.Throwables;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;
@@ -56,10 +55,6 @@ public class AnalysisService extends AbstractService implements IAnalysisService
         this.strictQueryParameters = strictQueryParameters;
     }
     
-    private CodeSonarPluginException createError(String msg, Object...args) {
-        return new CodeSonarPluginException(msg, args);
-    }
-
     @Override
     public String getAnalysisUrlFromLogFile(List<String> logFile) {
         Pattern pattern = Pattern.compile("codesonar:\\s+(.*/analysis/.*)");
@@ -85,7 +80,7 @@ public class AnalysisService extends AbstractService implements IAnalysisService
         try {
             encode = URLEncoder.encode("\"" + projectName + "\"", "UTF-8");
         } catch (UnsupportedEncodingException e) {
-            throw new CodeSonarPluginException("Request URI for analysis url for a project contains a syntax error. %nException: {0}%nStack Trace: {1}", e.getMessage(), Throwables.getStackTraceAsString(e));
+            throw new CodeSonarPluginException("Problems encoding analysis url for project \"{0}\".", e, projectName);
         }
         URI uri = baseHubUri.resolve("/project_search.xml?query=" + encode + "&scope=all");
 

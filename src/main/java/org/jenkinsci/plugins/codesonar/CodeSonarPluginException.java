@@ -1,8 +1,8 @@
 package org.jenkinsci.plugins.codesonar;
 
-import hudson.AbortException;
+import java.io.IOException;
 
-public class CodeSonarPluginException extends AbortException {
+public class CodeSonarPluginException extends IOException {
     private Object[] args;
     
     public CodeSonarPluginException() {
@@ -10,6 +10,11 @@ public class CodeSonarPluginException extends AbortException {
 
     public CodeSonarPluginException(String message, Object...args) {
         super(message);
+        this.args = args;
+    }
+    
+    public CodeSonarPluginException(String message, Throwable cause, Object...args) {
+        super(message, cause);
         this.args = args;
     }
     

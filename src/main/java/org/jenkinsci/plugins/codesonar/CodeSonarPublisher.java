@@ -53,7 +53,6 @@ import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
 import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
 import com.cloudbees.plugins.credentials.common.UsernamePasswordCredentials;
 import com.cloudbees.plugins.credentials.domains.DomainRequirement;
-import com.google.common.base.Throwables;
 
 import hudson.DescriptorExtensionList;
 import hudson.Extension;
@@ -128,6 +127,10 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
     
     private CodeSonarPluginException createError(String msg, Object...args) {
         return new CodeSonarPluginException(msg, args);
+    }
+    
+    private CodeSonarPluginException createError(String msg, Throwable cause) {
+        return new CodeSonarPluginException(msg, cause);
     }
 
     @DataBoundSetter
@@ -542,7 +545,7 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
                         serverCertificates = cf.generateCertificates(f.getContent());
                         LOGGER.log(Level.INFO, "X509Certificate initialized");
                     } catch (IOException | CertificateException e ) {
-                        throw createError("Failed to create X509Certificate from Secret File Credential. %n{0}: {1}%nStack Trace: {2}", e.getClass().getName(), e.getMessage(), Throwables.getStackTraceAsString(e));
+                        throw createError("Failed to create X509Certificate from Secret File Credential.", e);
                     }
                 } else {
                     if(serverCertificateCredentials != null) {

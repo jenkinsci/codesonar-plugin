@@ -106,7 +106,7 @@ public class AnalysisServiceTest {
         assertNull(result);
     }
 
-    @Test(expected = AbortException.class)
+    @Test(expected = CodeSonarPluginException.class)
     public void providedInvalidHubAddress_shouldThrowAnAbortException() throws IOException, URISyntaxException {
         final String INVALID_HUB_ADDRESS = "99.99.99.99";
         final String PROJECT_NAME = "pojectName";
@@ -124,7 +124,7 @@ public class AnalysisServiceTest {
         analysisService.getLatestAnalysisUrlForAProject(new URI(INVALID_HUB_ADDRESS), PROJECT_NAME);
     }
 
-    @Test(expected = AbortException.class)
+    @Test(expected = CodeSonarPluginException.class)
     public void projectWithProvidedProjectNameIsNotFoundOnTheHub_shouldThrowAnAbortException() throws Exception {
         final String VALID_HUB_ADDRESS = "http://10.10.1.131";
         final String VALID_PROJECT_NAME = "pojectName";
@@ -143,7 +143,7 @@ public class AnalysisServiceTest {
         
     }
 
-    @Test(expected = AbortException.class)
+    @Test(expected = CodeSonarPluginException.class)
     public void providedInvalidAnalysisUrl_shouldThrowAnAbortException() throws IOException {
         final String INVALID_ANALYSIS_URL = "10.10.10.10";
         BasicCookieStore httpCookieStore = new BasicCookieStore();

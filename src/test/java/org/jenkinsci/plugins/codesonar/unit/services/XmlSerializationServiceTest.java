@@ -49,7 +49,7 @@ public class XmlSerializationServiceTest {
         assertEquals(EXPECTED_RESULT, result);
     }
 
-    @Test(expected = AbortException.class)
+    @Test(expected = CodeSonarPluginException.class)
     public void providedInvalidXML_throwsAbortException() throws CodeSonarPluginException {
         final InputStream INVALID_XML_CONTENT = new ByteArrayInputStream((
                 "project url=\"/analysis/8.xml?filter=2&prj_filter=10\">\n"

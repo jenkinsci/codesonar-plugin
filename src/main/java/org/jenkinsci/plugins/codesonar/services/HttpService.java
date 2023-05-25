@@ -18,7 +18,6 @@ import org.apache.http.HttpResponse;
 import org.apache.http.client.CookieStore;
 import org.apache.http.client.fluent.Executor;
 import org.apache.http.client.fluent.Request;
-import org.apache.http.client.fluent.Response;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.impl.client.BasicCookieStore;
 import org.apache.http.impl.client.CloseableHttpClient;
@@ -26,8 +25,6 @@ import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.ssl.SSLContextBuilder;
 import org.jenkinsci.plugins.codesonar.CodeSonarPluginException;
-
-import com.google.common.base.Throwables;
 
 import hudson.util.Secret;
 
@@ -60,7 +57,7 @@ public class HttpService {
                 try {
                     sslContextBuilder.loadTrustMaterial(new CertificateFileTrustStrategy(serverCertificates));
                 } catch (NoSuchAlgorithmException | KeyStoreException e) {
-                    throw createError("Error setting up server certificates  %n{0}: {1}%nStack Trace: {2}", e.getClass().getName(), e.getMessage(), Throwables.getStackTraceAsString(e));
+                    throw createError("Error setting up server certificates", e);
                 }
             }
             
@@ -70,7 +67,7 @@ public class HttpService {
                 try {
                     sslContextBuilder.loadKeyMaterial(clientCertificateKeyStore, clientCertificatePassword.getPlainText().toCharArray());
                 } catch (UnrecoverableKeyException | NoSuchAlgorithmException | KeyStoreException e) {
-                    throw createError("Error setting up client certificate  %n{0}: {1}%nStack Trace: {2}", e.getClass().getName(), e.getMessage(), Throwables.getStackTraceAsString(e));
+                    throw createError("Error setting up client certificate.", e);
                 }
             }
             //Prepare the SSL context in order to let the HTTP client using specified certificates
@@ -81,7 +78,7 @@ public class HttpService {
                 httpClientBuilder.setSSLSocketFactory(csf);
                 LOGGER.log(Level.INFO, "SSL context initialized");
             } catch (KeyManagementException | NoSuchAlgorithmException e) {
-                throw createError("Error initiating SSL context.%nException message: {0}", e.getMessage());
+                throw createError("Error initiating SSL context.", e);
             }
         }
         
@@ -91,8 +88,12 @@ public class HttpService {
         LOGGER.log(Level.INFO, "HttpService initialized");
     }
     
-    private CodeSonarPluginException createError(String msg, Object...args) {
-        return new CodeSonarPluginException(msg, args);
+    private CodeSonarPluginException createError(String msg, Throwable cause, Object...args) {
+        return new CodeSonarPluginException(msg, cause, args);
+    }
+    
+    private CodeSonarPluginException createError(String msg, Throwable cause) {
+        return new CodeSonarPluginException(msg, cause);
     }
     
     public void setSocketTimeoutMS(int socketTimeoutMS) {
@@ -119,15 +120,21 @@ public class HttpService {
             HttpResponse resp = getExecutor().execute(req).returnResponse();
             serviceResponse = new HttpServiceResponse(resp.getStatusLine().getStatusCode(), resp.getStatusLine().getReasonPhrase(), resp.getEntity().getContent());
         } catch (IOException e) {
-            throw createError("Error requesting URL: {0}%nException message: {1}%nStack Trace: {2}", url, e.getMessage(), Throwables.getStackTraceAsString(e));
+            throw createError("Error requesting URL: {0}", e, url);
         }
         
         return serviceResponse;
     }
     
-    public Response execute(Request request) throws IOException {
+    public HttpServiceResponse execute(Request request) throws IOException {
         if(socketTimeoutMS != -1) request.socketTimeout(socketTimeoutMS);
-        return getExecutor().execute(request);
+        HttpResponse resp = getExecutor().execute(request).returnResponse();
+//      Header[] allHeaders = resp.getAllHeaders();
+//      LOGGER.log(Level.INFO, "Response headers:");
+//      for (int i = 0; i < allHeaders.length; i++) {
+//          LOGGER.log(Level.INFO, String.format("%s:%s", allHeaders[i].getName(), allHeaders[i].getValue()));
+//      }
+        return new HttpServiceResponse(resp.getStatusLine().getStatusCode(), resp.getStatusLine().getReasonPhrase(), resp.getEntity().getContent());
     }
     
     public Executor getExecutor() {

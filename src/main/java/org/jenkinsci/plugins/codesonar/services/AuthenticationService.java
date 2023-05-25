@@ -8,16 +8,13 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.fluent.Form;
 import org.apache.http.client.fluent.Request;
-import org.apache.http.util.EntityUtils;
+import org.jenkinsci.plugins.codesonar.CodeSonarHubCommunicationException;
 import org.jenkinsci.plugins.codesonar.CodeSonarPluginException;
 
-import com.google.common.base.Throwables;
-
-public class AuthenticationService {
+public class AuthenticationService extends AbstractService {
     private static final Logger LOGGER = Logger.getLogger(AuthenticationService.class.getName());
     private static final String HTTP_HEADER_AUTHORIZATION = "Authorization";
     private HttpService httpService;
@@ -26,8 +23,12 @@ public class AuthenticationService {
         this.httpService = httpService;
     }
     
-    private CodeSonarPluginException createError(String msg, Object...args) {
+    private CodeSonarPluginException createError(String msg, Object ...args) {
         return new CodeSonarPluginException(msg, args);
+    }
+    
+    private CodeSonarPluginException createError(String msg, Throwable cause, Object ...args) {
+        return new CodeSonarPluginException(msg, cause, args);
     }
     
     public void authenticate(URI baseHubUri, boolean supportsOpenAPI) throws CodeSonarPluginException {
@@ -55,34 +56,25 @@ public class AuthenticationService {
                 .add("key", "cookie")
                 .build();
 
-        int status = -1;
-        String reason = "";
-        String body = "";
         URI resolvedURI = baseHubUri;
-
+        HttpServiceResponse response = null;
         try {
             resolvedURI = baseHubUri.resolve("/session/create-tls-client-certificate/");
-
-            HttpResponse resp = httpService.execute(Request.Post(resolvedURI)
+            response = httpService.execute(Request.Post(resolvedURI)
                     .addHeader("X-CSHUB-USE-TLS-CLIENT-AUTH", "1")
-                    .bodyForm(loginForm))
-                    .returnResponse();
-
-            status = resp.getStatusLine().getStatusCode();
-            reason = resp.getStatusLine().getReasonPhrase();
-            body = EntityUtils.toString(resp.getEntity(), "UTF-8");
+                    .bodyForm(loginForm));
         } catch (IOException e) {
-            throw createError("failed to authenticate. %nIOException: {0}%nStack Trace: {1}", e.getMessage(), Throwables.getStackTraceAsString(e));
+            throw createError("failed to authenticate.", e);
         }
 
-        if(status == 301) { //HTTP 301 - MOVED PERMANENTLY
+        if(response.getStatusCode() == 301) { //HTTP 301 - MOVED PERMANENTLY
             if(baseHubUri.getScheme().equalsIgnoreCase("http")) {
-                throw createError("failed to authenticate. Possible reason could be the CodeSonar hub running on https, while protocol http was specified.%nHTTP status code: {0} - {1} %nHTTP Body: {2}", status, reason, body);
+                throw createError("failed to authenticate. Possible reason could be the CodeSonar hub running on https, while protocol http was specified.%nHTTP status code: {0} - {1} %nHTTP Body: {2}", response.getStatusCode(), response.getReasonPhrase(), readResponseContent(response, resolvedURI));
             }
         }
 
-        if (status != 200) {
-            throw createError("failed to authenticate. %nHTTP status code: {0} - {1} %nHTTP Body: {2}", status, reason, body);
+        if (response.getStatusCode() != 200) {
+            throw new CodeSonarHubCommunicationException(resolvedURI, response.getStatusCode(), response.getReasonPhrase(), readResponseContent(response, resolvedURI));
         }
     }
 
@@ -100,29 +92,23 @@ public class AuthenticationService {
         String reason = "";
         String body = "";
         URI resolvedURI = baseHubUri;
-
+        HttpServiceResponse response = null;
         try {
             resolvedURI = baseHubUri.resolve("/sign_in.html?response_try_plaintext=1");
-
-            HttpResponse resp = httpService.execute(Request.Post(resolvedURI)
-                    .bodyForm(loginForm))
-                    .returnResponse();
-
-            status = resp.getStatusLine().getStatusCode();
-            reason = resp.getStatusLine().getReasonPhrase();
-            body = EntityUtils.toString(resp.getEntity(), "UTF-8");
+            response = httpService.execute(Request.Post(resolvedURI)
+                    .bodyForm(loginForm));
         } catch (IOException e) {
-            throw createError("failed to authenticate. %nIOException: {0}%nStack Trace: {1}", e.getMessage(), Throwables.getStackTraceAsString(e));
+            throw createError("failed to authenticate.", e);
         }
 
-        if(status == 301) { //HTTP 301 - MOVED PERMANENTLY
+        if(response.getStatusCode() == 301) { //HTTP 301 - MOVED PERMANENTLY
             if(baseHubUri.getScheme().equalsIgnoreCase("http")) {
-                throw createError("failed to authenticate. Possible reason could be the CodeSonar hub running on https, while protocol http was specified.%nHTTP status code: {0} - {1} %nHTTP Body: {2}", status, reason, body);
+                throw createError("failed to authenticate. Possible reason could be the CodeSonar hub running on https, while protocol http was specified.%nHTTP status code: {0} - {1} %nHTTP Body: {2}", response.getStatusCode(), response.getReasonPhrase(), readResponseContent(response, resolvedURI));
             }
         }
 
-        if (status != 200) {
-            throw createError("failed to authenticate. %nHTTP status code: {0} - {1} %nHTTP Body: {2}", status, reason, body);
+        if (response.getStatusCode() != 200) {
+            throw new CodeSonarHubCommunicationException(resolvedURI, response.getStatusCode(), response.getReasonPhrase(), readResponseContent(response, resolvedURI));
         }
     }
     
@@ -150,37 +136,26 @@ public class AuthenticationService {
         List<NameValuePair> loginForm = Form.form()
                 .add("key", "cookie")
                 .build();
-        int status = -1;
-        String reason = "";
-        String body = "";
         URI resolvedURI = baseHubUri;
+        HttpServiceResponse response = null;
         try {
             resolvedURI = baseHubUri.resolve("/session/create-basic-auth/");
-            HttpResponse resp = httpService.execute(Request.Post(resolvedURI)
+            response = httpService.execute(Request.Post(resolvedURI)
                     .addHeader(HTTP_HEADER_AUTHORIZATION, formatBasicAuthHeader(username, password))
-                    .bodyForm(loginForm))
-                    .returnResponse();
+                    .bodyForm(loginForm));
             
-            status = resp.getStatusLine().getStatusCode();
-            reason = resp.getStatusLine().getReasonPhrase();
-//            Header[] allHeaders = resp.getAllHeaders();
-//            LOGGER.log(Level.INFO, "Response headers:");
-//            for (int i = 0; i < allHeaders.length; i++) {
-//                LOGGER.log(Level.INFO, String.format("%s:%s", allHeaders[i].getName(), allHeaders[i].getValue()));
-//            }
-            body = EntityUtils.toString(resp.getEntity(), "UTF-8");
         } catch (IOException e) {
-            throw createError("failed to authenticate. %nIOException: {0}%nStack Trace: {1}", e.getMessage(), Throwables.getStackTraceAsString(e));
+            throw createError("failed to authenticate.", e);
         }
 
-        if(status == 301) { //HTTP 301 - MOVED PERMANENTLY
+        if(response.getStatusCode() == 301) { //HTTP 301 - MOVED PERMANENTLY
             if(baseHubUri.getScheme().equalsIgnoreCase("http")) {
-                throw createError("failed to authenticate. Possible reason could be the CodeSonar hub running on https, while protocol http was specified.%nHTTP status code: {0} - {1} %nHTTP Body: {2}", status, reason, body);
+                throw createError("failed to authenticate. Possible reason could be the CodeSonar hub running on https, while protocol http was specified.%nHTTP status code: {0} - {1} %nHTTP Body: {2}", response.getStatusCode(), response.getReasonPhrase(), readResponseContent(response, resolvedURI));
             }
         }
 
-        if (status != 200) {
-            throw createError("failed to authenticate. %nHTTP status code: {0} - {1} %nHTTP Body: {2}", status, reason, body);
+        if (response.getStatusCode() != 200) {
+            throw new CodeSonarHubCommunicationException(resolvedURI, response.getStatusCode(), response.getReasonPhrase(), readResponseContent(response, resolvedURI));
         }
     }
 
@@ -194,36 +169,24 @@ public class AuthenticationService {
                 .add("response_try_plaintext", "1")
                 .build();
 
-        int status = -1;
-        String reason = "";
-        String body = "";
         URI resolvedURI = baseHubUri;
+        HttpServiceResponse response = null;
         try {
             resolvedURI = baseHubUri.resolve("/sign_in.html?response_try_plaintext=1");
-            HttpResponse resp = httpService.execute(Request.Post(resolvedURI)
-                    .bodyForm(loginForm))
-                    .returnResponse();
-            
-            status = resp.getStatusLine().getStatusCode();
-            reason = resp.getStatusLine().getReasonPhrase();
-//            Header[] allHeaders = resp.getAllHeaders();
-//            LOGGER.log(Level.INFO, "Response headers:");
-//            for (int i = 0; i < allHeaders.length; i++) {
-//                LOGGER.log(Level.INFO, String.format("%s:%s", allHeaders[i].getName(), allHeaders[i].getValue()));
-//            }
-            body = EntityUtils.toString(resp.getEntity(), "UTF-8");
+            response = httpService.execute(Request.Post(resolvedURI)
+                    .bodyForm(loginForm));
         } catch (IOException e) {
-            throw createError("failed to authenticate. %nIOException: {0}%nStack Trace: {1}", e.getMessage(), Throwables.getStackTraceAsString(e));
+            throw createError("failed to authenticate.", e);
         }
 
-        if(status == 301) { //HTTP 301 - MOVED PERMANENTLY
+        if(response.getStatusCode() == 301) { //HTTP 301 - MOVED PERMANENTLY
             if(baseHubUri.getScheme().equalsIgnoreCase("http")) {
-                throw createError("failed to authenticate. Possible reason could be the CodeSonar hub running on https, while protocol http was specified.%nHTTP status code: {0} - {1} %nHTTP Body: {2}", status, reason, body);
+                throw createError("failed to authenticate. Possible reason could be the CodeSonar hub running on https, while protocol http was specified.%nHTTP status code: {0} - {1} %nHTTP Body: {2}", response.getStatusCode(), response.getReasonPhrase(), readResponseContent(response, resolvedURI));
             }
         }
 
-        if (status != 200) {
-            throw createError("failed to authenticate. %nHTTP status code: {0} - {1} %nHTTP Body: {2}", status, reason, body);
+        if (response.getStatusCode() != 200) {
+            throw new CodeSonarHubCommunicationException(resolvedURI, response.getStatusCode(), response.getReasonPhrase(), readResponseContent(response, resolvedURI));
         }
     }
 
@@ -237,17 +200,14 @@ public class AuthenticationService {
     
     public void signOut(URI baseHubUri) throws CodeSonarPluginException {
         try {
-            HttpResponse resp = httpService.execute(Request.Get(baseHubUri.resolve("/sign_out.html?response_try_plaintext=1"))).returnResponse();
+            URI resolvedURI = baseHubUri.resolve("/sign_out.html?response_try_plaintext=1");
+            HttpServiceResponse response = httpService.execute(Request.Get(resolvedURI));
 
-            int statusCode = resp.getStatusLine().getStatusCode();
-            
-            if (statusCode != 200) {
-                String reason = resp.getStatusLine().getReasonPhrase();;
-                String body = EntityUtils.toString(resp.getEntity(), "UTF-8");
-                throw createError("failed to sign out. %nHTTP status code: {0} - {1} %nHTTP Body: {2}", statusCode, reason, body);
+            if (response.getStatusCode() != 200) {
+                throw new CodeSonarHubCommunicationException(resolvedURI, response.getStatusCode(), response.getReasonPhrase(), readResponseContent(response, resolvedURI));
             }
         } catch (IOException ex) {
-            throw createError("Failed to sign out.%nMessage is: {0}", ex.getMessage());
+            throw createError("Failed to sign out.", ex);
         }
     }
 }

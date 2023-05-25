@@ -8,12 +8,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.commons.lang.StringUtils;
-import org.apache.http.Consts;
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
-import org.apache.http.ParseException;
 import org.apache.http.client.fluent.Request;
-import org.apache.http.util.EntityUtils;
 import org.jenkinsci.plugins.codesonar.CodeSonarHubCommunicationException;
 import org.jenkinsci.plugins.codesonar.CodeSonarJsonSyntaxException;
 import org.jenkinsci.plugins.codesonar.CodeSonarLogger;
@@ -88,31 +83,23 @@ public class HubInfoService extends AbstractService {
         resolvedURI = baseHubUri.resolve(String.format("/command/check_version/%s/?version=%d&capability=openapi&capability=strictQueryParameters&capability=gridConfigJson", clientName, clientVersion));
         LOGGER.log(Level.INFO, "Calling " + resolvedURI.toString());
         
-        HttpResponse resp;
+        HttpServiceResponse response;
         try {
-            resp = httpService.execute(Request.Get(resolvedURI))
-                    .returnResponse();
+            response = httpService.execute(Request.Get(resolvedURI));
         } catch (IOException e) {
             LOGGER.log(Level.WARNING, "failed to get a response. %nIOException: {0}%nStack Trace: {1}", new Object[] {e.getMessage(), Throwables.getStackTraceAsString(e)});
             return null;
         }
         
-        if(resp.getStatusLine() == null) {
-            LOGGER.log(Level.INFO, String.format("Not able to read http status."));
-            return null;
-        }
-        
-        if(resp.getStatusLine().getStatusCode() == 404) {
+        if(response.getStatusCode() == 404) {
             //Hub might respond with an HTTP 404, we want to keep track this special case
-            LOGGER.log(Level.INFO, "specified endpoint seems not to exist on the hub. %nresponse is \"{0,number,integer}, {1}\"", new Object[]{resp.getStatusLine().getStatusCode() , resp.getStatusLine().getReasonPhrase()});
+            LOGGER.log(Level.INFO, "specified endpoint seems not to exist on the hub. %nresponse is \"{0,number,integer}, {1}\"", new Object[]{response.getStatusCode() , response.getReasonPhrase()});
             return null;
-        } else if(resp.getStatusLine().getStatusCode() != 200) {
-            //Hub returned an unexpected response
-            String responseBody = readResponseBody(resp);
-            throw createError("response is not successfull. %nresponse is \"{0}, {1}\" %nrespose body: \"{2}\"", resp.getStatusLine().getStatusCode() , resp.getStatusLine().getReasonPhrase(), responseBody);
+        } else if(response.getStatusCode() != 200) {
+            throw new CodeSonarHubCommunicationException(resolvedURI, response.getStatusCode(), response.getReasonPhrase(), readResponseContent(response, resolvedURI));
         }
         
-        String responseBody = readResponseBody(resp);
+        String responseBody = readResponseContent(response, resolvedURI);
         if(responseBody == null) {
             return null;
         }
@@ -133,21 +120,6 @@ public class HubInfoService extends AbstractService {
         }
         
         return cci;
-    }
-    
-    private String readResponseBody(HttpResponse resp) {
-        HttpEntity entity = resp.getEntity();
-        if(entity == null) {
-            LOGGER.log(Level.INFO, "hub compatibility info cannot be read. %nentity is null");
-            return null;
-        }
-        
-        try {
-            return EntityUtils.toString(entity, Consts.UTF_8);
-        } catch (ParseException | IOException e) {
-            LOGGER.log(Level.WARNING, "failed to read the response. %nException: {0}%nStack Trace: {1}", new Object[] {e.getMessage(), Throwables.getStackTraceAsString(e)});
-            return null;
-        }
     }
     
     private boolean supportsOpenAPI(CodeSonarHubClientCompatibilityInfo cci) {
