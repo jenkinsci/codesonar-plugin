@@ -12,7 +12,6 @@ import org.apache.http.client.utils.URIBuilder;
 import org.jenkinsci.plugins.codesonar.CodeSonarJsonSyntaxException;
 import org.jenkinsci.plugins.codesonar.CodeSonarPluginException;
 import org.jenkinsci.plugins.codesonar.CodeSonarRequestURISyntaxException;
-import org.jenkinsci.plugins.codesonar.api.CodeSonarAlertCounter;
 import org.jenkinsci.plugins.codesonar.models.json.CodeSonarAlertData;
 
 import com.google.common.base.Throwables;

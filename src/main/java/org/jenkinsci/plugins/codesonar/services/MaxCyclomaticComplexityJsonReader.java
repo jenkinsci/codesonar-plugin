@@ -1,4 +1,4 @@
-package org.jenkinsci.plugins.codesonar.parsers;
+package org.jenkinsci.plugins.codesonar.services;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -23,14 +23,14 @@ import com.google.gson.stream.JsonToken;
  * @author aseno
  *
  */
-public class MaxCyclomaticComplexityJsonParser extends AbstractJsonParser<ProcedureMetric> {
+class MaxCyclomaticComplexityJsonReader {
      private static final String NAME_TOKEN = "NAME TOKEN value=";
      private static final String STRING_TOKEN = "STRING TOKEN value=";
      private static final String NUMBER_TOKEN = "NUMBER TOKEN value=";
      private static final String BOOLEAN_TOKEN = "BOOLEAN TOKEN value=";
      private static final String NULL_TOKEN = "NULL TOKEN";
 
-    private static final Logger LOGGER = Logger.getLogger(MaxCyclomaticComplexityJsonParser.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(MaxCyclomaticComplexityJsonReader.class.getName());
 
     private static final String USER_OBJECT = "user";
     private static final Object BUILD_LAUNCHD_OBJECT = "buildLaunchd";
@@ -61,7 +61,7 @@ public class MaxCyclomaticComplexityJsonParser extends AbstractJsonParser<Proced
         void take(String tokenName, P parameter) throws IOException;
     }
     
-    public MaxCyclomaticComplexityJsonParser(InputStream inputStream) {
+    public MaxCyclomaticComplexityJsonReader(InputStream inputStream) {
         inputStreamReader = new InputStreamReader(inputStream, StandardCharsets.UTF_8);
     }
     
@@ -140,8 +140,7 @@ public class MaxCyclomaticComplexityJsonParser extends AbstractJsonParser<Proced
         
     }
 
-    @Override
-    public ProcedureMetric parseObject() throws IOException {
+    public ProcedureMetric readProcedureMetric() throws IOException {
         JsonReader jsonReader = new JsonReader(inputStreamReader);
         jsonReader.setLenient(true);
 

@@ -1,4 +1,4 @@
-package org.jenkinsci.plugins.codesonar.api;
+package org.jenkinsci.plugins.codesonar.services;
 
 import java.net.URI;
 import java.util.HashMap;
@@ -18,7 +18,6 @@ import org.jenkinsci.plugins.codesonar.models.json.CodeSonarWarningCountChartRow
 import org.jenkinsci.plugins.codesonar.models.metrics.Metrics;
 import org.jenkinsci.plugins.codesonar.models.procedures.ProcedureRow;
 import org.jenkinsci.plugins.codesonar.models.procedures.Procedures;
-import org.jenkinsci.plugins.codesonar.services.HttpService;
 
 /**
  * Loads and caches data related to a single analysis, for use by "Condition" classes.
@@ -103,51 +102,39 @@ public class CodeSonarHubAnalysisDataLoader {
         return services.getMetricsService().getMetricsFromUri(metricsUri);
     }
     
-    public Long getNumberOfActiveWarnings() throws CodeSonarPluginException {
+    public long getNumberOfActiveWarnings() throws CodeSonarPluginException {
         LOGGER.log(Level.INFO, "getNumberOfActiveWarnings");
         if(hubInfo.isJsonGridConfigSupported()) {
             if(activeWarningsForAnalysis == null) {
                 LOGGER.log(Level.INFO, "ActiveWarningsCount not already set, loading from corresponding service");
                 activeWarningsForAnalysis = services.getAnalysisService().getNumberOfWarnings(getBaseHubUri(), getAnalysisId(), getVisibilityFilter());
                 LOGGER.log(Level.INFO, "ActiveWarningsCount new instance {0}", activeWarningsForAnalysis);
-                if(activeWarningsForAnalysis == null) {
-                    return null;
-                }
             }
             return activeWarningsForAnalysis.getNumberOfWarnings();
         } else {
             if(analysisViewActive == null) {
                 analysisViewActive = getLegacyAnalysisViewActive();
                 LOGGER.log(Level.INFO, "Legacy AnalysisViewActive new instance {0}", analysisViewActive);
-                if(analysisViewActive == null) {
-                    return null;
-                }
             }
             return (long) analysisViewActive.getWarnings().size();
         }
     }
     
-    public Long getNumberOfNewWarnings() throws CodeSonarPluginException {
+    public long getNumberOfNewWarnings() throws CodeSonarPluginException {
         LOGGER.log(Level.INFO, "getNumberOfNewWarnings");
         if(hubInfo.isJsonGridConfigSupported()) {
             if(newWarningsForAnalysis == null) {
                 LOGGER.log(Level.INFO, "NewWarningsCount not already set, loading from corresponding service");
                 newWarningsForAnalysis = services.getAnalysisService().getNumberOfWarnings(getBaseHubUri(), getAnalysisId(), getNewWarningsVisibilityFilter());
                 LOGGER.log(Level.INFO, "NewWarningsCount new instance {0}", newWarningsForAnalysis);
-                if(newWarningsForAnalysis == null) {
-                    return null;
-                }
             }
             return newWarningsForAnalysis.getNumberOfWarnings();
         } else {
             if(analysisViewNew == null) {
                 analysisViewNew = getLegacyAnalysisViewNew();
                 LOGGER.log(Level.INFO, "Legacy AnalysisViewNew new instance {0}", analysisViewNew);
-                if(analysisViewNew == null) {
-                    return null;
-                }
             }
-            return (long) analysisViewNew.getWarnings().size();
+            return analysisViewNew.getWarnings().size();
         }
     }
 
@@ -164,9 +151,6 @@ public class CodeSonarHubAnalysisDataLoader {
             if(procedures == null) {
                 procedures = getLegacyProcedures();
                 LOGGER.log(Level.INFO, "Legacy Procedures new instance {0}", procedures);
-                if(procedures == null) {
-                    return null;
-                }
             }
             List<ProcedureRow> procedureRows = procedures.getProcedureRows();
             String procedure = null;
@@ -189,7 +173,7 @@ public class CodeSonarHubAnalysisDataLoader {
         }
     }
 
-    public Integer getNumberOfAlerts(CodeSonarAlertLevels level) throws CodeSonarPluginException {
+    public int getNumberOfAlerts(CodeSonarAlertLevels level) throws CodeSonarPluginException {
         LOGGER.log(Level.INFO, "getNumberOfAlerts");
         if(hubInfo.isJsonGridConfigSupported()) {
             if(alertCounter == null) {
@@ -203,20 +187,17 @@ public class CodeSonarHubAnalysisDataLoader {
                 LOGGER.log(Level.INFO, "AnalysisViewActive not already set, loading from corresponding service");
                 analysisViewActive = getLegacyAnalysisViewActive();
                 LOGGER.log(Level.INFO, "AnalysisViewActive new instance {0}", analysisViewActive);
-                if(analysisViewActive == null) {
-                    return null;
-                }
             }
             return analysisViewActive.getRedAlerts().size();
         }
     }
 
-    public Long getNumberOfWarningsWithScoreAboveThreshold(int threshold) throws CodeSonarPluginException {
+    public long getNumberOfWarningsWithScoreAboveThreshold(int threshold) throws CodeSonarPluginException {
         LOGGER.log(Level.INFO, "getNumberOfWarningsWithScoreAboveThreshold");
         if(hubInfo.isJsonGridConfigSupported()) {
             if(numberOfWarningsAboveThreshold.get(threshold) == null) {
                 LOGGER.log(Level.INFO, "NumberOfWarningsAboveThreshold not already set for threshold {0}, loading from corresponding service", threshold);
-                Long numberOfWarnings = services.getWarningsService().getNumberOfWarningsWithScoreAboveThreshold(getBaseHubUri(), getAnalysisId(), threshold);
+                long numberOfWarnings = services.getWarningsService().getNumberOfWarningsWithScoreAboveThreshold(getBaseHubUri(), getAnalysisId(), threshold);
                 numberOfWarningsAboveThreshold.put(threshold, numberOfWarnings);
                 LOGGER.log(Level.INFO, "NumberOfWarningsAboveThreshold new value {0}", numberOfWarnings);
             }
@@ -226,9 +207,6 @@ public class CodeSonarHubAnalysisDataLoader {
                 LOGGER.log(Level.INFO, "AnalysisViewActive not already set, loading from corresponding service");
                 analysisViewActive = getLegacyAnalysisViewActive();
                 LOGGER.log(Level.INFO, "AnalysisViewActive new instance {0}", analysisViewActive);
-                if(analysisViewActive == null) {
-                    return null;
-                }
             }
             
             long severeWarnings = 0;

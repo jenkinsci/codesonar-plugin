@@ -7,8 +7,8 @@ import javax.annotation.Nonnull;
 import org.jenkinsci.Symbol;
 import org.jenkinsci.plugins.codesonar.CodeSonarLogger;
 import org.jenkinsci.plugins.codesonar.CodeSonarPluginException;
-import org.jenkinsci.plugins.codesonar.api.CodeSonarHubAnalysisDataLoader;
 import org.jenkinsci.plugins.codesonar.models.CodeSonarAlertLevels;
+import org.jenkinsci.plugins.codesonar.services.CodeSonarHubAnalysisDataLoader;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
@@ -62,11 +62,11 @@ public class YellowAlertLimitCondition extends Condition {
             return Result.SUCCESS;
         }
         
-        Integer yellowAlerts = current.getNumberOfAlerts(CodeSonarAlertLevels.YELLOW);      
+        int yellowAlerts = current.getNumberOfAlerts(CodeSonarAlertLevels.YELLOW);      
 
         registerResult(csLogger, RESULT_DESCRIPTION_MESSAGE_FORMAT, alertLimit, yellowAlerts);
         
-        if (yellowAlerts.intValue() > alertLimit) {
+        if (yellowAlerts > alertLimit) {
             return Result.fromString(warrantedResult);
         }
 

@@ -1,17 +1,10 @@
-package org.jenkinsci.plugins.codesonar.api;
+package org.jenkinsci.plugins.codesonar.services;
 
 import java.util.logging.Logger;
 
 import org.jenkinsci.plugins.codesonar.AnalysisServiceFactory;
 import org.jenkinsci.plugins.codesonar.CodeSonarPluginException;
 import org.jenkinsci.plugins.codesonar.models.CodeSonarHubInfo;
-import org.jenkinsci.plugins.codesonar.services.AlertsService;
-import org.jenkinsci.plugins.codesonar.services.HttpService;
-import org.jenkinsci.plugins.codesonar.services.IAnalysisService;
-import org.jenkinsci.plugins.codesonar.services.MetricsService;
-import org.jenkinsci.plugins.codesonar.services.ProceduresService;
-import org.jenkinsci.plugins.codesonar.services.WarningsService;
-import org.jenkinsci.plugins.codesonar.services.XmlSerializationService;
 
 public class CodeSonarServices {
     private static final Logger LOGGER = Logger.getLogger(CodeSonarServices.class.getName());

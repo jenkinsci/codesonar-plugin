@@ -5,7 +5,7 @@ import java.text.MessageFormat;
 import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.plugins.codesonar.CodeSonarLogger;
 import org.jenkinsci.plugins.codesonar.CodeSonarPluginException;
-import org.jenkinsci.plugins.codesonar.api.CodeSonarHubAnalysisDataLoader;
+import org.jenkinsci.plugins.codesonar.services.CodeSonarHubAnalysisDataLoader;
 
 import hudson.DescriptorExtensionList;
 import hudson.ExtensionPoint;

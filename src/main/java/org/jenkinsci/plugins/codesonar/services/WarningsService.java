@@ -13,7 +13,6 @@ import org.jenkinsci.plugins.codesonar.CodeSonarHubCommunicationException;
 import org.jenkinsci.plugins.codesonar.CodeSonarJsonSyntaxException;
 import org.jenkinsci.plugins.codesonar.CodeSonarPluginException;
 import org.jenkinsci.plugins.codesonar.CodeSonarRequestURISyntaxException;
-import org.jenkinsci.plugins.codesonar.models.JsonStringPairSerializer;
 import org.jenkinsci.plugins.codesonar.models.json.CodeSonarWarningSearchData;
 import org.jenkinsci.plugins.codesonar.models.json.SearchConfigData;
 
@@ -32,7 +31,7 @@ public class WarningsService extends AbstractService {
         this.strictQueryParameters = strictQueryParameters;
     }
     
-    public Long getNumberOfWarningsWithScoreAboveThreshold(URI baseHubUri, long analysisId, int threshold) throws CodeSonarPluginException {
+    public long getNumberOfWarningsWithScoreAboveThreshold(URI baseHubUri, long analysisId, int threshold) throws CodeSonarPluginException {
         //Configure search parameters in order to extract the desired data
         SearchConfigData searchConfig = new SearchConfigData();
         //Avoid returning rows, only rows counter is needed.

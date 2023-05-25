@@ -1,6 +1,5 @@
 package org.jenkinsci.plugins.codesonar.conditions;
 
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.annotation.Nonnull;
@@ -8,8 +7,8 @@ import javax.annotation.Nonnull;
 import org.jenkinsci.Symbol;
 import org.jenkinsci.plugins.codesonar.CodeSonarLogger;
 import org.jenkinsci.plugins.codesonar.CodeSonarPluginException;
-import org.jenkinsci.plugins.codesonar.api.CodeSonarHubAnalysisDataLoader;
 import org.jenkinsci.plugins.codesonar.models.CodeSonarAlertLevels;
+import org.jenkinsci.plugins.codesonar.services.CodeSonarHubAnalysisDataLoader;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
@@ -63,18 +62,11 @@ public class RedAlertLimitCondition extends Condition {
             return Result.SUCCESS;
         }
         
-        Integer redAlerts = current.getNumberOfAlerts(CodeSonarAlertLevels.RED);      
+        int redAlerts = current.getNumberOfAlerts(CodeSonarAlertLevels.RED);      
         
-        // Going to produce build failure in the case of missing necessary information
-        if(redAlerts == null) {
-            LOGGER.log(Level.SEVERE, "\"redAlerts\" not available.");
-            registerResult(csLogger, DATA_LOADER_EMPTY_RESPONSE);
-            return Result.FAILURE;
-        }
-
         registerResult(csLogger, RESULT_DESCRIPTION_MESSAGE_FORMAT, alertLimit, redAlerts);
         
-        if (redAlerts.intValue() > alertLimit) {
+        if (redAlerts > alertLimit) {
             return Result.fromString(warrantedResult);
         }
         

@@ -8,7 +8,7 @@ import javax.annotation.Nonnull;
 import org.jenkinsci.Symbol;
 import org.jenkinsci.plugins.codesonar.CodeSonarLogger;
 import org.jenkinsci.plugins.codesonar.CodeSonarPluginException;
-import org.jenkinsci.plugins.codesonar.api.CodeSonarHubAnalysisDataLoader;
+import org.jenkinsci.plugins.codesonar.services.CodeSonarHubAnalysisDataLoader;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
@@ -70,14 +70,8 @@ public class WarningCountAbsoluteSpecifiedScoreAndHigherCondition extends Condit
             return Result.SUCCESS;
         }
         
-        Long warningsAboveThreshold = current.getNumberOfWarningsWithScoreAboveThreshold(rankOfWarnings);
+        long warningsAboveThreshold = current.getNumberOfWarningsWithScoreAboveThreshold(rankOfWarnings);
 
-        if(warningsAboveThreshold == null) {
-            LOGGER.log(Level.SEVERE, "\"warningsAboveThreshold\" not available.");
-            registerResult(csLogger, DATA_LOADER_EMPTY_RESPONSE);
-            return Result.FAILURE;          
-        }
-        
         registerResult(csLogger, RESULT_DESCRIPTION_MESSAGE_FORMAT, rankOfWarnings, warningCountThreshold, warningsAboveThreshold);
         
         if (warningsAboveThreshold > warningCountThreshold) {

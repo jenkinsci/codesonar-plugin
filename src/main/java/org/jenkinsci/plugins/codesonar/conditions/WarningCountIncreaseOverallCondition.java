@@ -9,7 +9,7 @@ import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.Symbol;
 import org.jenkinsci.plugins.codesonar.CodeSonarLogger;
 import org.jenkinsci.plugins.codesonar.CodeSonarPluginException;
-import org.jenkinsci.plugins.codesonar.api.CodeSonarHubAnalysisDataLoader;
+import org.jenkinsci.plugins.codesonar.services.CodeSonarHubAnalysisDataLoader;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
@@ -68,31 +68,19 @@ public class WarningCountIncreaseOverallCondition extends Condition {
             return Result.SUCCESS;
         }
         
-        Long previousCount = previous.getNumberOfActiveWarnings();
-        Long currentCount = current.getNumberOfActiveWarnings();
+        long previousCount = previous.getNumberOfActiveWarnings();
+        long currentCount = current.getNumberOfActiveWarnings();
         
-        // Going to produce build failures in the case of missing necessary information
-        if(previousCount == null) {
-            LOGGER.log(Level.SEVERE, "\"previousAnalysisActiveWarningsCount\" not available.");
-            registerResult(csLogger, DATA_LOADER_EMPTY_RESPONSE);
-            return Result.FAILURE;
-        }
-        if(currentCount == null) {
-            LOGGER.log(Level.SEVERE, "\"currentAnalysisActiveWarningsCount\" not available.");
-            registerResult(csLogger, DATA_LOADER_EMPTY_RESPONSE);
-            return Result.FAILURE;
-        }        
-        
-        long diff = currentCount.longValue() - previousCount.longValue();
+        long diff = currentCount - previousCount;
         float thresholdPercentage = Float.parseFloat(percentage);
         
         float result;
         //If there are no warnings, redefine percentage of new warnings
-        if(previousCount.longValue() == 0) {
+        if(previousCount == 0) {
             result = diff > 0 ? 100f : 0f;
             LOGGER.log(Level.INFO, "no active warnings found, forcing warning percentage to {0,number,0.00}%", result);
         } else {
-            result = (((float) diff) / previousCount.longValue()) * 100;
+            result = (((float) diff) / previousCount) * 100;
             LOGGER.log(Level.INFO, "warnings increment percentage = {0,number,0.00}%", result);
         }
         

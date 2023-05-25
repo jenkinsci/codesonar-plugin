@@ -1,4 +1,4 @@
-package org.jenkinsci.plugins.codesonar.models;
+package org.jenkinsci.plugins.codesonar.services;
 
 import java.lang.reflect.Type;
 

@@ -1,6 +1,5 @@
 package org.jenkinsci.plugins.codesonar.conditions;
 
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.annotation.Nonnull;
@@ -9,7 +8,7 @@ import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.Symbol;
 import org.jenkinsci.plugins.codesonar.CodeSonarLogger;
 import org.jenkinsci.plugins.codesonar.CodeSonarPluginException;
-import org.jenkinsci.plugins.codesonar.api.CodeSonarHubAnalysisDataLoader;
+import org.jenkinsci.plugins.codesonar.services.CodeSonarHubAnalysisDataLoader;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
@@ -76,21 +75,8 @@ public class WarningCountIncreaseSpecifiedScoreAndHigherCondition extends Condit
             return Result.SUCCESS;
         }
         
-        Long warningsAboveThresholdForCurrent = current.getNumberOfWarningsWithScoreAboveThreshold(rankOfWarnings);
-
-        if(warningsAboveThresholdForCurrent == null) {
-            LOGGER.log(Level.SEVERE, "\"warningsAboveThresholdForCurrent\" not available.");
-            registerResult(csLogger, DATA_LOADER_EMPTY_RESPONSE);
-            return Result.FAILURE;          
-        }
-        
-        Long warningsAboveThresholdForPrevious = previous.getNumberOfWarningsWithScoreAboveThreshold(rankOfWarnings);
-
-        if(warningsAboveThresholdForPrevious == null) {
-            LOGGER.log(Level.SEVERE, "\"warningsAboveThresholdForPrevious\" not available.");
-            registerResult(csLogger, DATA_LOADER_EMPTY_RESPONSE);
-            return Result.FAILURE;          
-        }
+        long warningsAboveThresholdForCurrent = current.getNumberOfWarningsWithScoreAboveThreshold(rankOfWarnings);
+        long warningsAboveThresholdForPrevious = previous.getNumberOfWarningsWithScoreAboveThreshold(rankOfWarnings);
         
         float thresholdPercentage = Float.parseFloat(warningPercentage);
         float calculatedWarningPercentage = ((float) warningsAboveThresholdForCurrent / warningsAboveThresholdForPrevious) * 100;;

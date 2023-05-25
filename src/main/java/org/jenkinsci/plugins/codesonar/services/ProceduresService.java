@@ -11,11 +11,9 @@ import org.javatuples.Pair;
 import org.jenkinsci.plugins.codesonar.CodeSonarHubCommunicationException;
 import org.jenkinsci.plugins.codesonar.CodeSonarPluginException;
 import org.jenkinsci.plugins.codesonar.CodeSonarRequestURISyntaxException;
-import org.jenkinsci.plugins.codesonar.models.JsonStringPairSerializer;
 import org.jenkinsci.plugins.codesonar.models.ProcedureMetric;
 import org.jenkinsci.plugins.codesonar.models.json.SearchConfigData;
 import org.jenkinsci.plugins.codesonar.models.procedures.Procedures;
-import org.jenkinsci.plugins.codesonar.parsers.MaxCyclomaticComplexityJsonParser;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -91,10 +89,10 @@ public class ProceduresService extends AbstractService {
             throw new CodeSonarHubCommunicationException(requestUriString, response.getStatusCode(), response.getReasonPhrase(), readResponseContent(response, requestUriString));
         }
         
-        MaxCyclomaticComplexityJsonParser parser = new MaxCyclomaticComplexityJsonParser(response.getContentInputStream());
+        MaxCyclomaticComplexityJsonReader reader = new MaxCyclomaticComplexityJsonReader(response.getContentInputStream());
 
         try {
-            return parser.parseObject();
+            return reader.readProcedureMetric();
         } catch (IOException e) {
             throw new CodeSonarPluginException("Unable to parse response content. %nURI: {0}", e, requestUriString);
         }

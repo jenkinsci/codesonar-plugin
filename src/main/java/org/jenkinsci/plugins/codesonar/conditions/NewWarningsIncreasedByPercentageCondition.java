@@ -9,7 +9,7 @@ import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.Symbol;
 import org.jenkinsci.plugins.codesonar.CodeSonarLogger;
 import org.jenkinsci.plugins.codesonar.CodeSonarPluginException;
-import org.jenkinsci.plugins.codesonar.api.CodeSonarHubAnalysisDataLoader;
+import org.jenkinsci.plugins.codesonar.services.CodeSonarHubAnalysisDataLoader;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
@@ -64,23 +64,11 @@ public class NewWarningsIncreasedByPercentageCondition extends Condition {
             return Result.SUCCESS;
         }
         
-        Long numberOfActiveWarnings = current.getNumberOfActiveWarnings();        
-        Long numberOfNewWarnings = current.getNumberOfNewWarnings();
+        long numberOfActiveWarnings = current.getNumberOfActiveWarnings();
+        long numberOfNewWarnings = current.getNumberOfNewWarnings();
         
-        // Going to produce build failures in the case of missing necessary information
-        if(numberOfActiveWarnings == null) {
-            LOGGER.log(Level.SEVERE, "\"numberOfActiveWarnings\" not available.");
-            registerResult(csLogger, DATA_LOADER_EMPTY_RESPONSE);
-            return Result.FAILURE;
-        }
-        if(numberOfNewWarnings == null) {
-            LOGGER.log(Level.SEVERE, "\"numberOfNewWarnings\" not available.");
-            registerResult(csLogger, DATA_LOADER_EMPTY_RESPONSE);
-            return Result.FAILURE;
-        }        
-
-        float activeWarningCount = numberOfActiveWarnings.longValue();
-        float newWarningCount = numberOfNewWarnings.longValue();
+        float activeWarningCount = numberOfActiveWarnings;
+        float newWarningCount = numberOfNewWarnings;
         
         float result;
         //If there are no active warnings, redefine percentage of new warnings

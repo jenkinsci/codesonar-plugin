@@ -190,8 +190,7 @@ public class AnalysisService extends AbstractService implements IAnalysisService
         }
         
         if(chartData.getRows().size() > 1) {
-            LOGGER.log(Level.INFO, "chart data does not contain a single row ({0,number,integer}).", chartData.getRows().size());
-            return null;
+            throw new CodeSonarPluginException("chart data does not contain a single row, size={0,number,integer}.", chartData.getRows().size());
         }
         
         return chartData.getRows().get(0);
