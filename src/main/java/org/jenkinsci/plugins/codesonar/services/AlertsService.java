@@ -66,7 +66,7 @@ public class AlertsService extends AbstractService {
                      * of range with respect to all currently supported alert kinds.
                      * This makes status 500 the right one to establish when to stop looping through kinds.
                      */
-                    LOGGER.log(Level.INFO, MessageFormat.format("Stop looping through alert kinds at kind id {0}", kind));
+                    LOGGER.log(Level.INFO, MessageFormat.format("Stop looping through alert kinds at kind id {0}, URI: {1}, HTTP status code: {2} - {3}, HTTP Body: {4}", kind, requestUriString, response.getStatusCode(), response.getReasonPhrase(), readResponseContent(response, requestUriString)));
                     break;
                 } else {
                     /*
@@ -78,7 +78,7 @@ public class AlertsService extends AbstractService {
                         if(unexpectedErrorCounter  > 2) {
                             throw new CodeSonarPluginException("Too many unexpected errors found communicating with CodeSonar Hub. %nURI: {0}%nHTTP status code: {1} - {2} %nHTTP Body: {3}", requestUriString, response.getStatusCode(), response.getReasonPhrase(), readResponseContent(response, requestUriString));
                         } else {
-                            LOGGER.log(Level.INFO, "Found an unexpected error in the response, try skipping current alert kind {0}", kind);
+                            LOGGER.log(Level.INFO, MessageFormat.format("Found an unexpected error in the response, try skipping current alert kind {0}, URI: {1}, HTTP status code: {2} - {3}, HTTP Body: {4}", kind, requestUriString, response.getStatusCode(), response.getReasonPhrase(), readResponseContent(response, requestUriString)));
                             continue;
                         }
                     } else {
@@ -94,7 +94,7 @@ public class AlertsService extends AbstractService {
                 if(unexpectedErrorCounter > 2) {
                     throw new CodeSonarPluginException("Too many exeptions communicating with CodeSonar Hub. %nURI: {0}", e, requestUriString);
                 } else {
-                    LOGGER.log(Level.INFO, "Exception querying the hub, skipping current alert kind", e);
+                    LOGGER.log(Level.INFO, MessageFormat.format("Exception querying the hub, skipping current alert kind {0}", kind), e);
                     continue;
                 }
             }

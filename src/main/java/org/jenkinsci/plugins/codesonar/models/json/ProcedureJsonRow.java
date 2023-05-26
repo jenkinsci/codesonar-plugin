@@ -1,16 +1,16 @@
-package org.jenkinsci.plugins.codesonar.models;
+package org.jenkinsci.plugins.codesonar.models.json;
 
 import java.util.Objects;
 
-public class ProcedureMetric implements Comparable<ProcedureMetric> {
+public class ProcedureJsonRow implements Comparable<ProcedureJsonRow> {
     private int metricCyclomaticComplexity;
     private String procedure;
     
-    public ProcedureMetric() {
+    public ProcedureJsonRow() {
         this(0, null);
     }
     
-    public ProcedureMetric(int metricCyclomaticComplexity, String procedure) {
+    public ProcedureJsonRow(int metricCyclomaticComplexity, String procedure) {
         this.metricCyclomaticComplexity = 0;
         this.procedure = procedure;
     }
@@ -37,12 +37,12 @@ public class ProcedureMetric implements Comparable<ProcedureMetric> {
                 + "]";
     }
 
-    /**
-     * Specify the natural ordering for ProcedureMetric objects.
+    /*
+     * Provide an ordering compatible with assumptions made by ProceduresService.getProcedureWithMaxCyclomaticComplexity().
      * It first sorts them in decreasing order by cyclomatic complexity, then in ascending order by procedure.
      */
     @Override
-    public int compareTo(ProcedureMetric metric) {
+    public int compareTo(ProcedureJsonRow metric) {
         int order = Integer.compare(metric.metricCyclomaticComplexity, metricCyclomaticComplexity);
         
         // If comparing cyclomatic complexity results in equality, then evaluate the second sorting criteria
@@ -66,7 +66,7 @@ public class ProcedureMetric implements Comparable<ProcedureMetric> {
             return false;
         if (getClass() != obj.getClass())
             return false;
-        ProcedureMetric other = (ProcedureMetric) obj;
+        ProcedureJsonRow other = (ProcedureJsonRow) obj;
         return metricCyclomaticComplexity == other.metricCyclomaticComplexity
                 && Objects.equals(procedure, other.procedure);
     }

@@ -415,7 +415,7 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
         csLogger.writeInfo("Evaluating conditions");
 
         for (Condition condition : conditions) {
-            Result validationResult = condition.validate(currentDataLoader, previousDataLoader, null, null, launcher, listener, csLogger);
+            Result validationResult = condition.validate(currentDataLoader, previousDataLoader, launcher, listener, csLogger);
             Pair<String, String> pair = Pair.with(condition.describeResult(), validationResult.toString());
             conditionNamesAndResults.add(pair);
             run.setResult(validationResult);

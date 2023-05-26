@@ -11,16 +11,17 @@ import org.jenkinsci.plugins.codesonar.CodeSonarPluginException;
 import org.jenkinsci.plugins.codesonar.models.CodeSonarAlertLevels;
 import org.jenkinsci.plugins.codesonar.models.CodeSonarHubInfo;
 import org.jenkinsci.plugins.codesonar.models.Metric;
-import org.jenkinsci.plugins.codesonar.models.ProcedureMetric;
 import org.jenkinsci.plugins.codesonar.models.analysis.Analysis;
 import org.jenkinsci.plugins.codesonar.models.analysis.Warning;
 import org.jenkinsci.plugins.codesonar.models.json.CodeSonarWarningCountChartRow;
+import org.jenkinsci.plugins.codesonar.models.json.ProcedureJsonRow;
 import org.jenkinsci.plugins.codesonar.models.metrics.Metrics;
 import org.jenkinsci.plugins.codesonar.models.procedures.ProcedureRow;
 import org.jenkinsci.plugins.codesonar.models.procedures.Procedures;
 
 /**
  * Loads and caches data related to a single analysis, for use by "Condition" classes.
+ * 
  * This class implements two distinct modes for loading data: a "legacy" mode, and the current mode.
  * The legacy mode loads large lists of warnings and procedures into main memory.
  * This was the only mode implemented through plugin version 3.3.x.
@@ -48,7 +49,7 @@ public class CodeSonarHubAnalysisDataLoader {
     private Analysis analysisViewNew;
     private Metrics metrics;
     private Procedures procedures;
-    private ProcedureMetric procedureWithMaxCyclomaticComplexity;
+    private ProcedureJsonRow maxCyclomaticComplexityProcedure;
     private CodeSonarAlertCounter alertCounter;
     private Map<Integer,Long> numberOfWarningsAboveThreshold = new HashMap<>();
     //------------------------------------------------------------
@@ -138,19 +139,22 @@ public class CodeSonarHubAnalysisDataLoader {
         }
     }
 
-    public ProcedureMetric getProcedureWithMaxCyclomaticComplexity() throws CodeSonarPluginException {
+    public ProcedureJsonRow getProcedureWithMaxCyclomaticComplexity() throws CodeSonarPluginException {
         LOGGER.log(Level.INFO, "getProcedureWithMaxCyclomaticComplexity");
         if(hubInfo.isJsonGridConfigSupported()) {
-            if(procedureWithMaxCyclomaticComplexity == null) {
-                LOGGER.log(Level.INFO, "ProcedureWithMaxCyclomaticComplexity not already set, loading from corresponding service");
-                procedureWithMaxCyclomaticComplexity = services.getProceduresService().getProcedureWithMaxCyclomaticComplexity(getBaseHubUri(), getAnalysisId());
+            if(maxCyclomaticComplexityProcedure == null) {
+                LOGGER.log(Level.INFO, "MaxCyclomaticComplexityProcedure not already set, loading from corresponding service");
+                maxCyclomaticComplexityProcedure = services.getProceduresService().getProcedureWithMaxCyclomaticComplexity(getBaseHubUri(), getAnalysisId());
             }
-            LOGGER.log(Level.INFO, "ProcedureWithMaxCyclomaticComplexity new instance {0}", procedureWithMaxCyclomaticComplexity);
-            return procedureWithMaxCyclomaticComplexity;
+            LOGGER.log(Level.INFO, "MaxCyclomaticComplexityProcedure new instance {0}", maxCyclomaticComplexityProcedure);
+            return maxCyclomaticComplexityProcedure;
         } else {
             if(procedures == null) {
                 procedures = getLegacyProcedures();
                 LOGGER.log(Level.INFO, "Legacy Procedures new instance {0}", procedures);
+                if(procedures == null) {
+                    throw new CodeSonarPluginException("Procedures list is null");
+                }
             }
             List<ProcedureRow> procedureRows = procedures.getProcedureRows();
             String procedure = null;
@@ -166,9 +170,9 @@ public class CodeSonarHubAnalysisDataLoader {
             }
             //If at least one procedure has been found, then return that
             if(procedure != null) {
-                return new ProcedureMetric(maxCC, procedure);
+                return new ProcedureJsonRow(maxCC, procedure);
             } else {
-                return null;
+                throw new CodeSonarPluginException("Procedure row can not ben found");
             }
         }
     }

@@ -1,6 +1,5 @@
 package org.jenkinsci.plugins.codesonar.conditions;
 
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.annotation.Nonnull;
@@ -8,7 +7,7 @@ import javax.annotation.Nonnull;
 import org.jenkinsci.Symbol;
 import org.jenkinsci.plugins.codesonar.CodeSonarLogger;
 import org.jenkinsci.plugins.codesonar.CodeSonarPluginException;
-import org.jenkinsci.plugins.codesonar.models.ProcedureMetric;
+import org.jenkinsci.plugins.codesonar.models.json.ProcedureJsonRow;
 import org.jenkinsci.plugins.codesonar.services.CodeSonarHubAnalysisDataLoader;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
@@ -57,24 +56,17 @@ public class ProcedureCyclomaticComplexityExceededCondition extends Condition {
     }
 
     @Override
-    public Result validate(CodeSonarHubAnalysisDataLoader current, CodeSonarHubAnalysisDataLoader previous, String visibilityFilter, String newVisibilityFilter, Launcher launcher, TaskListener listener, CodeSonarLogger csLogger) throws CodeSonarPluginException {       
+    public Result validate(CodeSonarHubAnalysisDataLoader current, CodeSonarHubAnalysisDataLoader previous, Launcher launcher, TaskListener listener, CodeSonarLogger csLogger) throws CodeSonarPluginException {       
         if (current == null) {
             registerResult(csLogger, CURRENT_BUILD_DATA_NOT_AVAILABLE);
             return Result.SUCCESS;
         }
 
-        ProcedureMetric procedureMetric = current.getProcedureWithMaxCyclomaticComplexity();
+        ProcedureJsonRow procedureRow = current.getProcedureWithMaxCyclomaticComplexity();
         
-        // Going to produce build failures in the case of missing necessary information
-        if(procedureMetric == null) {
-            LOGGER.log(Level.SEVERE, "\"procedureMetric\" not available.");
-            registerResult(csLogger, DATA_LOADER_EMPTY_RESPONSE);
-            return Result.FAILURE;
-        }
+        registerResult(csLogger, RESULT_DESCRIPTION_MESSAGE_FORMAT, cyclomaticComplexityThreshold, procedureRow.getMetricCyclomaticComplexity(), procedureRow.getProcedure());
         
-        registerResult(csLogger, RESULT_DESCRIPTION_MESSAGE_FORMAT, cyclomaticComplexityThreshold, procedureMetric.getMetricCyclomaticComplexity(), procedureMetric.getProcedure());
-        
-        if (procedureMetric.getMetricCyclomaticComplexity() > cyclomaticComplexityThreshold) {
+        if (procedureRow.getMetricCyclomaticComplexity() > cyclomaticComplexityThreshold) {
             return Result.fromString(warrantedResult);
         }
         

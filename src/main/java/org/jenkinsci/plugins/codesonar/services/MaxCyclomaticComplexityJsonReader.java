@@ -11,7 +11,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.logging.Logger;
 
-import org.jenkinsci.plugins.codesonar.models.ProcedureMetric;
+import org.jenkinsci.plugins.codesonar.CodeSonarPluginException;
+import org.jenkinsci.plugins.codesonar.models.json.ProcedureJsonRow;
 
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
@@ -33,14 +34,14 @@ class MaxCyclomaticComplexityJsonReader {
     private static final Logger LOGGER = Logger.getLogger(MaxCyclomaticComplexityJsonReader.class.getName());
 
     private static final String USER_OBJECT = "user";
-    private static final Object BUILD_LAUNCHD_OBJECT = "buildLaunchd";
-    private static final Object LAUNCHD_OBJECT = "launchd";
-    private static final Object PROJECT_OBJECT = "project";
-    private static final Object ROWS_ARRAY = "rows";
-    private static final Object METRIC_CYCLOMATIC_COMPLEXITY = "metricCyclomaticComplexity";
+    private static final String BUILD_LAUNCHD_OBJECT = "buildLaunchd";
+    private static final String LAUNCHD_OBJECT = "launchd";
+    private static final String PROJECT_OBJECT = "project";
+    private static final String ROWS_ARRAY = "rows";
+    private static final String METRIC_CYCLOMATIC_COMPLEXITY = "metricCyclomaticComplexity";
     private static final String PROCEDURE = "procedure";
     private Reader inputStreamReader;
-    private ProcedureMetric maxCyclomaticComplexityProcedure = null;
+    private ProcedureJsonRow maxCyclomaticComplexityProcedure = null;
     
     /**
      * Interface that represents an action to take during parsing based off of the value of the token which type is NAME.
@@ -140,7 +141,7 @@ class MaxCyclomaticComplexityJsonReader {
         
     }
 
-    public ProcedureMetric readProcedureMetric() throws IOException {
+    public ProcedureJsonRow readProcedureMetric() throws CodeSonarPluginException {
         JsonReader jsonReader = new JsonReader(inputStreamReader);
         jsonReader.setLenient(true);
 
@@ -167,31 +168,51 @@ class MaxCyclomaticComplexityJsonReader {
                             } else if(PROJECT_OBJECT.equals(name)) {
                                 parseProject(jsonReader);
                             } else if(ROWS_ARRAY.equals(name)) {
-                                List<ProcedureMetric> rowsArray = parseRowsArray(jsonReader);
+                                // Read all rows into an array so that we can sort them.
+                                List<ProcedureJsonRow> rowsArray = parseRowsArray(jsonReader);
                                 // Sort rows array by "cyclomatic complexity" firstly and by "procedure" secondly
                                 LOGGER.fine("rowsArray (before sorting)=" + rowsArray);
                                 Collections.sort(rowsArray);
                                 LOGGER.fine("rowsArray (after sorting)=" + rowsArray);
                                 /*
-                                 *  Get the first element of the list, which according to sorting settings,
-                                 *  corresponds to the one with the maximum cyclomatic complexity. 
+                                 * We will pick the first item that matches the sorting scheme implemented on the `ProcedureJsonRow` type.
+                                 * This is done to be compatible with assumptions made by `ProceduresService.getProcedureWithMaxCyclomaticComplexity()`.
                                  */
                                 if(rowsArray.size() > 0) {
                                     maxCyclomaticComplexityProcedure = rowsArray.get(0);
+                                } else {
+                                    throw new CodeSonarPluginException("Procedures search returned 0 rows");
                                 }
                             }
                         }
                     });
                 }
             }
+        } catch(IOException e) {
+            throw new CodeSonarPluginException("Error reading token from JsonReader", e);
         } finally {
-            jsonReader.close();
+            try {
+                jsonReader.close();
+            } catch (IOException e) {
+                throw new CodeSonarPluginException("Error closing JsonReader", e);
+            }
         }
+        
+        /*
+         * If, once reached this point, ProcedureRow is still null, this means that
+         * something during parsing prevented the rows array block from being found
+         * and thus read.
+         * As a result, signal this unexpected condition with an exception.
+         */
+        if(maxCyclomaticComplexityProcedure == null) {
+            throw new CodeSonarPluginException("JSON \"rows\" property not found in procedure search results.");
+        }
+        
         return maxCyclomaticComplexityProcedure;
     }
     
-    private List<ProcedureMetric> parseRowsArray(JsonReader jsonReader) throws IOException {
-        ArrayList<ProcedureMetric> rowsArray = new ArrayList<>();
+    private List<ProcedureJsonRow> parseRowsArray(JsonReader jsonReader) throws IOException {
+        ArrayList<ProcedureJsonRow> rowsArray = new ArrayList<>();
         
         jsonReader.beginArray();
         while (jsonReader.hasNext()) {
@@ -202,14 +223,14 @@ class MaxCyclomaticComplexityJsonReader {
         return rowsArray;
     }
 
-    private ProcedureMetric parseRowObject(JsonReader jsonReader) throws IOException {
-        ProcedureMetric row = new ProcedureMetric();
+    private ProcedureJsonRow parseRowObject(JsonReader jsonReader) throws IOException {
+        ProcedureJsonRow row = new ProcedureJsonRow();
         jsonReader.beginObject();
         
         while(jsonReader.hasNext()) {
-            parseToken(jsonReader.peek(), jsonReader, new ParametrizedParseAction<ProcedureMetric>() {
+            parseToken(jsonReader.peek(), jsonReader, new ParametrizedParseAction<ProcedureJsonRow>() {
                 @Override
-                public void take(String name, ProcedureMetric row) throws IOException {
+                public void take(String name, ProcedureJsonRow row) throws IOException {
                     if (name.equals(METRIC_CYCLOMATIC_COMPLEXITY)) {
                         row.setMetricCyclomaticComplexity(jsonReader.nextInt());
                     } else if (name.equals(PROCEDURE)) {
@@ -288,8 +309,8 @@ class MaxCyclomaticComplexityJsonReader {
         jsonReader.endObject();
     }
     
-    static void a(ProcedureMetric  m) {
-        m = new ProcedureMetric();
+    static void a(ProcedureJsonRow  m) {
+        m = new ProcedureJsonRow();
         LOGGER.fine("a=" + m);
     }
     
