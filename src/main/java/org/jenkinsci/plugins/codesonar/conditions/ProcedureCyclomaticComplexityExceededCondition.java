@@ -29,21 +29,21 @@ public class ProcedureCyclomaticComplexityExceededCondition extends Condition {
     private static final String NAME = "Cyclomatic complexity";
     private static final String RESULT_DESCRIPTION_MESSAGE_FORMAT = "threshold={0,number,0}, complexity={1,number,0} (procedure: ''{2}'')";
 
-    private int cyclomaticComplexityThreshold = 30;
+    private int maxCyclomaticComplexity = 30;
     private String warrantedResult = Result.UNSTABLE.toString();
 
     @DataBoundConstructor
     public ProcedureCyclomaticComplexityExceededCondition(int maxCyclomaticComplexity) {
-        this.cyclomaticComplexityThreshold = maxCyclomaticComplexity;
+        this.maxCyclomaticComplexity = maxCyclomaticComplexity;
     }
 
-    public int getCyclomaticComplexityThreshold() {
-        return cyclomaticComplexityThreshold;
+    public int getMaxCyclomaticComplexity() {
+        return maxCyclomaticComplexity;
     }
 
     @DataBoundSetter
-    public void setCyclomaticComplexityThreshold(int maxCyclomaticComplexity) {
-        this.cyclomaticComplexityThreshold = maxCyclomaticComplexity;
+    public void setMaxCyclomaticComplexity(int maxCyclomaticComplexity) {
+        this.maxCyclomaticComplexity = maxCyclomaticComplexity;
     }
 
     public String getWarrantedResult() {
@@ -64,9 +64,9 @@ public class ProcedureCyclomaticComplexityExceededCondition extends Condition {
 
         ProcedureJsonRow procedureRow = current.getProcedureWithMaxCyclomaticComplexity();
         
-        registerResult(csLogger, RESULT_DESCRIPTION_MESSAGE_FORMAT, cyclomaticComplexityThreshold, procedureRow.getMetricCyclomaticComplexity(), procedureRow.getProcedure());
+        registerResult(csLogger, RESULT_DESCRIPTION_MESSAGE_FORMAT, maxCyclomaticComplexity, procedureRow.getMetricCyclomaticComplexity(), procedureRow.getProcedure());
         
-        if (procedureRow.getMetricCyclomaticComplexity() > cyclomaticComplexityThreshold) {
+        if (procedureRow.getMetricCyclomaticComplexity() > maxCyclomaticComplexity) {
             return Result.fromString(warrantedResult);
         }
         
