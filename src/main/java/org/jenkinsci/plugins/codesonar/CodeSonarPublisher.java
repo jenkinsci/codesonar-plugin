@@ -9,6 +9,8 @@ import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
@@ -571,12 +573,26 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
                         throw createError(CodeSonarLogger.formatMessage("Authentication using a certificate is only available while SSL is enabled."));
                     }
         
-                    LOGGER.log(Level.INFO, "Configuring HttpClient with certificate authentication");
+                    LOGGER.log(Level.INFO, "Configuring HttpClient with certificate authentication using \"Certificate\" credentials parameter kind");
                     
                     StandardCertificateCredentials c = (StandardCertificateCredentials) clientCertificateCredentials;
         
                     clientCertificateKeyStore = c.getKeyStore();
                     clientCertificatePassword = c.getPassword();
+                } else if(clientCertificateCredentials instanceof FileCredentials) {
+                    LOGGER.log(Level.INFO, "Configuring HttpClient with certificate authentication using \"Secret File\" credentials parameter kind");
+                    
+                    FileCredentials f = (FileCredentials) clientCertificateCredentials;
+                    try {
+                        //Specify an empty-password secret
+                        clientCertificatePassword = Secret.fromString("");
+                        KeyStore keystore = KeyStore.getInstance("PKCS12");
+                        keystore.load(f.getContent(),clientCertificatePassword.getPlainText().toCharArray());
+                        clientCertificateKeyStore = keystore;
+                        LOGGER.log(Level.INFO, "Client PKCS12 keystore successfully imported");
+                    } catch (KeyStoreException | NoSuchAlgorithmException | CertificateException | IOException e) {
+                        throw createError("Failed to create PKCS12 keystore from Secret File Credential.", e);
+                    }
                 }
             }
 
