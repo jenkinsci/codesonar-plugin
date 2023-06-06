@@ -380,7 +380,7 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
         }
         
         csLogger.writeInfo("Current analysis: analysisId {0} from hub \"{1}\"", currentAnalysisId, baseHubUri);
-        CodeSonarHubAnalysisDataLoader currentDataLoader = new CodeSonarHubAnalysisDataLoader(httpService, hubInfo, baseHubUri, currentAnalysisId, visibilityFilter, newWarningsFilter);
+        CodeSonarHubAnalysisDataLoader currentDataLoader = new CodeSonarHubAnalysisDataLoader(httpService, hubInfo, baseHubUri, currentAnalysisId, getVisibilityFilterOrDefault(), getNewWarningsFilterOrDefault());
 
         CodeSonarBuildActionDTO currentBuildActionDTO = new CodeSonarBuildActionDTO(currentAnalysisId, baseHubUri);
         CodeSonarBuildAction csba = new CodeSonarBuildAction(currentBuildActionDTO, run, expandedProjectName);
@@ -405,7 +405,7 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
 
         CodeSonarHubAnalysisDataLoader previousDataLoader = null;
         if(compareDTO != null) {
-            previousDataLoader = new CodeSonarHubAnalysisDataLoader(httpService, hubInfo, compareDTO.getBaseHubUri(), compareDTO.getAnalysisId(), visibilityFilter, newWarningsFilter);
+            previousDataLoader = new CodeSonarHubAnalysisDataLoader(httpService, hubInfo, compareDTO.getBaseHubUri(), compareDTO.getAnalysisId(), getVisibilityFilterOrDefault(), getNewWarningsFilterOrDefault());
             csLogger.writeInfo("Comparison analysis: analysisId {0} from hub \"{1}\"", compareDTO.getAnalysisId(), compareDTO.getBaseHubUri());
             //Signal on the Jenkins' console if there's a mismatch between the hub of the current analysis and the one of the comparison analysis
             if(!currentDataLoader.getBaseHubUri().equals(previousDataLoader.getBaseHubUri())) {
