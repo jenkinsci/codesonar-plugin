@@ -112,7 +112,13 @@
             <artifactId>junit</artifactId>
             <version>4.13.1</version>
             <scope>test</scope>
-        </dependency>        
+            <exclusions>
+                <exclusion>
+                    <groupId>org.hamcrest</groupId>
+                    <artifactId>hamcrest-core</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
 
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
@@ -135,7 +141,7 @@
 
         <dependency>
             <groupId>org.hamcrest</groupId>
-            <artifactId>hamcrest</artifactId>
+            <artifactId>hamcrest-core</artifactId>
             <version>2.2</version>
             <scope>test</scope>
         </dependency>
