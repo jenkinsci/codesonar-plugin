@@ -3,26 +3,18 @@ package org.jenkinsci.plugins.codesonar.models.json;
 import java.util.Objects;
 
 public class ProcedureJsonRow implements Comparable<ProcedureJsonRow> {
-    private int metricCyclomaticComplexity;
     private String procedure;
-    
+    private int metricCyclomaticComplexity;
+
     public ProcedureJsonRow() {
-        this(0, null);
+        this(null, 0);
     }
-    
-    public ProcedureJsonRow(int metricCyclomaticComplexity, String procedure) {
-        this.metricCyclomaticComplexity = 0;
+
+    public ProcedureJsonRow(String procedure, int metricCyclomaticComplexity) {
         this.procedure = procedure;
-    }
-    
-    public int getMetricCyclomaticComplexity() {
-        return metricCyclomaticComplexity;
-    }
-    
-    public void setMetricCyclomaticComplexity(int metricCyclomaticComplexity) {
         this.metricCyclomaticComplexity = metricCyclomaticComplexity;
     }
-    
+
     public String getProcedure() {
         return procedure;
     }
@@ -31,10 +23,20 @@ public class ProcedureJsonRow implements Comparable<ProcedureJsonRow> {
         this.procedure = procedure;
     }
 
+    public int getMetricCyclomaticComplexity() {
+        return metricCyclomaticComplexity;
+    }
+    
+    public void setMetricCyclomaticComplexity(int metricCyclomaticComplexity) {
+        this.metricCyclomaticComplexity = metricCyclomaticComplexity;
+    }
+    
     @Override
     public String toString() {
-        return "ProcedureMetric [metricCyclomaticComplexity=" + metricCyclomaticComplexity + ", procedure=" + procedure
-                + "]";
+        return String.format(
+                    "ProcedureMetric [procedure='%s', metricCyclomaticComplexity='%s']",
+                    procedure,
+                    metricCyclomaticComplexity);
     }
 
     /*

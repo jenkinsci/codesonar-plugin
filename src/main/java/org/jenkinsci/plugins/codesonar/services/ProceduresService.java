@@ -3,6 +3,9 @@ package org.jenkinsci.plugins.codesonar.services;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -69,7 +72,6 @@ public class ProceduresService extends AbstractService {
          * If this assumption is wrong, then the results will not be deterministic between analyses,
          * but the critical data is the numeric value of the maximal cyclomatic complexity, not the procedure name,
          * so we are willing to live with this deficiency.
-         * Sorting procedures by name will happen inside the MaxCyclomaticComplexityJsonReader.
          */
         searchConfig.setLimit(100);
         searchConfig.getColumns().add("metricCyclomaticComplexity");
@@ -101,14 +103,33 @@ public class ProceduresService extends AbstractService {
         if(response.getStatusCode() != 200) {
             throw new CodeSonarHubCommunicationException(requestUriString, response.getStatusCode(), response.getReasonPhrase(), readResponseContent(response, requestUriString));
         }
-        
-        MaxCyclomaticComplexityJsonReader reader = new MaxCyclomaticComplexityJsonReader(response.getContentInputStream());
 
+        // Read all rows into an array so that we can sort them.
+        List<ProcedureJsonRow> rows = new ArrayList<ProcedureJsonRow>();
+        ProcedureJsonRowReader reader = new ProcedureJsonRowReader(response.getContentInputStream());
         try {
-            return reader.readProcedureMetric();
+            ProcedureJsonRow row = reader.readNextRow();
+            while (row != null) {
+                rows.add(row);
+                row = reader.readNextRow();
+            }
         } catch (IOException e) {
-            throw new CodeSonarPluginException("Unable to parse response content. %nURI: {0}", e, requestUriString);
+            reader.close();
+            throw new CodeSonarPluginException("Error parsing procedures response: {0}", e, requestUriString);
         }
+        // The ProcedureJsonRow is implemented so that it sorts
+        //  by cyclomatic complexity first and by procedure name second.
+        LOGGER.fine("rows (before sorting)=" + rows);
+        Collections.sort(rows);
+        LOGGER.fine("rows (after sorting)=" + rows);
+        ProcedureJsonRow maxCyclomaticComplexityProcedure = null;
+        if(rows.size() > 0) {
+            maxCyclomaticComplexityProcedure = rows.get(0);
+        } else {
+            throw new CodeSonarPluginException("Procedures search returned 0 rows");
+        }
+
+        return maxCyclomaticComplexityProcedure;
     }
     
 }

@@ -56,26 +56,46 @@ public class CodeSonarBuildAction implements Action {
         return "CodeSonar (" +projectName + ")";
     }
 
+    /** Get hub analysis URL for build summary page.
+     */
     @Override
     public String getUrlName() {
+        String analysisUrlString = StringUtils.EMPTY;
         URI baseHubUri = buildActionDTO.getBaseHubUri();
         if(baseHubUri == null) {
-            LOGGER.log(Level.WARNING, "\"baseHubUri\" not found in persisted build, returning empty URL name");
-            return StringUtils.EMPTY;
+            LOGGER.log(Level.WARNING, "\"baseHubUri\" not found in persisted build");
         }
-        Analysis analysisActiveWarnings = buildActionDTO.getAnalysisActiveWarnings();
-        if(analysisActiveWarnings == null) {
-            LOGGER.log(Level.WARNING, "\"analysisActiveWarnings\" data not found in persisted build, returning empty URL name");
-            return StringUtils.EMPTY;
+        Long analysisId = buildActionDTO.getAnalysisId();
+        String analysisIdString = null;
+        if (analysisId != null) {
+            // Newer versions of the plugin store the ID directly on the DTO:
+            analysisIdString = String.valueOf(analysisId);
+        } else {
+            // Fallback to older method of getting analysis ID:
+            Analysis analysisActiveWarnings = buildActionDTO.getAnalysisActiveWarnings();
+            if(analysisActiveWarnings == null) {
+                LOGGER.log(Level.WARNING, "Neither \"analysisId\" nor \"analysisActiveWarnings\" data found in persisted build");
+            } else {
+                analysisIdString = analysisActiveWarnings.getAnalysisId();
+            }
         }
-        String analysisId = analysisActiveWarnings.getAnalysisId();
-        return baseHubUri.resolve(String.format("/analysis/%s.html", analysisId)).toString();
+        if (baseHubUri == null || analysisIdString == null) {
+            LOGGER.log(Level.WARNING, "Could not create analysis URL for build summary page.");
+        }
+        else {
+            analysisUrlString = baseHubUri.resolve(
+                    String.format("/analysis/%s.html", analysisIdString)
+                ).toString();
+        }
+        return analysisUrlString;
     }
 
     public CodeSonarBuildActionDTO getBuildActionDTO() {
         return buildActionDTO;
     }
-    
+
+    /** Get results of conditions to display on build summary page.
+     */
     public List<Pair<String, String>> getConditionNamesAndResults() {
         return buildActionDTO.getConditionNamesAndResults();
     }

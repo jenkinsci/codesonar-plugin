@@ -170,7 +170,7 @@ public class CodeSonarHubAnalysisDataLoader {
             }
             //If at least one procedure has been found, then return that
             if(procedure != null) {
-                return new ProcedureJsonRow(maxCC, procedure);
+                return new ProcedureJsonRow(procedure, maxCC);
             } else {
                 throw new CodeSonarPluginException("Procedure row can not ben found");
             }
