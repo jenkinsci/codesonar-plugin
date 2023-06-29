@@ -398,17 +398,25 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
             && previousDataLoader == null
         ) {
             String previousBuildName = previousRun.getDisplayName();
-            csLogger.writeInfo("Found previous successful build: \"{0}\"", previousBuildName);
+            csLogger.writeInfo("Checking previous successful build: \"{0}\"...", previousBuildName);
             List<CodeSonarBuildAction> buildActions = previousRun.getActions(CodeSonarBuildAction.class);
             List<CodeSonarBuildAction> projectBuildActions = buildActions.stream()
                     .filter(c -> 
                         c.getProjectName() != null
                         && c.getProjectName().equals(expandedProjectName))
                     .collect(Collectors.toList());
-            if(projectBuildActions != null
-                && !projectBuildActions.isEmpty()
-                && projectBuildActions.size() < 2
-            ) {
+            if(projectBuildActions == null || projectBuildActions.isEmpty()) {
+                csLogger.writeInfo(
+                    "Ignoring build since it has no matching build data. build=\"{0}\", project=\"{1}\"",
+                    previousBuildName,
+                    expandedProjectName);
+            } else if (projectBuildActions.size() > 1) {
+                csLogger.writeInfo(
+                    "Ignoring build since it has too many matching build actions. build=\"{0}\", project=\"{1}\", matches={2}",
+                    previousBuildName,
+                    expandedProjectName,
+                    projectBuildActions.size());
+            } else {
                 CodeSonarBuildAction previousBuildAction = projectBuildActions.get(0);
                 CodeSonarBuildActionDTO previousDTO = previousBuildAction.getBuildActionDTO();
                 URI previousBuildBaseHubUri = previousDTO.getBaseHubUri();
@@ -416,7 +424,7 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
                     // TODO: we could try signing-in to the previous build hub;
                     //  if it works, then perhaps we can still compare results?
                     csLogger.writeInfo(
-                        "Ignoring build {0} since hub URI does not match current build. build=\"{0}\", hub=\"{1}\"",
+                        "Ignoring build since hub URI does not match current build. build=\"{0}\", hub=\"{1}\"",
                         previousBuildName,
                         previousBuildBaseHubUri);
                 } else {
