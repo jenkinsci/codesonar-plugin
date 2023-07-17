@@ -26,7 +26,7 @@ public class WarningCountIncreaseSpecifiedScoreAndHigherCondition extends Condit
     private static final Logger LOGGER = Logger.getLogger(WarningCountIncreaseSpecifiedScoreAndHigherCondition.class.getName());
 
     private static final String NAME = "Warning count increase: specified score and higher";
-    private static final String RESULT_DESCRIPTION_MESSAGE_FORMAT = "score={0,number,0}, threshold={1,number,0.00}%, increase={2,number,0.00}%";
+    private static final String RESULT_DESCRIPTION_MESSAGE_FORMAT = "score={0,number,0}, threshold={1,number,0.00}%, increase={2,number,0.00}% (count: current={3,number,0}, previous={4,number,0})";
 
     private int rankOfWarnings = 30;
     private String warningPercentage = String.valueOf(5.0f);
@@ -65,6 +65,8 @@ public class WarningCountIncreaseSpecifiedScoreAndHigherCondition extends Condit
 
     @Override
     public Result validate(CodeSonarHubAnalysisDataLoader current, CodeSonarHubAnalysisDataLoader previous, Launcher launcher, TaskListener listener, CodeSonarLogger csLogger) throws CodeSonarPluginException {
+        double thresholdPercentage = Double.parseDouble(warningPercentage);
+
         if (current == null) {
             registerResult(csLogger, CURRENT_BUILD_DATA_NOT_AVAILABLE);
             return Result.SUCCESS;
@@ -78,10 +80,22 @@ public class WarningCountIncreaseSpecifiedScoreAndHigherCondition extends Condit
         long warningsAboveThresholdForCurrent = current.getNumberOfWarningsWithScoreAboveThreshold(rankOfWarnings);
         long warningsAboveThresholdForPrevious = previous.getNumberOfWarningsWithScoreAboveThreshold(rankOfWarnings);
         
-        float thresholdPercentage = Float.parseFloat(warningPercentage);
-        float calculatedWarningPercentage = ((float) warningsAboveThresholdForCurrent / warningsAboveThresholdForPrevious) * 100;;
+        double calculatedWarningPercentage;
+        if (warningsAboveThresholdForPrevious == 0) {
+            calculatedWarningPercentage = 100.0 * (double)warningsAboveThresholdForCurrent;
+        } else {
+            long diff = warningsAboveThresholdForCurrent - warningsAboveThresholdForPrevious;
+            calculatedWarningPercentage = 100.0 * ((double)diff / (double)warningsAboveThresholdForPrevious);
+        }
         
-        registerResult(csLogger, RESULT_DESCRIPTION_MESSAGE_FORMAT, rankOfWarnings, thresholdPercentage, calculatedWarningPercentage);
+        registerResult(
+                csLogger,
+                RESULT_DESCRIPTION_MESSAGE_FORMAT,
+                rankOfWarnings,
+                thresholdPercentage,
+                calculatedWarningPercentage,
+                warningsAboveThresholdForCurrent,
+                warningsAboveThresholdForPrevious);
         
         if (calculatedWarningPercentage > thresholdPercentage) {
             return Result.fromString(warrantedResult);
