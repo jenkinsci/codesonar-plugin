@@ -1,16 +1,14 @@
 package org.jenkinsci.plugins.codesonar.conditions;
 
-import java.util.List;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.annotation.Nonnull;
 
 import org.jenkinsci.Symbol;
 import org.jenkinsci.plugins.codesonar.CodeSonarLogger;
-import org.jenkinsci.plugins.codesonar.models.CodeSonarBuildActionDTO;
-import org.jenkinsci.plugins.codesonar.models.analysis.Alert;
-import org.jenkinsci.plugins.codesonar.models.analysis.Analysis;
+import org.jenkinsci.plugins.codesonar.CodeSonarPluginException;
+import org.jenkinsci.plugins.codesonar.models.CodeSonarAlertLevels;
+import org.jenkinsci.plugins.codesonar.services.CodeSonarHubAnalysisDataLoader;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
@@ -58,28 +56,20 @@ public class YellowAlertLimitCondition extends Condition {
     }
 
     @Override
-    public Result validate(CodeSonarBuildActionDTO current, CodeSonarBuildActionDTO previous, Launcher launcher, TaskListener listener, CodeSonarLogger csLogger) {
+    public Result validate(CodeSonarHubAnalysisDataLoader current, CodeSonarHubAnalysisDataLoader previous, Launcher launcher, TaskListener listener, CodeSonarLogger csLogger) throws CodeSonarPluginException {
         if (current == null) {
             registerResult(csLogger, CURRENT_BUILD_DATA_NOT_AVAILABLE);
             return Result.SUCCESS;
         }
         
-        Analysis analysisActiveWarnings = current.getAnalysisActiveWarnings();
+        int yellowAlerts = current.getNumberOfAlerts(CodeSonarAlertLevels.YELLOW);      
+
+        registerResult(csLogger, RESULT_DESCRIPTION_MESSAGE_FORMAT, alertLimit, yellowAlerts);
         
-        // Going to produce build failure in the case of missing necessary information
-        if(analysisActiveWarnings == null) {
-            LOGGER.log(Level.SEVERE, "\"analysisActiveWarnings\" data not found in persisted build.");
-            registerResult(csLogger, CURRENT_BUILD_DATA_NOT_AVAILABLE);
-            return Result.FAILURE;
-        }
-        
-        List<Alert> yellowAlerts = analysisActiveWarnings.getYellowAlerts();
-        if (yellowAlerts.size() > alertLimit) {
-            registerResult(csLogger, RESULT_DESCRIPTION_MESSAGE_FORMAT, alertLimit, yellowAlerts.size());
+        if (yellowAlerts > alertLimit) {
             return Result.fromString(warrantedResult);
         }
 
-        registerResult(csLogger, RESULT_DESCRIPTION_MESSAGE_FORMAT, alertLimit, yellowAlerts.size());
         return Result.SUCCESS;
     }
 

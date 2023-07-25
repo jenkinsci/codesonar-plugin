@@ -15,19 +15,40 @@ import org.jenkinsci.plugins.codesonar.models.procedures.Procedures;
  * @author Andrius
  */
 public class CodeSonarBuildActionDTO {
+    /*
+     *  This is the legacy version of this DTO, which implies that all its fields are
+     *  populated and thus persisted.
+     */
+    public static final int MEMORY_GREEDY_VERSION = 1;
+    /*
+     *  This is the new memory optimized version of this DTO, which requires only fields
+     *  "dtoVersion", "analysisId" and "baseHubUri" to be populated and persisted.
+     */
+    public static final int MEMORY_OPTIMIZED_VERSION = 2;
+
     private static final Logger LOGGER = Logger.getLogger(CodeSonarBuildActionDTO.class.getName());
 
-    private final Long analysisId;
-    private final Analysis analysisActiveWarnings;
-    private final Analysis analysisNewWarnings;
-    private final Metrics metrics;
-    private final Procedures procedures;
-    private final URI baseHubUri;
+    private int dtoVersion;
+    private Long analysisId;
+    private Analysis analysisActiveWarnings;
+    private Analysis analysisNewWarnings;
+    private Metrics metrics;
+    private Procedures procedures;
+    private URI baseHubUri;
     private List<Pair<String, String>> conditionNamesAndResults;
-
-    public CodeSonarBuildActionDTO(Long analysisId, Analysis analysisActiveWarnings,
-            Analysis analysisNewWarnings, Metrics metrics, Procedures procedures,
-            URI baseHubUri) {
+    
+    public CodeSonarBuildActionDTO(Long analysisId, URI baseHubUri) {
+        this(MEMORY_OPTIMIZED_VERSION, analysisId, null, null, null, null, baseHubUri);
+    }
+    
+    public CodeSonarBuildActionDTO(Long analysisId, Analysis analysisActiveWarnings, Analysis analysisNewWarnings,
+            Metrics metrics, Procedures procedures, URI baseHubUri) {
+        this(MEMORY_GREEDY_VERSION, analysisId, analysisActiveWarnings, analysisNewWarnings, metrics, procedures, baseHubUri);
+    }
+    
+    private CodeSonarBuildActionDTO(int dtoVersion, Long analysisId, Analysis analysisActiveWarnings, Analysis analysisNewWarnings,
+            Metrics metrics, Procedures procedures, URI baseHubUri) {
+        this.dtoVersion = dtoVersion;
         this.analysisId = analysisId;
         this.analysisActiveWarnings = analysisActiveWarnings;
         this.analysisNewWarnings = analysisNewWarnings;
@@ -35,7 +56,7 @@ public class CodeSonarBuildActionDTO {
         this.procedures = procedures;
         this.baseHubUri = baseHubUri;
     }
-    
+
     public Long getAnalysisId() {
         return analysisId;
     }
@@ -68,19 +89,38 @@ public class CodeSonarBuildActionDTO {
         this.conditionNamesAndResults = conditionNamesAndResults;
     }
     
+    public int getDtoVersion() {
+        return dtoVersion;
+    }
+
     protected Object readResolve() {
+        if (dtoVersion == 0) {
+            LOGGER.log(Level.WARNING, "Found unassigned DTO version on persisted build, setting it to {0}", MEMORY_GREEDY_VERSION);
+            dtoVersion = MEMORY_GREEDY_VERSION;
+        }
+        
         if (analysisId == null) {
             LOGGER.log(Level.WARNING, "Found empty analysis id on persisted analysis");
         } else {
-            LOGGER.log(Level.INFO, "Found analysis di {0} on persisted analysis", analysisId.toString());
+            LOGGER.log(Level.INFO, "Found analysis id {0} on persisted analysis", analysisId.toString());
         }
         
         if (analysisActiveWarnings == null) {
             LOGGER.log(Level.WARNING, "Found empty analysisActiveWarnings on persisted analysis");
+        } else {
+            if(analysisId == null) {
+                analysisId = Long.valueOf(analysisActiveWarnings.getAnalysisId());
+                LOGGER.log(Level.INFO, "Migrating analysis id {0} from active warnings to analysisId", analysisId.toString());
+            }
         }
         
         if (analysisNewWarnings == null) {
             LOGGER.log(Level.WARNING, "Found empty analysisNewWarnings on persisted analysis");
+        } else {
+            if(analysisId == null) {
+                analysisId = Long.valueOf(analysisNewWarnings.getAnalysisId());
+                LOGGER.log(Level.INFO, "Migrating analysis id {0} from new warnings to analysisId", analysisId.toString());
+            }
         }
         
         if (metrics == null) {

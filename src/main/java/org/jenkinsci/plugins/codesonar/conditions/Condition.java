@@ -4,7 +4,8 @@ import java.text.MessageFormat;
 
 import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.plugins.codesonar.CodeSonarLogger;
-import org.jenkinsci.plugins.codesonar.models.CodeSonarBuildActionDTO;
+import org.jenkinsci.plugins.codesonar.CodeSonarPluginException;
+import org.jenkinsci.plugins.codesonar.services.CodeSonarHubAnalysisDataLoader;
 
 import hudson.DescriptorExtensionList;
 import hudson.ExtensionPoint;
@@ -22,9 +23,10 @@ import jenkins.model.Jenkins;
 public abstract class Condition implements Describable<Condition>, ExtensionPoint {
     protected static final String CURRENT_BUILD_DATA_NOT_AVAILABLE = "current build not found";
     protected static final String PREVIOUS_BUILD_DATA_NOT_AVAILABLE = "previous successful build not found";
+    protected static final String DATA_LOADER_EMPTY_RESPONSE = "Data loader returned an empty response";
     private String resultDescription;
     
-    public abstract Result validate(CodeSonarBuildActionDTO current, CodeSonarBuildActionDTO previous, Launcher launcher, TaskListener listener, CodeSonarLogger logger);
+    public abstract Result validate(CodeSonarHubAnalysisDataLoader current, CodeSonarHubAnalysisDataLoader previous, Launcher launcher, TaskListener listener, CodeSonarLogger logger) throws CodeSonarPluginException;
 
     @Override
     public Descriptor<Condition> getDescriptor() {

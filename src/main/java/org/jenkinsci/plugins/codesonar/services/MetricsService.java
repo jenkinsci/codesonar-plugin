@@ -1,19 +1,18 @@
 package org.jenkinsci.plugins.codesonar.services;
 
-import java.io.IOException;
-import java.io.InputStream;
 import java.net.URI;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import org.jenkinsci.plugins.codesonar.CodeSonarPublisher;
+import org.jenkinsci.plugins.codesonar.CodeSonarHubCommunicationException;
+import org.jenkinsci.plugins.codesonar.CodeSonarPluginException;
 import org.jenkinsci.plugins.codesonar.models.metrics.Metrics;
 
 /**
  *
  * @author Andrius
  */
-public class MetricsService {
+public class MetricsService extends AbstractService {
     private static final Logger LOGGER = Logger.getLogger(MetricsService.class.getName());
     
     private HttpService httpService;
@@ -28,9 +27,14 @@ public class MetricsService {
         return baseHubUri.resolve(String.format("/metrics/%s.xml", analysisId));
     }
     
-    public Metrics getMetricsFromUri(URI metricsUri) throws IOException {
+    public Metrics getMetricsFromUri(URI metricsUri) throws CodeSonarPluginException {
         LOGGER.log(Level.INFO, String.format("Calling getMetricsFromUri"));
-        InputStream xmlContent = httpService.getContentFromUrlAsInputStream(metricsUri);
-        return  xmlSerializationService.deserialize(xmlContent, Metrics.class);
+        HttpServiceResponse response = httpService.getResponseFromUrl(metricsUri);
+        
+        if(response.getStatusCode() != 200) {
+            throw new CodeSonarHubCommunicationException(metricsUri, response.getStatusCode(), response.getReasonPhrase(), readResponseContent(response, metricsUri));
+        }
+        
+        return  xmlSerializationService.deserialize(response.getContentInputStream(), Metrics.class);
     }
 }

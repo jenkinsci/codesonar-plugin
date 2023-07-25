@@ -22,10 +22,10 @@ public class HttpServiceTest {
         httpService = new HttpService(null, null, null, -1);
     }
 
-    @Test(expected = AbortException.class)
-    public void testGetContentFromURLAsString() throws Exception {
+    @Test(expected = CodeSonarPluginException.class)
+    public void testgetResponseFromUrl() throws Exception {
         final String INVALID_URL = "invalidurl";
        
-        httpService.getContentFromUrlAsString(INVALID_URL);
+        httpService.getResponseFromUrl(INVALID_URL).readContent();
     }
 }

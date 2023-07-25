@@ -1,6 +1,5 @@
 package org.jenkinsci.plugins.codesonar.conditions;
 
-import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -8,9 +7,8 @@ import javax.annotation.Nonnull;
 
 import org.jenkinsci.Symbol;
 import org.jenkinsci.plugins.codesonar.CodeSonarLogger;
-import org.jenkinsci.plugins.codesonar.models.CodeSonarBuildActionDTO;
-import org.jenkinsci.plugins.codesonar.models.analysis.Analysis;
-import org.jenkinsci.plugins.codesonar.models.analysis.Warning;
+import org.jenkinsci.plugins.codesonar.CodeSonarPluginException;
+import org.jenkinsci.plugins.codesonar.services.CodeSonarHubAnalysisDataLoader;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
@@ -66,35 +64,20 @@ public class WarningCountAbsoluteSpecifiedScoreAndHigherCondition extends Condit
     }
 
     @Override
-    public Result validate(CodeSonarBuildActionDTO current, CodeSonarBuildActionDTO previous, Launcher launcher, TaskListener listener, CodeSonarLogger csLogger) {
+    public Result validate(CodeSonarHubAnalysisDataLoader current, CodeSonarHubAnalysisDataLoader previous, Launcher launcher, TaskListener listener, CodeSonarLogger csLogger) throws CodeSonarPluginException {
         if (current == null) {
             registerResult(csLogger, CURRENT_BUILD_DATA_NOT_AVAILABLE);
             return Result.SUCCESS;
         }
-
-        Analysis analysis = current.getAnalysisActiveWarnings();
         
-        // Going to produce build failure in the case of missing necessary information
-        if(analysis == null) {
-            LOGGER.log(Level.SEVERE, "\"analysisActiveWarnings\" data not found in persisted build.");
-            registerResult(csLogger, CURRENT_BUILD_DATA_NOT_AVAILABLE);
-            return Result.FAILURE;
-        }
+        long warningsAboveThreshold = current.getNumberOfWarningsWithScoreAboveThreshold(rankOfWarnings);
 
-        int severeWarnings = 0;
-        List<Warning> warnings = analysis.getWarnings();
-        for (Warning warning : warnings) {
-            if (warning.getScore() >= rankOfWarnings) {
-                severeWarnings++;
-            }
-        }
-
-        if (severeWarnings > warningCountThreshold) {
-            registerResult(csLogger, RESULT_DESCRIPTION_MESSAGE_FORMAT, rankOfWarnings, warningCountThreshold, severeWarnings);
+        registerResult(csLogger, RESULT_DESCRIPTION_MESSAGE_FORMAT, rankOfWarnings, warningCountThreshold, warningsAboveThreshold);
+        
+        if (warningsAboveThreshold > warningCountThreshold) {
             return Result.fromString(warrantedResult);
         }
 
-        registerResult(csLogger, RESULT_DESCRIPTION_MESSAGE_FORMAT, rankOfWarnings, warningCountThreshold, severeWarnings);
         return Result.SUCCESS;
     }
 

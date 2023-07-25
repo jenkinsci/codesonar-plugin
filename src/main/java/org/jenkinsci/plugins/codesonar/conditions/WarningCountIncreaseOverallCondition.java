@@ -8,8 +8,8 @@ import javax.annotation.Nonnull;
 import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.Symbol;
 import org.jenkinsci.plugins.codesonar.CodeSonarLogger;
-import org.jenkinsci.plugins.codesonar.models.CodeSonarBuildActionDTO;
-import org.jenkinsci.plugins.codesonar.models.analysis.Analysis;
+import org.jenkinsci.plugins.codesonar.CodeSonarPluginException;
+import org.jenkinsci.plugins.codesonar.services.CodeSonarHubAnalysisDataLoader;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
@@ -57,7 +57,7 @@ public class WarningCountIncreaseOverallCondition extends Condition {
     }
 
     @Override
-    public Result validate(CodeSonarBuildActionDTO current, CodeSonarBuildActionDTO previous, Launcher launcher, TaskListener listener, CodeSonarLogger csLogger) {
+    public Result validate(CodeSonarHubAnalysisDataLoader current, CodeSonarHubAnalysisDataLoader previous, Launcher launcher, TaskListener listener, CodeSonarLogger csLogger) throws CodeSonarPluginException {
         if (current == null) {
             registerResult(csLogger, CURRENT_BUILD_DATA_NOT_AVAILABLE);
             return Result.SUCCESS;
@@ -68,23 +68,10 @@ public class WarningCountIncreaseOverallCondition extends Condition {
             return Result.SUCCESS;
         }
         
-        // Going to produce build failures in the case of missing necessary information
-        Analysis previousAnalysisActiveWarnings = previous.getAnalysisActiveWarnings();
-        if(previousAnalysisActiveWarnings == null) {
-            LOGGER.log(Level.SEVERE, "\"analysisActiveWarnings\" data not found in persisted build.");
-            registerResult(csLogger, CURRENT_BUILD_DATA_NOT_AVAILABLE);
-            return Result.FAILURE;
-        }
-        Analysis currentAnalysisActiveWarnings = current.getAnalysisActiveWarnings();
-        if(currentAnalysisActiveWarnings == null) {
-            LOGGER.log(Level.SEVERE, "\"analysisNewWarnings\" data not found in persisted build.");
-            registerResult(csLogger, CURRENT_BUILD_DATA_NOT_AVAILABLE);
-            return Result.FAILURE;
-        }    
-
-        int previousCount = previous.getAnalysisActiveWarnings().getWarnings().size();
-        int currentCount = current.getAnalysisActiveWarnings().getWarnings().size();
-        int diff = currentCount - previousCount;
+        long previousCount = previous.getNumberOfActiveWarnings();
+        long currentCount = current.getNumberOfActiveWarnings();
+        
+        long diff = currentCount - previousCount;
         float thresholdPercentage = Float.parseFloat(percentage);
         
         float result;
@@ -97,11 +84,11 @@ public class WarningCountIncreaseOverallCondition extends Condition {
             LOGGER.log(Level.INFO, "warnings increment percentage = {0,number,0.00}%", result);
         }
         
+        registerResult(csLogger, RESULT_DESCRIPTION_MESSAGE_FORMAT, thresholdPercentage, result, currentCount, previousCount);
+        
         if (result > thresholdPercentage) {
-            registerResult(csLogger, RESULT_DESCRIPTION_MESSAGE_FORMAT, thresholdPercentage, result, diff, previousCount);
             return Result.fromString(warrantedResult);
         }
-        registerResult(csLogger, RESULT_DESCRIPTION_MESSAGE_FORMAT, thresholdPercentage, result, diff, previousCount);
         return Result.SUCCESS;
     }
 
@@ -137,4 +124,5 @@ public class WarningCountIncreaseOverallCondition extends Condition {
         }
 
     }
+    
 }

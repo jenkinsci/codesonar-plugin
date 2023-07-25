@@ -1,7 +1,5 @@
 package org.jenkinsci.plugins.codesonar.conditions;
 
-import java.util.List;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.annotation.Nonnull;
@@ -9,9 +7,8 @@ import javax.annotation.Nonnull;
 import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.Symbol;
 import org.jenkinsci.plugins.codesonar.CodeSonarLogger;
-import org.jenkinsci.plugins.codesonar.models.CodeSonarBuildActionDTO;
-import org.jenkinsci.plugins.codesonar.models.analysis.Analysis;
-import org.jenkinsci.plugins.codesonar.models.analysis.Warning;
+import org.jenkinsci.plugins.codesonar.CodeSonarPluginException;
+import org.jenkinsci.plugins.codesonar.services.CodeSonarHubAnalysisDataLoader;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
@@ -29,7 +26,7 @@ public class WarningCountIncreaseSpecifiedScoreAndHigherCondition extends Condit
     private static final Logger LOGGER = Logger.getLogger(WarningCountIncreaseSpecifiedScoreAndHigherCondition.class.getName());
 
     private static final String NAME = "Warning count increase: specified score and higher";
-    private static final String RESULT_DESCRIPTION_MESSAGE_FORMAT = "score={0,number,0}, threshold={1,number,0.00}%, increase={2,number,0.00}%";
+    private static final String RESULT_DESCRIPTION_MESSAGE_FORMAT = "score={0,number,0}, threshold={1,number,0.00}%, increase={2,number,0.00}% (count: current={3,number,0}, previous={4,number,0})";
 
     private int rankOfWarnings = 30;
     private String warningPercentage = String.valueOf(5.0f);
@@ -67,48 +64,43 @@ public class WarningCountIncreaseSpecifiedScoreAndHigherCondition extends Condit
     }
 
     @Override
-    public Result validate(CodeSonarBuildActionDTO current, CodeSonarBuildActionDTO previous, Launcher launcher, TaskListener listener, CodeSonarLogger csLogger) {
+    public Result validate(CodeSonarHubAnalysisDataLoader current, CodeSonarHubAnalysisDataLoader previous, Launcher launcher, TaskListener listener, CodeSonarLogger csLogger) throws CodeSonarPluginException {
+        double thresholdPercentage = Double.parseDouble(warningPercentage);
+
         if (current == null) {
             registerResult(csLogger, CURRENT_BUILD_DATA_NOT_AVAILABLE);
             return Result.SUCCESS;
         }
         
-        Analysis analysis = current.getAnalysisActiveWarnings();
-        
-        // Going to produce build failure in the case of missing necessary information
-        if(analysis == null) {
-            LOGGER.log(Level.SEVERE, "\"analysisActiveWarnings\" data not found in persisted build.");
-            registerResult(csLogger, CURRENT_BUILD_DATA_NOT_AVAILABLE);
-            return Result.FAILURE;
-        }
-
-        int totalNumberOfWarnings = analysis.getWarnings().size();
-
-        int severeWarnings = 0;
-        List<Warning> warnings = analysis.getWarnings();
-        for (Warning warning : warnings) {
-            if (warning.getScore() > rankOfWarnings) {
-                severeWarnings++;
-            }
+        if (previous == null) {
+            registerResult(csLogger, PREVIOUS_BUILD_DATA_NOT_AVAILABLE);
+            return Result.SUCCESS;
         }
         
-        float calculatedWarningPercentage;
-        //If there are no warnings, redefine percentage of new warnings
-        if(totalNumberOfWarnings == 0) {
-            calculatedWarningPercentage = severeWarnings > 0 ? 100f : 0f;
-            LOGGER.log(Level.INFO, "no warnings found, forcing severe warning percentage to {0,number,0.00}%", calculatedWarningPercentage);
+        long warningsAboveThresholdForCurrent = current.getNumberOfWarningsWithScoreAboveThreshold(rankOfWarnings);
+        long warningsAboveThresholdForPrevious = previous.getNumberOfWarningsWithScoreAboveThreshold(rankOfWarnings);
+        
+        double calculatedWarningPercentage;
+        if (warningsAboveThresholdForPrevious == 0) {
+            calculatedWarningPercentage = 100.0 * (double)warningsAboveThresholdForCurrent;
         } else {
-            calculatedWarningPercentage = ((float) severeWarnings / totalNumberOfWarnings) * 100;
-            LOGGER.log(Level.INFO, "severe warnings percentage = {0,number,0.00}%", calculatedWarningPercentage);
+            long diff = warningsAboveThresholdForCurrent - warningsAboveThresholdForPrevious;
+            calculatedWarningPercentage = 100.0 * ((double)diff / (double)warningsAboveThresholdForPrevious);
         }
-
-        float thresholdPercentage = Float.parseFloat(warningPercentage);
+        
+        registerResult(
+                csLogger,
+                RESULT_DESCRIPTION_MESSAGE_FORMAT,
+                rankOfWarnings,
+                thresholdPercentage,
+                calculatedWarningPercentage,
+                warningsAboveThresholdForCurrent,
+                warningsAboveThresholdForPrevious);
+        
         if (calculatedWarningPercentage > thresholdPercentage) {
-            registerResult(csLogger, RESULT_DESCRIPTION_MESSAGE_FORMAT, rankOfWarnings, thresholdPercentage, calculatedWarningPercentage);
             return Result.fromString(warrantedResult);
         }
         
-        registerResult(csLogger, RESULT_DESCRIPTION_MESSAGE_FORMAT, rankOfWarnings, thresholdPercentage, calculatedWarningPercentage);
         return Result.SUCCESS;
     }
 

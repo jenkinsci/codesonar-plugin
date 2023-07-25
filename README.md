@@ -155,7 +155,7 @@ extending the Pipeline's build stage as described in the following steps.
       **MANUAL:** How CodeSonar Works > CodeSonar Structure > TLS Certificates
 
       **MANUAL:**  Using CodeSonar > GUI Reference > Hub and Account Management > GUI: User Certificates
-1. Edit the build stage of your Jenkins pipeline integrate the CodeSonar build/analysis.
+1. Edit the build stage of your Jenkins pipeline to integrate the CodeSonar build/analysis.
    1. Edit the agent specification to add the `CodeSonar` label (or whatever label you added to the agents where you installed CodeSonar.)
    1. Wrap the software build command or commands in a `withCredentials()` block.
       * Password authentication:
@@ -301,7 +301,7 @@ analysis information from the hub.
    | **Authentication Type** | **Parameter Name** | **Type** | **Value** |
    |-------------------------|--------------------|--------------------|-----------|
    | Username/Password       | `CSONAR_HUBUSERPASS` | Credentials Parameter | A **Username with password** containing the hub user account username and password |
-   | Certificate | `CSONAR_HUBUSERCERT` | Credentials Parameter | A **Certificate** containing the user certificate and its private key in PKCS#12 format.<p>**MANUAL:** How CodeSonar Works > CodeSonar Structure > Hub > Manually Generating and Uploading User Certificates</p> |
+   | Certificate | `CSONAR_HUBUSERCERT` | Credentials Parameter | A certificate and private key in PKCS#12 format.  If the key is password protected, then the credentials parameter kind should be **Certificate**, otherwise it should be **Secret file**.  <p>**MANUAL:** How CodeSonar Works > CodeSonar Structure > Hub > Manually Generating and Uploading User Certificates</p> |
 1. [HTTPS hubs only] If your hub uses a self-signed server certificate, create a parameter to store a copy of this certificate so that the plugin can be instructed to trust it.
    | **Parameter Name** | **Type** | **Value** |
    |--------------------|--------------------|-----------|
@@ -544,10 +544,10 @@ There are six different condition types.
 |--|--|
 | **Cyclomatic complexity** | cyclomaticComplexity(maxCyclomaticComplexity:'*limit*', warrantedResult:'*result*'),<p>Set the build result to *result* if one or more procedures has cyclomatic complexity (as determined by CodeSonar) that exceeds *limit*. </p> **MANUAL**: How CodeSonar Works > CodeSonar Structure > Metrics |
 | **Red alerts** |  redAlerts(alertLimit:'*limit*', warrantedResult:'*result*')<p>Set the build result to *result* if the number of [red alerts](#yellow-and-red-alerts) from CodeSonar analysis exceeds *limit*. </p> **MANUAL**: Using CodeSonar > GUI Reference > Alerts |
-| **Warnings count absolute: specified score and higher** | warningCountAbsoluteSpecifiedScoreAndHigher(rankOfWarnings:'*minrank*', warningCountThreshold:'*limit', warrantedResult:'*result*')<p>Set the build result to *result* if the number of  warnings with rank *minrank* or higher issued by the CodeSonar analysis exceeds *limit*. </p> **MANUAL**: How CodeSonar Works > CodeSonar Structure > Warnings > Warnings: Instances and Groups |
+| **Warnings count absolute: specified score and higher** | warningCountAbsoluteSpecifiedScoreAndHigher(rankOfWarnings:'*minscore*', warningCountThreshold:'*limit', warrantedResult:'*result*')<p>Set the build result to *result* if the number of  warnings with score *minscore* or higher issued by the CodeSonar analysis exceeds *limit*. </p> **MANUAL**: How CodeSonar Works > CodeSonar Structure > Warnings > Warnings: Instances and Groups |
 | **Warning count increase: new only** | warningCountIncreaseNewOnly(percentage:'*limit*', warrantedResult:'*result*') <p>Set the build result to *result* if the number of new warnings issued by the CodeSonar analysis exceeds the number issued for the previous analysis by more than *limit*%. </p> **MANUAL**: How CodeSonar Works > CodeSonar Structure > Warnings > Warnings: Instances and Groups |
 | **Warning count increase: overall** | warningCountIncreaseOverall(percentage:'*limit*', warrantedResult:'*result*')<p>Set the build result to *result* if the number of warnings issued by the CodeSonar analysis exceeds the number issued for the previous analysis by more than *limit*%. </p> **MANUAL**: How CodeSonar Works > CodeSonar Structure > Warnings > Warnings: Instances and Groups |
-| **Warnings count increase: specified score and higher** | warningCountIncreaseSpecifiedScoreAndHigher(rankOfWarnings:'*minrank*', warningPercentage:'*limit', warrantedResult:'*result*')<p>Set the build result to *result* if the number of warnings with rank *minrank* or higher issued by the CodeSonar analysis exceeds the number issued for the previous analysis by more than *limit*%. </p> **MANUAL**: How CodeSonar Works > CodeSonar Structure > Warnings > Warnings: Instances and Groups |
+| **Warnings count increase: specified score and higher** | warningCountIncreaseSpecifiedScoreAndHigher(rankOfWarnings:'*minscore*', warningPercentage:'*limit', warrantedResult:'*result*')<p>Set the build result to *result* if the number of warnings with score *minscore* or higher issued by the CodeSonar analysis exceeds the number issued for the previous analysis by more than *limit*%. </p> **MANUAL**: How CodeSonar Works > CodeSonar Structure > Warnings > Warnings: Instances and Groups |
 | **Yellow alerts** | yellowAlerts(alertLimit:'*limit*', warrantedResult:'*result*')<p>Set the build result to *result* if the number of [yellow alerts](#yellow-and-red-alerts) from CodeSonar analysis exceeds *limit*. </p>**MANUAL**: Using CodeSonar > GUI Reference > Alerts |
 
 ### Yellow and red alerts

@@ -7,6 +7,7 @@ public class CodeSonarHubInfo {
     private String version;
     private boolean openAPISupported;
     private boolean strictQueryParametersEnforced;
+    private boolean jsonGridConfigSupported;
     
     public CodeSonarHubInfo() {
         version = VERSION_NOT_INITIALIZED;
@@ -36,6 +37,14 @@ public class CodeSonarHubInfo {
 
     public void setStrictQueryParametersEnforced(boolean strictQueryParametersEnforced) {
         this.strictQueryParametersEnforced = strictQueryParametersEnforced;
+    }
+
+    public boolean isJsonGridConfigSupported() {
+        return jsonGridConfigSupported;
+    }
+
+    public void setJsonGridConfigSupported(boolean jsonGridConfigSupported) {
+        this.jsonGridConfigSupported = jsonGridConfigSupported;
     }
     
 }

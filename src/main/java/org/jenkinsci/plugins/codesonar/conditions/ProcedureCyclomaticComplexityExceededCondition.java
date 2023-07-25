@@ -1,17 +1,14 @@
 package org.jenkinsci.plugins.codesonar.conditions;
 
-import java.util.List;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.annotation.Nonnull;
 
 import org.jenkinsci.Symbol;
 import org.jenkinsci.plugins.codesonar.CodeSonarLogger;
-import org.jenkinsci.plugins.codesonar.models.CodeSonarBuildActionDTO;
-import org.jenkinsci.plugins.codesonar.models.Metric;
-import org.jenkinsci.plugins.codesonar.models.procedures.ProcedureRow;
-import org.jenkinsci.plugins.codesonar.models.procedures.Procedures;
+import org.jenkinsci.plugins.codesonar.CodeSonarPluginException;
+import org.jenkinsci.plugins.codesonar.models.json.ProcedureJsonRow;
+import org.jenkinsci.plugins.codesonar.services.CodeSonarHubAnalysisDataLoader;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
@@ -59,30 +56,20 @@ public class ProcedureCyclomaticComplexityExceededCondition extends Condition {
     }
 
     @Override
-    public Result validate(CodeSonarBuildActionDTO current, CodeSonarBuildActionDTO previous, Launcher launcher, TaskListener listener, CodeSonarLogger csLogger) {       
+    public Result validate(CodeSonarHubAnalysisDataLoader current, CodeSonarHubAnalysisDataLoader previous, Launcher launcher, TaskListener listener, CodeSonarLogger csLogger) throws CodeSonarPluginException {       
         if (current == null) {
             registerResult(csLogger, CURRENT_BUILD_DATA_NOT_AVAILABLE);
             return Result.SUCCESS;
         }
 
-        Procedures procedures = current.getProcedures();
-        // Going to produce build failure in the case of missing necessary information
-        if(procedures == null) {
-            LOGGER.log(Level.SEVERE, "\"procedures\" data not found in persisted build.");
-            registerResult(csLogger, CURRENT_BUILD_DATA_NOT_AVAILABLE);
-            return Result.FAILURE;
+        ProcedureJsonRow procedureRow = current.getProcedureWithMaxCyclomaticComplexity();
+        
+        registerResult(csLogger, RESULT_DESCRIPTION_MESSAGE_FORMAT, maxCyclomaticComplexity, procedureRow.getMetricCyclomaticComplexity(), procedureRow.getProcedure());
+        
+        if (procedureRow.getMetricCyclomaticComplexity() > maxCyclomaticComplexity) {
+            return Result.fromString(warrantedResult);
         }
-        List<ProcedureRow> procedureRows = procedures.getProcedureRows();
-        for (ProcedureRow procedureRow : procedureRows) {
-            Metric cyclomaticComplexityMetric = procedureRow.getMetricByName("Cyclomatic Complexity");
-
-            int value = Integer.parseInt(cyclomaticComplexityMetric.getValue());
-            if (value > maxCyclomaticComplexity) {
-                registerResult(csLogger, RESULT_DESCRIPTION_MESSAGE_FORMAT, maxCyclomaticComplexity, value, procedureRow.getProcedure());
-                return Result.fromString(warrantedResult);
-            }
-        }
-        registerResult(csLogger, "All cyclomatic complexity values within threshold {0,number,0}", maxCyclomaticComplexity);
+        
         return Result.SUCCESS;
     }
     

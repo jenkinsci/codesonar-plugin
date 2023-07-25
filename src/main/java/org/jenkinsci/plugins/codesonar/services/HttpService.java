@@ -1,7 +1,6 @@
 package org.jenkinsci.plugins.codesonar.services;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.URI;
 import java.security.KeyManagementException;
 import java.security.KeyStore;
@@ -19,17 +18,13 @@ import org.apache.http.HttpResponse;
 import org.apache.http.client.CookieStore;
 import org.apache.http.client.fluent.Executor;
 import org.apache.http.client.fluent.Request;
-import org.apache.http.client.fluent.Response;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.impl.client.BasicCookieStore;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.ssl.SSLContextBuilder;
-import org.apache.http.util.EntityUtils;
 import org.jenkinsci.plugins.codesonar.CodeSonarPluginException;
-
-import com.google.common.base.Throwables;
 
 import hudson.util.Secret;
 
@@ -62,7 +57,7 @@ public class HttpService {
                 try {
                     sslContextBuilder.loadTrustMaterial(new CertificateFileTrustStrategy(serverCertificates));
                 } catch (NoSuchAlgorithmException | KeyStoreException e) {
-                    throw createError("Error setting up server certificates  %n{0}: {1}%nStack Trace: {2}", e.getClass().getName(), e.getMessage(), Throwables.getStackTraceAsString(e));
+                    throw createError("Error setting up server certificates", e);
                 }
             }
             
@@ -72,7 +67,7 @@ public class HttpService {
                 try {
                     sslContextBuilder.loadKeyMaterial(clientCertificateKeyStore, clientCertificatePassword.getPlainText().toCharArray());
                 } catch (UnrecoverableKeyException | NoSuchAlgorithmException | KeyStoreException e) {
-                    throw createError("Error setting up client certificate  %n{0}: {1}%nStack Trace: {2}", e.getClass().getName(), e.getMessage(), Throwables.getStackTraceAsString(e));
+                    throw createError("Error setting up client certificate.", e);
                 }
             }
             //Prepare the SSL context in order to let the HTTP client using specified certificates
@@ -83,7 +78,7 @@ public class HttpService {
                 httpClientBuilder.setSSLSocketFactory(csf);
                 LOGGER.log(Level.INFO, "SSL context initialized");
             } catch (KeyManagementException | NoSuchAlgorithmException e) {
-                throw createError("Error initiating SSL context.%nException message: {0}", e.getMessage());
+                throw createError("Error initiating SSL context.", e);
             }
         }
         
@@ -93,82 +88,56 @@ public class HttpService {
         LOGGER.log(Level.INFO, "HttpService initialized");
     }
     
-    private CodeSonarPluginException createError(String msg, Object...args) {
-        return new CodeSonarPluginException(msg, args);
+    private CodeSonarPluginException createError(String msg, Throwable cause, Object...args) {
+        return new CodeSonarPluginException(msg, cause, args);
     }
-
+    
+    private CodeSonarPluginException createError(String msg, Throwable cause) {
+        return new CodeSonarPluginException(msg, cause);
+    }
+    
     public void setSocketTimeoutMS(int socketTimeoutMS) {
         LOGGER.log(Level.FINE, "HttpService - setSocketTimeoutMS to {0}", socketTimeoutMS);
         this.socketTimeoutMS = socketTimeoutMS;
     }
 
-    public String getContentFromUrlAsString(URI uri) throws CodeSonarPluginException {
-        return getContentFromUrlAsString(uri.toString());
+    public HttpServiceResponse getResponseFromUrl(URI uri) throws CodeSonarPluginException {
+        return getResponseFromUrl(uri.toString());
     }
     
-    public String getContentFromUrlAsString(String url) throws CodeSonarPluginException {
-        if(!url.contains("response_try_plaintext")) {
+    public HttpServiceResponse getResponseFromUrl(String url) throws CodeSonarPluginException {
+        if (!url.contains("response_try_plaintext")) {
             url = (url.contains("?")) ? url + "#response_try_plaintext=1" : url + "?response_try_plaintext=1";
         }
-        LOGGER.log(Level.INFO, "getContentFromUrlAsString({0})", url);
-        int status = -1;
-        String reason = "";
-        String body = "";
-
+        LOGGER.log(Level.INFO, "getResponseFromUrl({0})", url);
+        Request req = Request.Get(url);
+        if (socketTimeoutMS != -1)
+            req.socketTimeout(socketTimeoutMS);
+//        LOGGER.log(Level.INFO, String.format("Listing cookies held by coockie store (instance: %s)", httpCookieStore.getClass().getName()));
+//        httpCookieStore.getCookies().forEach(cookie -> LOGGER.log(Level.INFO, String.format("%s  %s=%s", cookie.getClass().getName(), cookie.getName(), cookie.getValue())));
+        HttpServiceResponse serviceResponse = null;
         try {
-            Request req = Request.Get(url);
-            if(socketTimeoutMS != -1) req.socketTimeout(socketTimeoutMS);
-//            LOGGER.log(Level.INFO, String.format("Listing cookies held by coockie store (instance: %s)", httpCookieStore.getClass().getName()));
-//            httpCookieStore.getCookies().forEach(cookie -> LOGGER.log(Level.INFO, String.format("%s  %s=%s", cookie.getClass().getName(), cookie.getName(), cookie.getValue())));
-            HttpResponse resp = executor.execute(req).returnResponse();
-            status = resp.getStatusLine().getStatusCode();
-            reason = resp.getStatusLine().getReasonPhrase();
-            body = EntityUtils.toString(resp.getEntity(), "UTF-8");
-        } catch (Exception e) {
-            throw createError("Error on url: {0}%nMessage is: {1}", url, e.getMessage());
+            HttpResponse resp = getExecutor().execute(req).returnResponse();
+            serviceResponse = new HttpServiceResponse(resp.getStatusLine().getStatusCode(), resp.getStatusLine().getReasonPhrase(), resp.getEntity().getContent());
+        } catch (IOException e) {
+            throw createError("Error requesting URL: {0}", e, url);
         }
-        if (status != 200) {
-            throw createError("Error communicating with CodeSonar Hub. %nURI: {0}%nHTTP status code: {1} - {2} %nHTTP Body: {3}", url, status, reason, body);
-        }
-        return body;
+        
+        return serviceResponse;
     }
     
-    public InputStream getContentFromUrlAsInputStream(URI uri) throws CodeSonarPluginException {
-        return getContentFromUrlAsInputStream(uri.toString());
-    }
-    
-    public InputStream getContentFromUrlAsInputStream(String url) throws CodeSonarPluginException {
-        InputStream is;
-        if(!url.contains("response_try_plaintext")) {
-            url = (url.contains("?")) ? url + "#response_try_plaintext=1" : url + "?response_try_plaintext=1";
-        }
-        LOGGER.log(Level.INFO, "getContentFromUrlAsInputStream({0})", url);
-        int status = -1;
-        String reason = "";
-        String body = "";
-
-        try {
-            Request req = Request.Get(url);
-            if(socketTimeoutMS != -1) req.socketTimeout(socketTimeoutMS);
-//            LOGGER.log(Level.INFO, String.format("Listing cookies held by coockie store (instance: %s)", httpCookieStore.getClass().getName()));
-//            httpCookieStore.getCookies().forEach(cookie -> LOGGER.log(Level.INFO, String.format("%s  %s=%s", cookie.getClass().getName(), cookie.getName(), cookie.getValue())));
-            HttpResponse resp = executor.execute(req).returnResponse();
-            is = resp.getEntity().getContent();
-            status = resp.getStatusLine().getStatusCode();
-            reason = resp.getStatusLine().getReasonPhrase();
-            body = EntityUtils.toString(resp.getEntity(), "UTF-8");
-        } catch (Exception e) {
-            throw createError("Error on url: {0}%nMessage is: {1}", url, e.getMessage());
-        }
-        if (status != 200) {
-            throw createError("Error communicating with CodeSonar Hub. %nURI: {0}%nHTTP status code: {1} - {2} %nHTTP Body: {3}", url, status, reason, body);
-        }
-        return is;
-    }
-    
-    public Response execute(Request request) throws IOException {
+    public HttpServiceResponse execute(Request request) throws IOException {
         if(socketTimeoutMS != -1) request.socketTimeout(socketTimeoutMS);
-        return executor.execute(request);
+        HttpResponse resp = getExecutor().execute(request).returnResponse();
+//      Header[] allHeaders = resp.getAllHeaders();
+//      LOGGER.log(Level.INFO, "Response headers:");
+//      for (int i = 0; i < allHeaders.length; i++) {
+//          LOGGER.log(Level.INFO, String.format("%s:%s", allHeaders[i].getName(), allHeaders[i].getValue()));
+//      }
+        return new HttpServiceResponse(resp.getStatusLine().getStatusCode(), resp.getStatusLine().getReasonPhrase(), resp.getEntity().getContent());
     }
     
+    public Executor getExecutor() {
+        return this.executor;
+    }
 }

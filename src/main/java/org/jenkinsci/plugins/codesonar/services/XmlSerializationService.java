@@ -16,8 +16,8 @@ import org.jenkinsci.plugins.codesonar.CodeSonarPluginException;
  */
 public class XmlSerializationService implements Serializable {
     
-    private CodeSonarPluginException createError(String msg, Object...args) {
-        return new CodeSonarPluginException(msg, args);
+    private CodeSonarPluginException createError(String msg, Throwable cause) {
+        return new CodeSonarPluginException(msg, cause);
     }
 
     public <T extends Serializable> T deserialize(InputStream content, Class<T> t) throws CodeSonarPluginException {
@@ -30,7 +30,7 @@ public class XmlSerializationService implements Serializable {
 
             return (T) un.unmarshal(bis);
         } catch (JAXBException ex) {
-            throw createError(ex.getMessage());
+            throw createError("Error deserializing XML.", ex);
         } finally {
             Thread.currentThread().setContextClassLoader(originalClassLoader);
         }

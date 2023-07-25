@@ -9,6 +9,8 @@ import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
@@ -32,16 +34,11 @@ import org.jenkinsci.plugins.codesonar.conditions.Condition;
 import org.jenkinsci.plugins.codesonar.conditions.ConditionDescriptor;
 import org.jenkinsci.plugins.codesonar.models.CodeSonarBuildActionDTO;
 import org.jenkinsci.plugins.codesonar.models.CodeSonarHubInfo;
-import org.jenkinsci.plugins.codesonar.models.analysis.Analysis;
-import org.jenkinsci.plugins.codesonar.models.metrics.Metrics;
-import org.jenkinsci.plugins.codesonar.models.procedures.Procedures;
 import org.jenkinsci.plugins.codesonar.services.AuthenticationService;
+import org.jenkinsci.plugins.codesonar.services.CodeSonarHubAnalysisDataLoader;
 import org.jenkinsci.plugins.codesonar.services.HttpService;
 import org.jenkinsci.plugins.codesonar.services.HubInfoService;
 import org.jenkinsci.plugins.codesonar.services.IAnalysisService;
-import org.jenkinsci.plugins.codesonar.services.MetricsService;
-import org.jenkinsci.plugins.codesonar.services.ProceduresService;
-import org.jenkinsci.plugins.codesonar.services.XmlSerializationService;
 import org.jenkinsci.plugins.plaincredentials.FileCredentials;
 import org.jenkinsci.remoting.RoleChecker;
 import org.kohsuke.stapler.AncestorInPath;
@@ -58,7 +55,6 @@ import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
 import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
 import com.cloudbees.plugins.credentials.common.UsernamePasswordCredentials;
 import com.cloudbees.plugins.credentials.domains.DomainRequirement;
-import com.google.common.base.Throwables;
 
 import hudson.DescriptorExtensionList;
 import hudson.Extension;
@@ -101,16 +97,10 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
     private int socketTimeoutMS = -1;
     private String projectFile;
 
-    private XmlSerializationService xmlSerializationService = null;
     private HttpService httpService = null;
     private AuthenticationService authenticationService = null;
-    private IAnalysisService analysisService = null;
-    private MetricsService metricsService = null;
-    private ProceduresService proceduresService = null;
     private HubInfoService hubInfoService = null;
     
-    private AnalysisServiceFactory analysisServiceFactory = null;
-
     private List<Condition> conditions;
 
     private String credentialId;
@@ -118,6 +108,7 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
 
     private String serverCertificateCredentialId = "";
     private StandardCredentials serverCertificateCredentials;
+
 
     @DataBoundConstructor
     public CodeSonarPublisher(
@@ -138,6 +129,10 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
     
     private CodeSonarPluginException createError(String msg, Object...args) {
         return new CodeSonarPluginException(msg, args);
+    }
+    
+    private CodeSonarPluginException createError(String msg, Throwable cause) {
+        return new CodeSonarPluginException(msg, cause);
     }
 
     @DataBoundSetter
@@ -335,13 +330,9 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
             @Nonnull TaskListener listener)
             throws InterruptedException, IOException
     {
-        xmlSerializationService = getXmlSerializationService();
         httpService = getHttpService(run);
         authenticationService = getAuthenticationService(run);
-        metricsService = getMetricsService(run);
-        proceduresService = getProceduresService(run);
         hubInfoService = getHubInfoService(run);
-        analysisServiceFactory = getAnalysisServiceFactory();
 
         String expandedHubAddress = run.getEnvironment(listener).expand(Util.fixNull(hubAddress));
         String expandedProjectName = run.getEnvironment(listener).expand(Util.fixNull(projectName));
@@ -367,69 +358,119 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
         
         authenticate(run, baseHubUri, hubInfo.isOpenAPISupported());
 
-        analysisServiceFactory = getAnalysisServiceFactory();
-        analysisServiceFactory.setHubInfo(hubInfo);
-        analysisService = analysisServiceFactory.getAnalysisService(httpService, xmlSerializationService);
-        analysisService.setVisibilityFilter(getVisibilityFilterOrDefault());
-        analysisService.setNewWarningsFilter(getNewWarningsFilterOrDefault());
-
-        String analysisId = null;
+        String currentAnalysisIdString = null;
         if(StringUtils.isBlank(aid)) {
             LOGGER.log(Level.INFO, "Determining analysis id...");
-            analysisId = workspace.act(new DetermineAid(expandedProjectFile));
-            LOGGER.log(Level.INFO, "Found analysis id: {0}", analysisId);
+            currentAnalysisIdString = workspace.act(new DetermineAid(expandedProjectFile));
+            LOGGER.log(Level.INFO, "Found analysis id: {0}", currentAnalysisIdString);
         } else {
-            analysisId = aid;
+            currentAnalysisIdString = aid;
             LOGGER.log(Level.INFO, "Using override analysis id: \"" + aid + "\".");
         }
         
-        String analysisUrl = baseHubUri.toString() + "/analysis/" + analysisId + ".xml";
-
-        Analysis analysisWarnings = analysisService.getAnalysisFromUrlWarningsByFilter(analysisUrl);
-        URI metricsUri = metricsService.getMetricsUriFromAnAnalysisId(baseHubUri, analysisId);
-        Metrics metrics = metricsService.getMetricsFromUri(metricsUri);
-        URI proceduresUri = proceduresService.getProceduresUriFromAnAnalysisId(baseHubUri, analysisId);
-        Procedures procedures = proceduresService.getProceduresFromUri(proceduresUri);
-
-        Analysis analysisNewWarnings = analysisService.getAnalysisFromUrlWithNewWarnings(analysisUrl);
-        List<Pair<String, String>> conditionNamesAndResults = new ArrayList<>();
-        
-        Long lAnalysisId = null;
+        Long currentAnalysisId = null;
         try {
-            lAnalysisId = Long.valueOf(analysisId);
+            currentAnalysisId = Long.valueOf(currentAnalysisIdString);
         } catch(NumberFormatException e) {
-            LOGGER.log(Level.WARNING, "Unable to parse analysis id \"" + analysisId + "\" as long integer.");
+            LOGGER.log(Level.WARNING, "Unable to parse analysis id \"" + currentAnalysisIdString + "\" as long integer.");
         }
-        CodeSonarBuildActionDTO buildActionDTO = new CodeSonarBuildActionDTO(lAnalysisId, analysisWarnings, analysisNewWarnings, metrics, procedures, baseHubUri);
-        CodeSonarBuildAction csba = new CodeSonarBuildAction(buildActionDTO, run, expandedProjectName, analysisUrl);
         
-        csLogger.writeInfo("Finding previous builds for comparison");
+        if(currentAnalysisId == null) {
+            throw createError("No valid analysis id available");
+        }
         
-        CodeSonarBuildActionDTO compareDTO = null;
-        Run<?,?> previousSuccess = run.getPreviousSuccessfulBuild();
-        if(previousSuccess != null) {
-            csLogger.writeInfo("Found previous build to compare to ({0})", previousSuccess.getDisplayName());
-            List<CodeSonarBuildAction> actionsList = previousSuccess.getActions(CodeSonarBuildAction.class);
-            List<CodeSonarBuildAction> filteredActions = actionsList.stream()
-                    .filter(c -> c.getProjectName() != null && c.getProjectName().equals(expandedProjectName))
+        csLogger.writeInfo("Current analysis: analysisId {0} from hub \"{1}\"", String.valueOf(currentAnalysisId), baseHubUri);
+        CodeSonarHubAnalysisDataLoader currentDataLoader = new CodeSonarHubAnalysisDataLoader(httpService, hubInfo, baseHubUri, currentAnalysisId, getVisibilityFilterOrDefault(), getNewWarningsFilterOrDefault());
+
+        CodeSonarBuildActionDTO currentBuildActionDTO = new CodeSonarBuildActionDTO(currentAnalysisId, baseHubUri);
+        CodeSonarBuildAction csba = new CodeSonarBuildAction(currentBuildActionDTO, run, expandedProjectName);
+
+        List<Pair<String, String>> conditionNamesAndResults = new ArrayList<>();
+
+        // Search for a previous, successful build that has the same ProjectName and hub URI.
+        //  We match hub URI since generally it is not reliable to compare results between different hubs.
+        //  Also, even if we want to consider other hubs, we may still be unable to communicate with them
+        //   due to CA certificate and user credential differences.
+        csLogger.writeInfo("Finding previous builds for comparison...");
+        CodeSonarHubAnalysisDataLoader previousDataLoader = null;
+        Run<?,?> previousRun = run.getPreviousSuccessfulBuild();
+        while(previousRun != null 
+            && previousDataLoader == null
+        ) {
+            String previousBuildName = previousRun.getDisplayName();
+            csLogger.writeInfo("Checking previous successful build: \"{0}\"...", previousBuildName);
+            List<CodeSonarBuildAction> buildActions = previousRun.getActions(CodeSonarBuildAction.class);
+            List<CodeSonarBuildAction> projectBuildActions = buildActions.stream()
+                    .filter(c -> 
+                        c.getProjectName() != null
+                        && c.getProjectName().equals(expandedProjectName))
                     .collect(Collectors.toList());
-            if(filteredActions != null && !filteredActions.isEmpty() && filteredActions.size() < 2) {
-                csLogger.writeInfo("Found comparison data");
-                compareDTO = filteredActions.get(0).getBuildActionDTO();
+            if(projectBuildActions == null || projectBuildActions.isEmpty()) {
+                csLogger.writeInfo(
+                    "Ignoring build since it has no matching build data. build=\"{0}\", project=\"{1}\"",
+                    previousBuildName,
+                    expandedProjectName);
+            } else if (projectBuildActions.size() > 1) {
+                csLogger.writeInfo(
+                    "Ignoring build since it has too many matching build actions. build=\"{0}\", project=\"{1}\", matches={2}",
+                    previousBuildName,
+                    expandedProjectName,
+                    projectBuildActions.size());
+            } else {
+                CodeSonarBuildAction previousBuildAction = projectBuildActions.get(0);
+                CodeSonarBuildActionDTO previousDTO = previousBuildAction.getBuildActionDTO();
+                URI previousBuildBaseHubUri = previousDTO.getBaseHubUri();
+                if(!baseHubUri.equals(previousBuildBaseHubUri)) {
+                    // TODO: we could try signing-in to the previous build hub;
+                    //  if it works, then perhaps we can still compare results?
+                    csLogger.writeInfo(
+                        "Ignoring build since hub URI does not match current build. build=\"{0}\", hub=\"{1}\"",
+                        previousBuildName,
+                        previousBuildBaseHubUri);
+                } else {
+                    Long previousAnalysisId = previousDTO.getAnalysisId();
+                    previousDataLoader = new CodeSonarHubAnalysisDataLoader(
+                            httpService,
+                            hubInfo,
+                            previousBuildBaseHubUri,
+                            previousAnalysisId,
+                            getVisibilityFilterOrDefault(),
+                            getNewWarningsFilterOrDefault());
+                    csLogger.writeInfo(
+                        "Found previous build for comparison: build=\"{0}\", analysisId={1}, hub=\"{2}\"",
+                        previousBuildName,
+                        String.valueOf(previousAnalysisId),
+                        previousBuildBaseHubUri);
+                }
+            }
+            if (previousDataLoader == null) {
+                // Try an earlier run, maybe this hub has been used before:
+                Run<?,?> previousRun2 = previousRun.getPreviousSuccessfulBuild();
+                if (previousRun2 == null) {
+                    previousRun = null;
+                } else if (previousRun2.getId().equals(previousRun.getId())) {
+                    previousRun = null;
+                } else {
+                    previousRun = previousRun2;
+                }
             }
         }
-        
-        csLogger.writeInfo("Evaluating conditions");
+
+        if (previousDataLoader == null) {
+            csLogger.writeInfo("Could not find a previous build with compatible analysis for comparison.");
+        }
+
+        csLogger.writeInfo("Evaluating conditions...");
 
         for (Condition condition : conditions) {
-            Result validationResult = condition.validate(buildActionDTO, compareDTO, launcher, listener, csLogger);
+            Result validationResult = condition.validate(currentDataLoader, previousDataLoader, launcher, listener, csLogger);
             Pair<String, String> pair = Pair.with(condition.describeResult(), validationResult.toString());
             conditionNamesAndResults.add(pair);
             run.setResult(validationResult);
             csLogger.writeInfo("\"{0}\" marked the build as {1}", condition.getDescriptor().getDisplayName(), validationResult.toString());
         }
         
-        csLogger.writeInfo("Done evaluating conditions");
+        csLogger.writeInfo("Done evaluating conditions.");
         
         csba.getBuildActionDTO().setConditionNamesAndResults(conditionNamesAndResults);
         run.addAction(csba);
@@ -437,7 +478,7 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
             
         csLogger.writeInfo("Done performing codesonar actions");
     }
-
+    
     private void authenticate(Run<?, ?> run, URI baseHubUri, boolean supportsOpenAPI) throws CodeSonarPluginException {
         //If clientCertificateCredentials is null, then authenticate as anonymous
         if(clientCertificateCredentials != null) {
@@ -499,10 +540,6 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
         this.protocol = protocol;
     }
 
-    public void setAnalysisServiceFactory(AnalysisServiceFactory analysisServiceFactory) {
-        this.analysisServiceFactory = analysisServiceFactory;
-    }
-
     /**
      * @param hubAddress the hubAddress to set
      */
@@ -524,26 +561,10 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
         this.projectName = projectName;
     }
 
-    public void setXmlSerializationService(XmlSerializationService xmlSerializationService) {
-        this.xmlSerializationService = xmlSerializationService;
-    }
-
     public void setHttpService(HttpService httpService) {
         this.httpService = httpService;
     }
-
-    public void setAnalysisService(IAnalysisService analysisService) {
-        this.analysisService = analysisService;
-    }
-
-    public void setMetricsService(MetricsService metricsService) {
-        this.metricsService = metricsService;
-    }
-
-    public void setProceduresService(ProceduresService proceduresService) {
-        this.proceduresService = proceduresService;
-    }
-
+    
     public void setAuthenticationService(AuthenticationService authenticationService) {
         this.authenticationService = authenticationService;
     }
@@ -554,13 +575,6 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
 
     public void setCredentialId(String credentialId) {
         this.credentialId = credentialId;
-    }
-
-    public XmlSerializationService getXmlSerializationService() {
-        if (xmlSerializationService == null) {
-            xmlSerializationService = new XmlSerializationService();
-        }
-        return xmlSerializationService;
     }
 
     public HttpService getHttpService(@Nonnull Run<?, ?> run) throws CodeSonarPluginException {
@@ -579,7 +593,7 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
                         serverCertificates = cf.generateCertificates(f.getContent());
                         LOGGER.log(Level.INFO, "X509Certificate initialized");
                     } catch (IOException | CertificateException e ) {
-                        throw createError("Failed to create X509Certificate from Secret File Credential. %n{0}: {1}%nStack Trace: {2}", e.getClass().getName(), e.getMessage(), Throwables.getStackTraceAsString(e));
+                        throw createError("Failed to create X509Certificate from Secret File Credential.", e);
                     }
                 } else {
                     if(serverCertificateCredentials != null) {
@@ -605,12 +619,26 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
                         throw createError(CodeSonarLogger.formatMessage("Authentication using a certificate is only available while SSL is enabled."));
                     }
         
-                    LOGGER.log(Level.INFO, "Configuring HttpClient with certificate authentication");
+                    LOGGER.log(Level.INFO, "Configuring HttpClient with certificate authentication using \"Certificate\" credentials parameter kind");
                     
                     StandardCertificateCredentials c = (StandardCertificateCredentials) clientCertificateCredentials;
         
                     clientCertificateKeyStore = c.getKeyStore();
                     clientCertificatePassword = c.getPassword();
+                } else if(clientCertificateCredentials instanceof FileCredentials) {
+                    LOGGER.log(Level.INFO, "Configuring HttpClient with certificate authentication using \"Secret File\" credentials parameter kind");
+                    
+                    FileCredentials f = (FileCredentials) clientCertificateCredentials;
+                    try {
+                        //Specify an empty-password secret
+                        clientCertificatePassword = Secret.fromString("");
+                        KeyStore keystore = KeyStore.getInstance("PKCS12");
+                        keystore.load(f.getContent(),clientCertificatePassword.getPlainText().toCharArray());
+                        clientCertificateKeyStore = keystore;
+                        LOGGER.log(Level.INFO, "Client PKCS12 keystore successfully imported");
+                    } catch (KeyStoreException | NoSuchAlgorithmException | CertificateException | IOException e) {
+                        throw createError("Failed to create PKCS12 keystore from Secret File Credential.", e);
+                    }
                 }
             }
 
@@ -625,20 +653,6 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
         }
         return authenticationService;
     }
-
-    public MetricsService getMetricsService(@Nonnull Run<?, ?> run) throws CodeSonarPluginException {
-        if (metricsService == null) {
-            metricsService = new MetricsService(getHttpService(run), getXmlSerializationService());
-        }
-        return metricsService;
-    }
-
-    public ProceduresService getProceduresService(@Nonnull Run<?, ?> run) throws CodeSonarPluginException {
-        if (proceduresService == null) {
-            proceduresService = new ProceduresService(getHttpService(run), getXmlSerializationService());
-        }
-        return proceduresService;
-    }
     
     public HubInfoService getHubInfoService(@Nonnull Run<?, ?> run) throws CodeSonarPluginException {
         if (hubInfoService == null) {
@@ -647,13 +661,6 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
         return hubInfoService;
     }
     
-    public AnalysisServiceFactory getAnalysisServiceFactory() {
-        if (analysisServiceFactory == null) {
-            analysisServiceFactory = new AnalysisServiceFactory();
-        }
-        return analysisServiceFactory;
-    }
-
     @Symbol("codesonar")
     @Extension
     public static class DescriptorImpl extends BuildStepDescriptor<Publisher> {

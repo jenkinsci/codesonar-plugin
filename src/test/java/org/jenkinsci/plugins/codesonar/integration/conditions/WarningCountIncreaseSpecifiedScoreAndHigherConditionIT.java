@@ -41,9 +41,6 @@ public class WarningCountIncreaseSpecifiedScoreAndHigherConditionIT extends Cond
         CodeSonarPublisher codeSonarPublisher = new CodeSonarPublisher(conditions, "http", VALID_HUB_ADDRESS.toString(), VALID_PROJECT_NAME, "", IAnalysisService.VISIBILITY_FILTER_ALL_WARNINGS_DEFAULT);
         codeSonarPublisher.setNewWarningsFilter(IAnalysisService.VISIBILITY_FILTER_NEW_WARNINGS_DEFAULT);
         codeSonarPublisher.setProjectFile(VALID_CODESONAR_PROJECT_FILE);
-        codeSonarPublisher.setAnalysisService(mockedAnalysisService);
-        codeSonarPublisher.setMetricsService(mockedMetricsService);
-        codeSonarPublisher.setProceduresService(mockedProceduresService);
         codeSonarPublisher.setHttpService(mockedHttpService);
 
         FreeStyleProject project = jenkinsRule.createFreeStyleProject();
@@ -76,11 +73,7 @@ public class WarningCountIncreaseSpecifiedScoreAndHigherConditionIT extends Cond
         CodeSonarPublisher codeSonarPublisher = new CodeSonarPublisher(conditions, "http", VALID_HUB_ADDRESS.toString(), VALID_PROJECT_NAME, "", IAnalysisService.VISIBILITY_FILTER_ALL_WARNINGS_DEFAULT);
         codeSonarPublisher.setNewWarningsFilter(IAnalysisService.VISIBILITY_FILTER_NEW_WARNINGS_DEFAULT);
         codeSonarPublisher.setProjectFile(VALID_CODESONAR_PROJECT_FILE);
-        codeSonarPublisher.setAnalysisService(mockedAnalysisService);
-        codeSonarPublisher.setMetricsService(mockedMetricsService);
-        codeSonarPublisher.setProceduresService(mockedProceduresService);
         codeSonarPublisher.setAuthenticationService(mockedAuthenticationService);
-        codeSonarPublisher.setAnalysisServiceFactory(mockedAnalysisServiceFactory);
         codeSonarPublisher.setHttpService(mockedHttpService);
         
         FreeStyleProject project = jenkinsRule.createFreeStyleProject();
