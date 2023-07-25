@@ -2,11 +2,20 @@
 
 === Master ===
 
-=== Version 3.3.1 (April 2022) ===
+=== Version 3.4.0 (July 2023) ===
+
+* No longer store analysis detail data on Jenkins server.
+* Allow passwordless client certificate credentials as Secret file type.
+* Correct some references to "rank" and "score" of warnings in documentation.
+* Fix `warningCountIncreaseSpecifiedScoreAndHigher` condition to match documented description.
+* Make `warningCountIncreaseOverall` build summary data more consistent.
+* Make `cyclomaticComplexity` build summary data more specific in success case.
+
+=== Version 3.3.1 (April 2023) ===
 
 * Update job-dsl plugin dependency to address CVE-2019-1003034.
 
-=== Version 3.3.0 (April 2022) ===
+=== Version 3.3.0 (April 2023) ===
 
 * Add new `projectFile` parameter for CodeSonar project file path.
 * Add new `newWarningsFilter` parameter to allow greater control of new warning identification.
@@ -16,17 +25,17 @@
 * Fix and clean up some job-dsl code that was broken.
 * Clean up some internal logging and error handling code.
 
-=== Version 3.2.1 (February 2022) ===
+=== Version 3.2.1 (February 2023) ===
 
 * Revise documentation to correct errors and to focus on scripted pipeline.
 * Update CodeSonar display text and icon in various places.
 
-=== Version 3.2.0 (February 2022) ===
+=== Version 3.2.0 (February 2023) ===
 
 * Support CodeSonar 7.2 hubs.
 * Fix another bug with Server Certificate post-build parameter selection list.
 
-=== Version 3.1.1 (January 2022) ===
+=== Version 3.1.1 (January 2023) ===
 
 * Fix bug with Server Certificate post-build parameter selection list.
 * Update documentation and repository source URLs; README now visible on plugins.jenkins.io.
