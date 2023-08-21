@@ -41,6 +41,10 @@
     <f:entry field="projectFile" title="CodeSonar Project File">
         <f:textbox/>
     </f:entry>
+    
+    <f:entry field="baseAnalysis" title="Base Analysis">
+        <f:textbox/>
+    </f:entry>
 
     <f:section title="Configure build status conditions"> 
         <f:block>

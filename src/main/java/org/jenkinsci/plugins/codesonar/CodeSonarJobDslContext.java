@@ -25,6 +25,7 @@ public class CodeSonarJobDslContext implements Context {
     private String sslCertificateCredentialId;
     private String projectFile;
     private String newWarningsFilter;
+    private String baseAnalysis;
     
     public void socketTimeoutMS(int value) {
         socketTimeoutMS = value;
@@ -40,6 +41,10 @@ public class CodeSonarJobDslContext implements Context {
     
     public void newWarningsFilter(String value) {
         newWarningsFilter = value;
+    }
+    
+    public void baseAnalysis(String value) {
+        baseAnalysis = value;
     }
 
     public void cyclomaticComplexity(int max, boolean fail) {
@@ -130,5 +135,9 @@ public class CodeSonarJobDslContext implements Context {
 
     public String getNewWarningsFilter() {
         return newWarningsFilter;
+    }
+    
+    public String getBaseAnalysis() {
+        return baseAnalysis;
     }
 }

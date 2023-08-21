@@ -96,6 +96,7 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
     private String aid;
     private int socketTimeoutMS = -1;
     private String projectFile;
+    private String baseAnalysis;
 
     private HttpService httpService = null;
     private AuthenticationService authenticationService = null;
@@ -184,6 +185,15 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
         this.projectFile = projectFile;
     }
     
+    public String getBaseAnalysis() {
+        return baseAnalysis;
+    }
+
+    @DataBoundSetter
+    public void setBaseAnalysis(String baseAnalysis) {
+        this.baseAnalysis = baseAnalysis;
+    }
+
     public String getNewWarningsFilter() {
         return newWarningsFilter;
     }
@@ -386,78 +396,100 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
         CodeSonarBuildAction csba = new CodeSonarBuildAction(currentBuildActionDTO, run, expandedProjectName);
 
         List<Pair<String, String>> conditionNamesAndResults = new ArrayList<>();
-
-        // Search for a previous, successful build that has the same ProjectName and hub URI.
-        //  We match hub URI since generally it is not reliable to compare results between different hubs.
-        //  Also, even if we want to consider other hubs, we may still be unable to communicate with them
-        //   due to CA certificate and user credential differences.
-        csLogger.writeInfo("Finding previous builds for comparison...");
+        
         CodeSonarHubAnalysisDataLoader previousDataLoader = null;
-        Run<?,?> previousRun = run.getPreviousSuccessfulBuild();
-        while(previousRun != null 
-            && previousDataLoader == null
-        ) {
-            String previousBuildName = previousRun.getDisplayName();
-            csLogger.writeInfo("Checking previous successful build: \"{0}\"...", previousBuildName);
-            List<CodeSonarBuildAction> buildActions = previousRun.getActions(CodeSonarBuildAction.class);
-            List<CodeSonarBuildAction> projectBuildActions = buildActions.stream()
-                    .filter(c -> 
-                        c.getProjectName() != null
-                        && c.getProjectName().equals(expandedProjectName))
-                    .collect(Collectors.toList());
-            if(projectBuildActions == null || projectBuildActions.isEmpty()) {
-                csLogger.writeInfo(
-                    "Ignoring build since it has no matching build data. build=\"{0}\", project=\"{1}\"",
-                    previousBuildName,
-                    expandedProjectName);
-            } else if (projectBuildActions.size() > 1) {
-                csLogger.writeInfo(
-                    "Ignoring build since it has too many matching build actions. build=\"{0}\", project=\"{1}\", matches={2}",
-                    previousBuildName,
-                    expandedProjectName,
-                    projectBuildActions.size());
-            } else {
-                CodeSonarBuildAction previousBuildAction = projectBuildActions.get(0);
-                CodeSonarBuildActionDTO previousDTO = previousBuildAction.getBuildActionDTO();
-                URI previousBuildBaseHubUri = previousDTO.getBaseHubUri();
-                if(!baseHubUri.equals(previousBuildBaseHubUri)) {
-                    // TODO: we could try signing-in to the previous build hub;
-                    //  if it works, then perhaps we can still compare results?
+        // If specified, use parameter "base Analysis" as the analysis being used for comparison
+        if(StringUtils.isNotBlank(baseAnalysis)) {
+            Long baseAnalysisId = null;
+            try {
+                baseAnalysisId = Long.valueOf(baseAnalysis);
+            } catch(NumberFormatException e) {
+                LOGGER.log(Level.WARNING, "Unable to parse base analysis \"" + baseAnalysis + "\" as long integer.");
+            }
+            
+            previousDataLoader = new CodeSonarHubAnalysisDataLoader(
+                    httpService,
+                    hubInfo,
+                    baseHubUri,
+                    baseAnalysisId,
+                    getVisibilityFilterOrDefault(),
+                    getNewWarningsFilterOrDefault());
+            csLogger.writeInfo(
+                "Using analysis {0} on hub {1} for comparison",
+                String.valueOf(baseAnalysisId),
+                baseHubUri);
+        } else {
+            // Search for a previous, successful build that has the same ProjectName and hub URI.
+            //  We match hub URI since generally it is not reliable to compare results between different hubs.
+            //  Also, even if we want to consider other hubs, we may still be unable to communicate with them
+            //   due to CA certificate and user credential differences.
+            csLogger.writeInfo("Finding previous builds for comparison...");
+            Run<?,?> previousRun = run.getPreviousSuccessfulBuild();
+            while(previousRun != null 
+                && previousDataLoader == null
+            ) {
+                String previousBuildName = previousRun.getDisplayName();
+                csLogger.writeInfo("Checking previous successful build: \"{0}\"...", previousBuildName);
+                List<CodeSonarBuildAction> buildActions = previousRun.getActions(CodeSonarBuildAction.class);
+                List<CodeSonarBuildAction> projectBuildActions = buildActions.stream()
+                        .filter(c -> 
+                            c.getProjectName() != null
+                            && c.getProjectName().equals(expandedProjectName))
+                        .collect(Collectors.toList());
+                if(projectBuildActions == null || projectBuildActions.isEmpty()) {
                     csLogger.writeInfo(
-                        "Ignoring build since hub URI does not match current build. build=\"{0}\", hub=\"{1}\"",
+                        "Ignoring build since it has no matching build data. build=\"{0}\", project=\"{1}\"",
                         previousBuildName,
-                        previousBuildBaseHubUri);
+                        expandedProjectName);
+                } else if (projectBuildActions.size() > 1) {
+                    csLogger.writeInfo(
+                        "Ignoring build since it has too many matching build actions. build=\"{0}\", project=\"{1}\", matches={2}",
+                        previousBuildName,
+                        expandedProjectName,
+                        projectBuildActions.size());
                 } else {
-                    Long previousAnalysisId = previousDTO.getAnalysisId();
-                    previousDataLoader = new CodeSonarHubAnalysisDataLoader(
-                            httpService,
-                            hubInfo,
-                            previousBuildBaseHubUri,
-                            previousAnalysisId,
-                            getVisibilityFilterOrDefault(),
-                            getNewWarningsFilterOrDefault());
-                    csLogger.writeInfo(
-                        "Found previous build for comparison: build=\"{0}\", analysisId={1}, hub=\"{2}\"",
-                        previousBuildName,
-                        String.valueOf(previousAnalysisId),
-                        previousBuildBaseHubUri);
+                    CodeSonarBuildAction previousBuildAction = projectBuildActions.get(0);
+                    CodeSonarBuildActionDTO previousDTO = previousBuildAction.getBuildActionDTO();
+                    URI previousBuildBaseHubUri = previousDTO.getBaseHubUri();
+                    if(!baseHubUri.equals(previousBuildBaseHubUri)) {
+                        // TODO: we could try signing-in to the previous build hub;
+                        //  if it works, then perhaps we can still compare results?
+                        csLogger.writeInfo(
+                            "Ignoring build since hub URI does not match current build. build=\"{0}\", hub=\"{1}\"",
+                            previousBuildName,
+                            previousBuildBaseHubUri);
+                    } else {
+                        Long previousAnalysisId = previousDTO.getAnalysisId();
+                        previousDataLoader = new CodeSonarHubAnalysisDataLoader(
+                                httpService,
+                                hubInfo,
+                                previousBuildBaseHubUri,
+                                previousAnalysisId,
+                                getVisibilityFilterOrDefault(),
+                                getNewWarningsFilterOrDefault());
+                        csLogger.writeInfo(
+                            "Found previous build for comparison: build=\"{0}\", analysisId={1}, hub=\"{2}\"",
+                            previousBuildName,
+                            String.valueOf(previousAnalysisId),
+                            previousBuildBaseHubUri);
+                    }
+                }
+                if (previousDataLoader == null) {
+                    // Try an earlier run, maybe this hub has been used before:
+                    Run<?,?> previousRun2 = previousRun.getPreviousSuccessfulBuild();
+                    if (previousRun2 == null) {
+                        previousRun = null;
+                    } else if (previousRun2.getId().equals(previousRun.getId())) {
+                        previousRun = null;
+                    } else {
+                        previousRun = previousRun2;
+                    }
                 }
             }
+    
             if (previousDataLoader == null) {
-                // Try an earlier run, maybe this hub has been used before:
-                Run<?,?> previousRun2 = previousRun.getPreviousSuccessfulBuild();
-                if (previousRun2 == null) {
-                    previousRun = null;
-                } else if (previousRun2.getId().equals(previousRun.getId())) {
-                    previousRun = null;
-                } else {
-                    previousRun = previousRun2;
-                }
+                csLogger.writeInfo("Could not find a previous build with compatible analysis for comparison.");
             }
-        }
-
-        if (previousDataLoader == null) {
-            csLogger.writeInfo("Could not find a previous build with compatible analysis for comparison.");
         }
 
         csLogger.writeInfo("Evaluating conditions...");
