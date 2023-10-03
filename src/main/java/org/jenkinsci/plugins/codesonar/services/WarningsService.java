@@ -1,6 +1,7 @@
 package org.jenkinsci.plugins.codesonar.services;
 
 import java.io.InputStreamReader;
+import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
@@ -31,7 +32,13 @@ public class WarningsService extends AbstractService {
         this.strictQueryParameters = strictQueryParameters;
     }
     
-    public long getNumberOfWarningsWithScoreAboveThreshold(URI baseHubUri, long analysisId, int threshold) throws CodeSonarPluginException {
+    public long getNumberOfWarningsWithScoreAboveThreshold(
+            URI baseHubUri,
+            long analysisId,
+            int threshold,
+            String visibilityFilter)
+        throws CodeSonarPluginException {
+
         //Configure search parameters in order to extract the desired data
         SearchConfigData searchConfig = new SearchConfigData();
         //Avoid returning rows, only rows counter is needed.
@@ -48,10 +55,12 @@ public class WarningsService extends AbstractService {
         URIBuilder uriBuilder = new URIBuilder(baseHubUri);
         uriBuilder.setPath("search.json");
         uriBuilder.addParameter("scope", String.format("aid:%d", analysisId));
-        uriBuilder.addParameter("filter", Utils.formatParameter("all", strictQueryParameters));
+        if (visibilityFilter != null && visibilityFilter.length() > 0) {
+            uriBuilder.addParameter("filter", Utils.formatParameter(visibilityFilter, strictQueryParameters));
+        }
         uriBuilder.addParameter("swarnings_json", searchConfigAsJson);
         uriBuilder.addParameter("query", String.format("score>%d", threshold));
-        
+
         URI requestUri = null;
         try {
             requestUri = uriBuilder.build();
@@ -59,22 +68,38 @@ public class WarningsService extends AbstractService {
             throw new CodeSonarRequestURISyntaxException(e);
         }
         String requestUriString = requestUri.toASCIIString();
-        
+
+        CodeSonarWarningSearchData warningSearchData = null;
         HttpServiceResponse response = httpService.getResponseFromUrl(requestUriString);
-        
-        if(response.getStatusCode() != 200) {
-            throw new CodeSonarHubCommunicationException(requestUriString, response.getStatusCode(), response.getReasonPhrase(), readResponseContent(response, requestUriString));
+        try {
+            if(response.getStatusCode() != 200) {
+                throw new CodeSonarHubCommunicationException(
+                        requestUriString,
+                        response.getStatusCode(),
+                        response.getReasonPhrase(),
+                        readResponseContent(response, requestUriString));
+            }
+
+            Gson gsonDeserializer = new Gson();
+            try {
+                warningSearchData = gsonDeserializer.fromJson(
+                        new InputStreamReader(response.getContentInputStream(), StandardCharsets.UTF_8),
+                        CodeSonarWarningSearchData.class);
+                LOGGER.log(Level.INFO, "response warningSearchData={0}", warningSearchData.toString());
+            } catch(JsonSyntaxException e) {
+                throw new CodeSonarJsonSyntaxException(e);
+            }
+        } finally {
+            try {
+                response.close();
+            } catch (IOException ex) {
+                // Ignore this exception if we are already throwing.
+                if (warningSearchData == null) {
+                    throw new CodeSonarPluginException("Failed to close HTTP response", ex);
+                }
+            }
         }
 
-        Gson gsonDeserializer = new Gson();
-        CodeSonarWarningSearchData warningSearchData = null;
-        try {
-            warningSearchData = gsonDeserializer.fromJson(new InputStreamReader(response.getContentInputStream(), StandardCharsets.UTF_8), CodeSonarWarningSearchData.class);
-            LOGGER.log(Level.INFO, "response warningSearchData={0}", warningSearchData.toString());
-        } catch(JsonSyntaxException e) {
-            throw new CodeSonarJsonSyntaxException(e);
-        }
-        
         return warningSearchData.getCount();
     }
 

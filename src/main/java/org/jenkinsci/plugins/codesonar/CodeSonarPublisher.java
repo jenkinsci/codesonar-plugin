@@ -354,6 +354,7 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
         csLogger.writeInfo("Using hub URI: {0}", baseHubUri);
 
         CodeSonarHubInfo hubInfo = hubInfoService.fetchHubInfo(baseHubUri);
+        httpService.setHubInfo(hubInfo);
         LOGGER.log(Level.FINE, "hub version: {0}", hubInfo.getVersion());
         
         authenticate(run, baseHubUri, hubInfo.isOpenAPISupported());

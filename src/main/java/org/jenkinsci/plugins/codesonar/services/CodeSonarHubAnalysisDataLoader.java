@@ -201,7 +201,11 @@ public class CodeSonarHubAnalysisDataLoader {
         if(hubInfo.isJsonGridConfigSupported()) {
             if(numberOfWarningsAboveThreshold.get(threshold) == null) {
                 LOGGER.log(Level.INFO, "NumberOfWarningsAboveThreshold not already set for threshold {0}, loading from corresponding service", threshold);
-                long numberOfWarnings = services.getWarningsService().getNumberOfWarningsWithScoreAboveThreshold(getBaseHubUri(), getAnalysisId(), threshold);
+                long numberOfWarnings = services.getWarningsService().getNumberOfWarningsWithScoreAboveThreshold(
+                        getBaseHubUri(),
+                        getAnalysisId(),
+                        threshold,
+                        visibilityFilter);
                 numberOfWarningsAboveThreshold.put(threshold, numberOfWarnings);
                 LOGGER.log(Level.INFO, "NumberOfWarningsAboveThreshold new value {0}", numberOfWarnings);
             }
