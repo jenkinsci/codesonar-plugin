@@ -99,8 +99,7 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
 
     private HttpService httpService = null;
     private AuthenticationService authenticationService = null;
-    private HubInfoService hubInfoService = null;
-    
+
     private List<Condition> conditions;
 
     private String credentialId;
@@ -214,16 +213,10 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
         return (DescriptorImpl) super.getDescriptor();
     }
 
-    /**
-     * @return the hubAddress
-     */
     public String getHubAddress() {
         return hubAddress;
     }
 
-    /**
-     * @return the protocol
-     */
     public String getProtocol() {
         return protocol;
     }
@@ -232,33 +225,16 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
         this.protocol = protocol;
     }
 
-    /**
-     * @param hubAddress the hubAddress to set
-     */
     public void setHubAddress(String hubAddress) {
         this.hubAddress = hubAddress;
     }
 
-    /**
-     * @return the projectLocation
-     */
     public String getProjectName() {
         return projectName;
     }
 
-    /**
-     * @param projectName the projectLocation to set
-     */
     public void setProjectName(String projectName) {
         this.projectName = projectName;
-    }
-
-    public void setHttpService(HttpService httpService) {
-        this.httpService = httpService;
-    }
-    
-    public void setAuthenticationService(AuthenticationService authenticationService) {
-        this.authenticationService = authenticationService;
     }
 
     public String getCredentialId() {
@@ -267,6 +243,32 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
 
     public void setCredentialId(String credentialId) {
         this.credentialId = credentialId;
+    }
+
+    private HttpService getHttpService(@Nonnull Run<?,?> run) throws CodeSonarPluginException {
+        if (this.httpService == null)
+        {
+            this.httpService = createHttpService(run);
+        }
+        return this.httpService;
+    }
+
+    /** Used by unit tests. */
+    public void setHttpService(HttpService httpService) {
+        this.httpService = httpService;
+    }
+
+    private AuthenticationService getAuthenticationService(@Nonnull Run<?,?> run) throws CodeSonarPluginException {
+        if (this.authenticationService == null) {
+            this.authenticationService = new AuthenticationService(
+                getHttpService(run));
+        }
+        return this.authenticationService;
+    }
+
+    /** Used by unit tests. */
+    public void setAuthenticationService(AuthenticationService authenticationService) {
+        this.authenticationService = authenticationService;
     }
 
     private StandardCredentials lookupCredentials(String credentialId, Run<?,?> run) {
@@ -416,10 +418,6 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
             @Nonnull TaskListener listener)
             throws InterruptedException, IOException
     {
-        httpService = getHttpService(run);
-        authenticationService = getAuthenticationService(run);
-        hubInfoService = getHubInfoService(run);
-
         String expandedHubAddress = run.getEnvironment(listener).expand(Util.fixNull(hubAddress));
         String expandedProjectName = run.getEnvironment(listener).expand(Util.fixNull(projectName));
         LOGGER.log(Level.INFO, "projectName: {0} expandedProjectName {1}", new String[] {projectName, expandedProjectName});
@@ -439,11 +437,16 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
         URI baseHubUri = URI.create(String.format("%s://%s", getProtocol(), expandedHubAddress));
         csLogger.writeInfo("Using hub URI: {0}", baseHubUri);
 
+        HttpService httpService = getHttpService(run);
+        HubInfoService hubInfoService = new HubInfoService(httpService);
         CodeSonarHubInfo hubInfo = hubInfoService.fetchHubInfo(baseHubUri);
+        // Set hubInfo on httpService so that later users of httpService can get it.
+        //  TODO: It would be better if httpService could fetch hubInfo this itself.
         httpService.setHubInfo(hubInfo);
-        LOGGER.log(Level.FINE, "hub version: {0}", hubInfo.getVersion());
-        
-        authenticate(run, baseHubUri, hubInfo.isOpenAPISupported());
+        LOGGER.log(Level.INFO, "hub version: {0}", hubInfo.getVersion());
+
+        AuthenticationService authenticationService = getAuthenticationService(run);
+        authenticate(authenticationService, baseHubUri, csLogger, run);
 
         String currentAnalysisIdString = null;
         if(StringUtils.isBlank(aid)) {
@@ -566,22 +569,27 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
         csLogger.writeInfo("Done performing codesonar actions");
     }
     
-    private void authenticate(Run<?, ?> run, URI baseHubUri, boolean supportsOpenAPI) throws CodeSonarPluginException {
+    private void authenticate(
+                AuthenticationService authenticationService,
+                URI baseHubUri,
+                CodeSonarLogger csLogger,
+                Run<?, ?> run)
+            throws CodeSonarPluginException {
         String hubUserCredentialId = getCredentialId();
         StandardCredentials hubUserCredentials = lookupCredentials(hubUserCredentialId, run);
         if (hubUserCredentials == null) {
-            LOGGER.log(Level.INFO, "Authenticating as anonymous");
+            csLogger.writeInfo("Using hub URI: {0}", baseHubUri);
         } else if (hubUserCredentials instanceof StandardUsernamePasswordCredentials) {
-            LOGGER.log(Level.INFO, "Authenticating using username and password");
-            UsernamePasswordCredentials c = (UsernamePasswordCredentials) hubUserCredentials;
+            csLogger.writeInfo("Authenticating using username and password");
+            UsernamePasswordCredentials userPassCredentials = (UsernamePasswordCredentials) hubUserCredentials;
 
-            authenticationService.authenticate(baseHubUri,
-                    supportsOpenAPI,
-                    c.getUsername(),
-                    c.getPassword().getPlainText());
+            authenticationService.authenticate(
+                    baseHubUri,
+                    userPassCredentials.getUsername(),
+                    userPassCredentials.getPassword().getPlainText());
         } else if (hubUserCredentials instanceof StandardCertificateCredentials
                 || hubUserCredentials instanceof FileCredentials) {
-            LOGGER.log(Level.INFO, "Authenticating using SSL certificate");
+            csLogger.writeInfo("Authenticating using client certificate");
             if (protocol.equals("http")) {
                 throw createError("Authentication using a certificate is only available when using HTTPS protocol.");
             }
@@ -589,101 +597,79 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
             // Client certificate credentials must be applied to the authenticationService
             //  via the HttpService during creation;
             //  so assume that the credentials are already applied:
-            authenticationService.authenticate(baseHubUri,
-                    supportsOpenAPI);
+            authenticationService.authenticate(baseHubUri);
         } else {
-            LOGGER.log(Level.WARNING,
-                "Unrecognized credential type for credential \"{0}\": {1}",
-                new String[] {
+            throw createError(
+                    "Unrecognized credential type for credential \"{0}\": {1}",
                     hubUserCredentialId,
-                    hubUserCredentials.getClass().toString()});
-            throw createError("Unrecognized credential type for credential \"{0}\"", hubUserCredentialId);
+                    hubUserCredentials.getClass().getName());
         }
     }
 
-    public HttpService getHttpService(@Nonnull Run<?, ?> run) throws CodeSonarPluginException {
-        if (httpService == null) {
-            Collection<? extends Certificate> serverCertificates = null;
-            if (StringUtils.isNotEmpty(serverCertificateCredentialId)) {
-                serverCertificateCredentials = lookupCredentials(
-                    getServerCertificateCredentialId(),
-                    run);
-                if (serverCertificateCredentials instanceof FileCredentials) {
-                    LOGGER.log(Level.INFO, "Found FileCredentials provided as Hub HTTPS certificate");
-                    FileCredentials f = (FileCredentials) serverCertificateCredentials;
-                    try {
-                        CertificateFactory cf = CertificateFactory.getInstance("X.509");
-                        serverCertificates = cf.generateCertificates(f.getContent());
-                        LOGGER.log(Level.INFO, "X509Certificate initialized");
-                    } catch (IOException | CertificateException e ) {
-                        throw createError("Failed to create X509Certificate from Secret File Credential.", e);
-                    }
-                } else {
-                    if (serverCertificateCredentials != null) {
-                        LOGGER.log(Level.INFO, "Found {0} provided as Hub HTTPS certificate", serverCertificateCredentials.getClass().getName());
-                        throw createError("The Jenkins Credentials provided as Hub HTTPS certificate is of type {0}.%nPlease provide a credential of type FileCredentials", serverCertificateCredentials.getClass().getName());
-                    }
-                    LOGGER.log(Level.INFO, "Credentials with id \"{0}\" not found", getServerCertificateCredentialId());
-                    throw createError(CodeSonarLogger.formatMessage("Credentials with id \"{0}\" not found", getServerCertificateCredentialId()));
+    private HttpService createHttpService(@Nonnull Run<?, ?> run) throws CodeSonarPluginException {
+        Collection<? extends Certificate> serverCertificates = null;
+        if (StringUtils.isNotEmpty(serverCertificateCredentialId)) {
+            serverCertificateCredentials = lookupCredentials(
+                getServerCertificateCredentialId(),
+                run);
+            if (serverCertificateCredentials == null) {
+                throw createError(CodeSonarLogger.formatMessage("Credentials with id \"{0}\" not found", getServerCertificateCredentialId()));
+            }
+            else if (serverCertificateCredentials instanceof FileCredentials) {
+                LOGGER.log(Level.INFO, "Found FileCredentials provided as Hub HTTPS certificate");
+                FileCredentials f = (FileCredentials) serverCertificateCredentials;
+                try {
+                    CertificateFactory cf = CertificateFactory.getInstance("X.509");
+                    serverCertificates = cf.generateCertificates(f.getContent());
+                    LOGGER.log(Level.INFO, "X509Certificate initialized");
+                } catch (IOException | CertificateException e ) {
+                    throw createError("Failed to create X509Certificate from Secret File Credential.", e);
+                }
+            } else {
+                throw createError("Invalid credential type provided for hub HTTPS certificate: {0}", serverCertificateCredentials.getClass().getName());
+            }
+        }
+        
+        KeyStore clientCertificateKeyStore = null;
+        Secret clientCertificatePassword = null;
+        String hubUserCredentialId = getCredentialId();
+        StandardCredentials hubUserCredentials = lookupCredentials(hubUserCredentialId, run);
+        if (StringUtils.isNotBlank(hubUserCredentialId) && hubUserCredentials == null) {
+            throw createError("Hub user credential ID not found: \"{0}\"", hubUserCredentialId);
+        } else if (hubUserCredentials != null) {
+            if (hubUserCredentials instanceof StandardCertificateCredentials) {
+                if (protocol.equals("http")) {
+                    throw createError("Authentication using a certificate is only available when using HTTPS protocol.");
+                }
+                LOGGER.log(Level.INFO, "Configuring HttpClient with certificate authentication using \"Certificate\" credentials parameter kind");
+                StandardCertificateCredentials certificateCredentials = (StandardCertificateCredentials) hubUserCredentials;
+                clientCertificateKeyStore = certificateCredentials.getKeyStore();
+                clientCertificatePassword = certificateCredentials.getPassword();
+            } else if(hubUserCredentials instanceof FileCredentials) {
+                LOGGER.log(Level.INFO, "Configuring HttpClient with certificate authentication using \"Secret File\" credentials parameter kind");
+                FileCredentials certificateFileCredentials = (FileCredentials) hubUserCredentials;
+                try {
+                    //Specify an empty-password secret
+                    clientCertificatePassword = Secret.fromString("");
+                    KeyStore keystore = KeyStore.getInstance("PKCS12");
+                    keystore.load(
+                        certificateFileCredentials.getContent(),
+                        clientCertificatePassword.getPlainText().toCharArray());
+                    clientCertificateKeyStore = keystore;
+                    LOGGER.log(Level.INFO, "Client PKCS12 keystore successfully imported");
+                } catch (KeyStoreException | NoSuchAlgorithmException | CertificateException | IOException e) {
+                    throw createError("Failed to create PKCS12 keystore from Secret File Credential.", e);
                 }
             }
-            
-            KeyStore clientCertificateKeyStore = null;
-            Secret clientCertificatePassword = null;
-            String hubUserCredentialId = getCredentialId();
-            StandardCredentials hubUserCredentials = lookupCredentials(hubUserCredentialId, run);
-            if (StringUtils.isNotBlank(hubUserCredentialId) && hubUserCredentials == null) {
-                throw createError("Hub user credential ID not found: \"{0}\"", hubUserCredentialId);
-            } else if (hubUserCredentials != null) {
-                if (hubUserCredentials instanceof StandardCertificateCredentials) {
-                    if (protocol.equals("http")) {
-                        throw createError("Authentication using a certificate is only available when using HTTPS protocol.");
-                    }
-                    LOGGER.log(Level.INFO, "Configuring HttpClient with certificate authentication using \"Certificate\" credentials parameter kind");
-                    StandardCertificateCredentials certificateCredentials = (StandardCertificateCredentials) hubUserCredentials;
-                    clientCertificateKeyStore = certificateCredentials.getKeyStore();
-                    clientCertificatePassword = certificateCredentials.getPassword();
-                } else if(hubUserCredentials instanceof FileCredentials) {
-                    LOGGER.log(Level.INFO, "Configuring HttpClient with certificate authentication using \"Secret File\" credentials parameter kind");
-                    FileCredentials certificateFileCredentials = (FileCredentials) hubUserCredentials;
-                    try {
-                        //Specify an empty-password secret
-                        clientCertificatePassword = Secret.fromString("");
-                        KeyStore keystore = KeyStore.getInstance("PKCS12");
-                        keystore.load(
-                            certificateFileCredentials.getContent(),
-                            clientCertificatePassword.getPlainText().toCharArray());
-                        clientCertificateKeyStore = keystore;
-                        LOGGER.log(Level.INFO, "Client PKCS12 keystore successfully imported");
-                    } catch (KeyStoreException | NoSuchAlgorithmException | CertificateException | IOException e) {
-                        throw createError("Failed to create PKCS12 keystore from Secret File Credential.", e);
-                    }
-                }
-            }
-
-            httpService = new HttpService(
-                    serverCertificates,
-                    clientCertificateKeyStore,
-                    clientCertificatePassword,
-                    getSocketTimeoutMS());
         }
-        return httpService;
+
+        return new HttpService(
+                serverCertificates,
+                clientCertificateKeyStore,
+                clientCertificatePassword,
+                getSocketTimeoutMS());
     }
 
-    public AuthenticationService getAuthenticationService(@Nonnull Run<?, ?> run) throws CodeSonarPluginException {
-        if (authenticationService == null) {
-            authenticationService = new AuthenticationService(getHttpService(run));
-        }
-        return authenticationService;
-    }
-    
-    public HubInfoService getHubInfoService(@Nonnull Run<?, ?> run) throws CodeSonarPluginException {
-        if (hubInfoService == null) {
-            hubInfoService = new HubInfoService(getHttpService(run));
-        }
-        return hubInfoService;
-    }
-    
     @Symbol("codesonar")
     @Extension
     public static class DescriptorImpl extends BuildStepDescriptor<Publisher> {
