@@ -27,31 +27,37 @@
             <email>mads.nielsen@eficode.com</email>
         </developer>
         <developer>
-            <id>kryptag</id>
-            <name>Florent Haxha</name>
-            <email>flo@praqma.net</email>
-        </developer>
-        <developer>
-            <id>atombrella</id>
-            <name>Mads Jensen</name>
-            <email>mads.jensen@eficode.com</email>
-        </developer>
-        <developer>
-            <id>madsbaggesen</id>
-            <name>Mads Baggesen</name>
-            <email>mads.baggesen@eficode.com</email>
-        </developer>
-        <developer>
             <id>gt_dbechtold</id>
             <name>dbechtold</name>
-            <email>dbechtold@grammatech.com</email>
-        </developer>
-        <developer>
-            <id>aseno-grammatech</id>
-            <name>aseno</name>
-            <email>aseno@grammatech.com</email>
+            <organization>CodeSecure</organization>
+            <organizationUrl>https://www.codesecure.com</organizationUrl>
+            <email>dbechtold@codesecure.com</email>
         </developer>
     </developers>
+    
+    <contributors>
+        <contributor>
+            <name>Florent Haxha</name>
+            <properties>
+                <id>kryptag</id>
+            </properties>
+        </contributor>
+        <contributor>
+            <name>Mads Jensen</name>
+            <properties>
+                <id>atombrella</id>
+            </properties>
+        </contributor>
+        <contributor>
+            <name>Mads Baggesen</name>
+            <properties>
+                <id>madsbaggesen</id>
+            </properties>
+        </contributor>
+        <contributor>
+            <name>aseno</name>
+        </contributor>
+    </contributors>
 
     <scm>
         <connection>scm:git:ssh://github.com/jenkinsci/codesonar-plugin.git</connection>
