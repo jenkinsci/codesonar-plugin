@@ -398,15 +398,20 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
         List<Pair<String, String>> conditionNamesAndResults = new ArrayList<>();
         
         CodeSonarHubAnalysisDataLoader previousDataLoader = null;
-        // If specified, use parameter "base Analysis" as the analysis being used for comparison
-        if(StringUtils.isNotBlank(baseAnalysis)) {
+        if (StringUtils.isBlank(baseAnalysis)) {
+            previousDataLoader = findPreviousBuildAnalysisDataLoader(
+                    run,
+                    expandedProjectName,
+                    csLogger,
+                    baseHubUri,
+                    hubInfo);
+        } else {
             Long baseAnalysisId = null;
             try {
                 baseAnalysisId = Long.valueOf(baseAnalysis);
             } catch(NumberFormatException e) {
-                LOGGER.log(Level.WARNING, "Unable to parse base analysis \"" + baseAnalysis + "\" as long integer.");
+                throw createError("Unable to parse base analysis ID", e);
             }
-            
             previousDataLoader = new CodeSonarHubAnalysisDataLoader(
                     httpService,
                     hubInfo,
@@ -418,8 +423,6 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
                 "Using analysis {0} on hub {1} for comparison",
                 String.valueOf(baseAnalysisId),
                 baseHubUri);
-        } else {
-            previousDataLoader = searchForPreviousSuccessfulBuild(run, expandedProjectName, csLogger, baseHubUri, hubInfo, previousDataLoader);
         }
 
         csLogger.writeInfo("Evaluating conditions...");
@@ -441,9 +444,13 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
         csLogger.writeInfo("Done performing codesonar actions");
     }
 
-    private CodeSonarHubAnalysisDataLoader searchForPreviousSuccessfulBuild(Run<?, ?> run, String expandedProjectName,
-            CodeSonarLogger csLogger, URI baseHubUri, CodeSonarHubInfo hubInfo,
-            CodeSonarHubAnalysisDataLoader previousDataLoader) {
+    private CodeSonarHubAnalysisDataLoader findPreviousBuildAnalysisDataLoader(
+                Run<?, ?> run,
+                String expandedProjectName,
+                CodeSonarLogger csLogger,
+                URI baseHubUri,
+                CodeSonarHubInfo hubInfo) {
+        CodeSonarHubAnalysisDataLoader previousDataLoader = null;
         // Search for a previous, successful build that has the same ProjectName and hub URI.
         //  We match hub URI since generally it is not reliable to compare results between different hubs.
         //  Also, even if we want to consider other hubs, we may still be unable to communicate with them
