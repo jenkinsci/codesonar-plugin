@@ -14,6 +14,7 @@ import org.jenkinsci.plugins.codesonar.CodeSonarPluginException;
 public class HttpServiceRequest {
     private URI uri;
     private String uriString;
+    private String httpMethod = "GET";
     private Collection<Map.Entry<String,String>> headers;
 
     public HttpServiceRequest(URI uri) throws CodeSonarPluginException {
@@ -44,6 +45,15 @@ public class HttpServiceRequest {
 
     public URI getURI() {
         return this.uri;
+    }
+
+    public String getHTTPMethod() {
+        return this.httpMethod;
+    }
+
+    public HttpServiceRequest setHTTPMethod(String httpMethod) {
+        this.httpMethod = httpMethod;
+        return this;
     }
 
     public Collection<Map.Entry<String,String>> getHeaderCollection() {

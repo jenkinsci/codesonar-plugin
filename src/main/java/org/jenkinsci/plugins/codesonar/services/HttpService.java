@@ -99,11 +99,15 @@ public class HttpService {
         executor = Executor.newInstance(httpClient).use(httpCookieStore);
         LOGGER.log(Level.INFO, "HttpService initialized");
     }
-    
+
     private CodeSonarPluginException createError(String msg, Throwable cause, Object...args) {
         return new CodeSonarPluginException(msg, cause, args);
     }
     
+    private CodeSonarPluginException createError(String msg, Object...args) {
+        return new CodeSonarPluginException(msg, args);
+    }
+
     private CodeSonarPluginException createError(String msg, Throwable cause) {
         return new CodeSonarPluginException(msg, cause);
     }
@@ -144,8 +148,30 @@ public class HttpService {
         if (!openAPISupported && !url.contains("response_try_plaintext")) {
             url = (url.contains("?")) ? url + "&response_try_plaintext=1" : url + "?response_try_plaintext=1";
         }
-        LOGGER.log(Level.INFO, "HTTP GET {0}", url);
-        Request req = Request.Get(url);
+        String httpMethod = request.getHTTPMethod();
+        Request req = null;
+        if (httpMethod == null || httpMethod.equals("")) {
+            httpMethod = "GET";
+        }
+        if (httpMethod.equals("GET")) {
+            req = Request.Get(url);
+        } else if (httpMethod.equals("DELETE")) {
+            req = Request.Delete(url);
+        } else if (httpMethod.equals("POST")) {
+            req = Request.Post(url);
+        } else if (httpMethod.equals("PUT")) {
+            req = Request.Put(url);
+        } else if (httpMethod.equals("PATCH")) {
+            req = Request.Patch(url);
+        } else if (httpMethod.equals("HEAD")) {
+            req = Request.Head(url);
+        } else if (httpMethod.equals("OPTIONS")) {
+            req = Request.Options(url);
+        } else {
+            throw createError("Unrecognized HTTP method verb in: {0} {1}", httpMethod, url);
+        }
+        LOGGER.log(Level.INFO, "HTTP {0} {1}", new String[] {httpMethod, url});
+
         if (socketTimeoutMS >= 0) {
             req.socketTimeout(socketTimeoutMS);
         }
