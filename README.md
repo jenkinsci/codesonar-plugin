@@ -364,7 +364,7 @@ analysis information from the hub.
       Note that the `aid` parameter is a string type, not a number type.
       In most cases the `projectFile` is the best way to identify the analysis of interest.
       However, you might want to use a different analysis in a more complex configuration involving multiple analyses.
-    * To specify the "previous" analysis to use as a base for comparing analysis results, add the following line after the `projectFile` line, where `<AID>` is the *analysis id* of you previous analysis.
+    * To specify the "previous" analysis to use as a base for comparing analysis results, add the following line after the `projectFile` line, where `<AID>` is the *analysis id* of your previous analysis.
       ```
       comparisonAnalysis: "<AID>",
       ```
