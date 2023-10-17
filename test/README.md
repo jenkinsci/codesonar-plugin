@@ -144,7 +144,7 @@ The Linux kernel job is using a specific git sha of the kernel, so we get the sa
 
 *Purpose is to auto generate a (large) amount of warnings, to stress test the plugin and setup. We use wgen.py, a script supplied by CodeSonar developers that can generate a number of warnings per line of code*.
 
-The fibonacci.c program have 26 lines of code.
+The fibonacci.c program has 26 lines of code.
 
 The warnings will contain much lesser data than real life data, as the messages are simpler and generated, but we can generate more warnings than a real project would if we like.
 
