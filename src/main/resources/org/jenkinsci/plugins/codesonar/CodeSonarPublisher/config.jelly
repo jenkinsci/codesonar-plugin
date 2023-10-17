@@ -42,7 +42,7 @@
         <f:textbox/>
     </f:entry>
     
-    <f:entry field="baseAnalysis" title="Base Analysis">
+    <f:entry field="comparisonAnalysis" title="Comparison Analysis">
         <f:textbox/>
     </f:entry>
 

@@ -96,7 +96,7 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
     private String aid;
     private int socketTimeoutMS = -1;
     private String projectFile;
-    private String baseAnalysis;
+    private String comparisonAnalysis;
 
     private HttpService httpService = null;
     private AuthenticationService authenticationService = null;
@@ -185,13 +185,13 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
         this.projectFile = projectFile;
     }
     
-    public String getBaseAnalysis() {
-        return baseAnalysis;
+    public String getComparisonAnalysis() {
+        return comparisonAnalysis;
     }
 
     @DataBoundSetter
-    public void setBaseAnalysis(String baseAnalysis) {
-        this.baseAnalysis = baseAnalysis;
+    public void setComparisonAnalysis(String comparisonAnalysis) {
+        this.comparisonAnalysis = comparisonAnalysis;
     }
 
     public String getNewWarningsFilter() {
@@ -398,7 +398,7 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
         List<Pair<String, String>> conditionNamesAndResults = new ArrayList<>();
         
         CodeSonarHubAnalysisDataLoader previousDataLoader = null;
-        if (StringUtils.isBlank(baseAnalysis)) {
+        if (StringUtils.isBlank(comparisonAnalysis)) {
             previousDataLoader = findPreviousBuildAnalysisDataLoader(
                     run,
                     expandedProjectName,
@@ -406,9 +406,9 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
                     baseHubUri,
                     hubInfo);
         } else {
-            Long baseAnalysisId = null;
+            Long comparisonAnalysisId = null;
             try {
-                baseAnalysisId = Long.valueOf(baseAnalysis);
+                comparisonAnalysisId = Long.valueOf(comparisonAnalysis);
             } catch(NumberFormatException e) {
                 throw createError("Unable to parse base analysis ID", e);
             }
@@ -416,12 +416,12 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
                     httpService,
                     hubInfo,
                     baseHubUri,
-                    baseAnalysisId,
+                    comparisonAnalysisId,
                     getVisibilityFilterOrDefault(),
                     getNewWarningsFilterOrDefault());
             csLogger.writeInfo(
                 "Using analysis {0} on hub {1} for comparison",
-                String.valueOf(baseAnalysisId),
+                String.valueOf(comparisonAnalysisId),
                 baseHubUri);
         }
 
