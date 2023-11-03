@@ -5,7 +5,7 @@ This script can be used to generate large numbers of warnings with little effort
 It generates a set of warnings for each line in each compilation unit, where
 the number per line is controlled by the variable WARNINGS_PER_LINE below.
 
-If supplied by Grammatech for Praqma for testing the Code Sonar plugin.
+It was supplied by CodeSonar developers for Praqma for testing the CodeSonar plugin.
 
 
 There are three approaches to using it; 1) plugin approach for all analysis running 2) plugin approach for single project 3) interactive runninng command from command line
