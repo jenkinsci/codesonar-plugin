@@ -8,6 +8,7 @@ public class CodeSonarHubInfo {
     private boolean openAPISupported;
     private boolean strictQueryParametersEnforced;
     private boolean jsonGridConfigSupported;
+    private boolean userSessionPoolingSupported;
     
     public CodeSonarHubInfo() {
         version = VERSION_NOT_INITIALIZED;
@@ -46,5 +47,12 @@ public class CodeSonarHubInfo {
     public void setJsonGridConfigSupported(boolean jsonGridConfigSupported) {
         this.jsonGridConfigSupported = jsonGridConfigSupported;
     }
-    
+
+    public boolean isUserSessionPoolingSupported() {
+        return userSessionPoolingSupported;
+    }
+
+    public void setUserSessionPoolingSupported(boolean userSessionPoolingSupported) {
+        this.userSessionPoolingSupported = userSessionPoolingSupported;
+    }
 }

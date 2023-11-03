@@ -4,6 +4,7 @@ public class CodeSonarHubCapabilityInfo {
     private Boolean openapi;
     private Boolean strictQueryParameters;
     private Boolean gridConfigJson;
+    private Boolean userSessionPool;
 
     public Boolean getOpenapi() {
         return openapi;
@@ -29,10 +30,21 @@ public class CodeSonarHubCapabilityInfo {
         this.gridConfigJson = gridConfigJson;
     }
 
+    public Boolean getUserSessionPool() {
+        return userSessionPool;
+    }
+
+    public void setUserSessionPool(Boolean userSessionPool) {
+        this.userSessionPool = userSessionPool;
+    }
+
     @Override
     public String toString() {
-        return "CodeSonarHubCapabilityInfo [openapi=" + openapi + ", strictQueryParameters=" + strictQueryParameters
-                + ", gridConfigJson=" + gridConfigJson + "]";
+        return String.format(
+            "CodeSonarHubCapabilityInfo [openapi=%s, strictQueryParameters=%s, gridConfigJson=%s, userSessionPool=%s]",
+            openapi,
+            strictQueryParameters,
+            gridConfigJson,
+            userSessionPool);
     }
-    
 }

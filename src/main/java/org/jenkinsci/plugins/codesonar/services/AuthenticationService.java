@@ -18,6 +18,7 @@ import org.jenkinsci.plugins.codesonar.models.CodeSonarHubInfo;
 public class AuthenticationService extends AbstractService {
     private static final Logger LOGGER = Logger.getLogger(AuthenticationService.class.getName());
     private static final String HTTP_HEADER_AUTHORIZATION = "Authorization";
+    private static final String USER_SESSION_POOL_NAME = "jenkins+codesonar";
     private final HttpService httpService;
 
     public AuthenticationService(HttpService httpService) {
@@ -42,7 +43,7 @@ public class AuthenticationService extends AbstractService {
         CodeSonarHubInfo hubInfo = getHubInfo();
         if(hubInfo != null && hubInfo.isOpenAPISupported()) {
             //If the hub supports OpenAPI, then leverage that new form of authentication
-            authenticate702(baseHubUri);
+            authenticate702(baseHubUri, hubInfo);
         } else {
             //If the hub does not support OpenAPI, then fallback to the legacy authentication method
             authenticate701(baseHubUri);
@@ -55,14 +56,10 @@ public class AuthenticationService extends AbstractService {
      * @param username
      * @throws CodeSonarPluginException 
      */
-    private void authenticate702(URI baseHubUri) throws CodeSonarPluginException {
+    private void authenticate702(URI baseHubUri, CodeSonarHubInfo hubInfo) throws CodeSonarPluginException {
         //The implementation of this function comes from authenticate701(URI baseHubUri)
         LOGGER.log(Level.INFO, "OpenAPI certificate authentication request");
-        
-        List<NameValuePair> loginForm = Form.form()
-                .add("key", "cookie")
-                .build();
-
+        List<NameValuePair> loginForm = createLoginForm702(hubInfo);
         URI resolvedURI = baseHubUri;
         HttpServiceResponse response = null;
         try {
@@ -124,7 +121,7 @@ public class AuthenticationService extends AbstractService {
         CodeSonarHubInfo hubInfo = getHubInfo();
         if(hubInfo != null && hubInfo.isOpenAPISupported()) {
             //If the hub supports OpenAPI, then leverage that new form of authentication
-            authenticate702(baseHubUri, username, password);
+            authenticate702(baseHubUri, hubInfo, username, password);
         } else {
             //If the hub does not support OpenAPI, then fallback to the legacy authentication method
             authenticate701(baseHubUri, username, password);
@@ -138,12 +135,10 @@ public class AuthenticationService extends AbstractService {
      * @param password
      * @throws CodeSonarPluginException 
      */
-    private void authenticate702(URI baseHubUri, String username, String password) throws CodeSonarPluginException {
+    private void authenticate702(URI baseHubUri, CodeSonarHubInfo hubInfo, String username, String password) throws CodeSonarPluginException {
         //The implementation of this function comes from authenticate7011(URI baseHubUri, String username, String password)
         LOGGER.log(Level.INFO, "OpenAPI password authentication request");
-        List<NameValuePair> loginForm = Form.form()
-                .add("key", "cookie")
-                .build();
+        List<NameValuePair> loginForm = createLoginForm702(hubInfo);
         URI resolvedURI = baseHubUri;
         HttpServiceResponse response = null;
         try {
@@ -198,6 +193,20 @@ public class AuthenticationService extends AbstractService {
         }
     }
 
+    private List<NameValuePair> createLoginForm702(CodeSonarHubInfo hubInfo) {
+        Form formBuilder = Form.form();
+        formBuilder.add("key", "cookie");
+        if (hubInfo.isUserSessionPoolingSupported()) {
+            LOGGER.log(Level.INFO, "Using hub user session pooling.");
+            formBuilder.add("pool", USER_SESSION_POOL_NAME);
+            formBuilder.add("keepalive", "true");
+            formBuilder.add("overflow_ok", "false");
+            // TODO: can we add Jenkins build ID as a session note or something?
+            //formBuilder.add("note", sessionNote);
+        }
+        return formBuilder.build();
+    }
+
     /**
      * Encode username/password into HTTP Basic Authentication, Authorization header value.
      */
@@ -207,10 +216,25 @@ public class AuthenticationService extends AbstractService {
     }
     
     public void signOut(URI baseHubUri) throws CodeSonarPluginException {
+        CodeSonarHubInfo hubInfo = getHubInfo();
         try {
-            URI resolvedURI = baseHubUri.resolve("/sign_out.html?response_try_plaintext=1");
-            HttpServiceResponse response = httpService.execute(Request.Get(resolvedURI));
-
+            URI resolvedURI;
+            HttpServiceRequest request;
+            if (hubInfo != null && hubInfo.isOpenAPISupported()) {
+                // Note: `DELETE /session/` only works for bearer token auth,
+                //  we must use the usual sign_out.html page to signout with cookie auth.
+                // TODO use bearer token auth instead of cookie auth when possible.
+                //resolvedURI = baseHubUri.resolve("/session/");
+                //request = new HttpServiceRequest(resolvedURI);
+                //request.setHTTPMethod("DELETE");
+                resolvedURI = baseHubUri.resolve("/sign_out.html");
+                request = new HttpServiceRequest(resolvedURI);
+                request.addHeader("Accept", "text/plain");
+            } else {
+                resolvedURI = baseHubUri.resolve("/sign_out.html?response_try_plaintext=1");
+                request = new HttpServiceRequest(resolvedURI);
+            }
+            HttpServiceResponse response = httpService.getResponse(request);
             if (response.getStatusCode() != 200) {
                 throw new CodeSonarHubCommunicationException(resolvedURI, response.getStatusCode(), response.getReasonPhrase(), readResponseContent(response, resolvedURI));
             }

@@ -16,6 +16,8 @@ public class HttpServiceRequest {
     private final String uriString;
     private final Collection<Map.Entry<String,String>> headers;
 
+    private String httpMethod = "GET";
+
     public HttpServiceRequest(URI uri) throws CodeSonarPluginException {
         if (uri == null) {
             throw new CodeSonarPluginException("URI cannot be null");
@@ -46,6 +48,15 @@ public class HttpServiceRequest {
 
     public URI getURI() {
         return this.uri;
+    }
+
+    public String getHTTPMethod() {
+        return this.httpMethod;
+    }
+
+    public HttpServiceRequest setHTTPMethod(String httpMethod) {
+        this.httpMethod = httpMethod;
+        return this;
     }
 
     public Collection<Map.Entry<String,String>> getHeaderCollection() {
