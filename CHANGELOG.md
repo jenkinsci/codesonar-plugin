@@ -1,6 +1,12 @@
 == Changelog ==
 
-=== Master ===
+=== Version 3.4.0 (November 2023) ===
+
+* CodeSonar is now a CodeSecure product.
+* Add new comparisonAnalysis parameter.
+* Use hub session pools in CodeSonar 8.0.
+* Fix bug with warning filter in score+threshold conditions.
+* Add better validation and logging for credential use.
 
 === Version 3.4.0 (July 2023) ===
 
