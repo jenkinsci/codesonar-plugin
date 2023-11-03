@@ -105,7 +105,6 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
     private String credentialId;
 
     private String serverCertificateCredentialId = "";
-    private StandardCredentials serverCertificateCredentials;
 
 
     @DataBoundConstructor
@@ -575,13 +574,19 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
                 CodeSonarLogger csLogger,
                 Run<?, ?> run)
             throws CodeSonarPluginException {
+        StandardCredentials hubUserCredentials = null;
         String hubUserCredentialId = getCredentialId();
-        StandardCredentials hubUserCredentials = lookupCredentials(hubUserCredentialId, run);
+        if (StringUtils.isNotBlank(hubUserCredentialId)) {
+            hubUserCredentials = lookupCredentials(hubUserCredentialId, run);
+            if (hubUserCredentials == null) {
+                throw createError("Credentials not found: \"{0}\"", hubUserCredentialId);
+            }
+        }
         if (hubUserCredentials == null) {
-            csLogger.writeInfo("Using hub URI: {0}", baseHubUri);
+            csLogger.writeInfo("Authenticating as Anonymous.");
         } else if (hubUserCredentials instanceof StandardUsernamePasswordCredentials) {
-            csLogger.writeInfo("Authenticating using username and password");
-            UsernamePasswordCredentials userPassCredentials = (UsernamePasswordCredentials) hubUserCredentials;
+            csLogger.writeInfo("Authenticating with username and password.");
+            UsernamePasswordCredentials userPassCredentials = (UsernamePasswordCredentials)hubUserCredentials;
 
             authenticationService.authenticate(
                     baseHubUri,
@@ -589,9 +594,9 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
                     userPassCredentials.getPassword().getPlainText());
         } else if (hubUserCredentials instanceof StandardCertificateCredentials
                 || hubUserCredentials instanceof FileCredentials) {
-            csLogger.writeInfo("Authenticating using client certificate");
-            if (protocol.equals("http")) {
-                throw createError("Authentication using a certificate is only available when using HTTPS protocol.");
+            csLogger.writeInfo("Authenticating with client certificate.");
+            if (!protocol.equals("https")) {
+                throw createError("Certificate authentication requires HTTPS protocol.");
             }
 
             // Client certificate credentials must be applied to the authenticationService
@@ -607,26 +612,30 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
     }
 
     private HttpService createHttpService(@Nonnull Run<?, ?> run) throws CodeSonarPluginException {
+        StandardCredentials serverCertificateCredentials;
+        String serverCertificateCredentialId = getServerCertificateCredentialId();
         Collection<? extends Certificate> serverCertificates = null;
         if (StringUtils.isNotEmpty(serverCertificateCredentialId)) {
             serverCertificateCredentials = lookupCredentials(
-                getServerCertificateCredentialId(),
+                serverCertificateCredentialId,
                 run);
             if (serverCertificateCredentials == null) {
-                throw createError(CodeSonarLogger.formatMessage("Credentials with id \"{0}\" not found", getServerCertificateCredentialId()));
+                throw createError("Credentials with id \"{0}\" not found",
+                        serverCertificateCredentialId);
             }
             else if (serverCertificateCredentials instanceof FileCredentials) {
                 LOGGER.log(Level.INFO, "Found FileCredentials provided as Hub HTTPS certificate");
-                FileCredentials f = (FileCredentials) serverCertificateCredentials;
+                FileCredentials fileCredentials = (FileCredentials)serverCertificateCredentials;
                 try {
-                    CertificateFactory cf = CertificateFactory.getInstance("X.509");
-                    serverCertificates = cf.generateCertificates(f.getContent());
+                    CertificateFactory certificateFactory = CertificateFactory.getInstance("X.509");
+                    serverCertificates = certificateFactory.generateCertificates(fileCredentials.getContent());
                     LOGGER.log(Level.INFO, "X509Certificate initialized");
                 } catch (IOException | CertificateException e ) {
                     throw createError("Failed to create X509Certificate from Secret File Credential.", e);
                 }
             } else {
-                throw createError("Invalid credential type provided for hub HTTPS certificate: {0}", serverCertificateCredentials.getClass().getName());
+                throw createError("Invalid credential type provided for hub HTTPS certificate: {0}",
+                        serverCertificateCredentials.getClass().getName());
             }
         }
         
