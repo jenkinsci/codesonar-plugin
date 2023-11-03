@@ -24,6 +24,7 @@ job {
             sslCertificateCredentialId(String value)
             projectFile(String value)
             newWarningsFilter(String value)
+            comparisonAnalysis(String value)
             cyclomaticComplexity(int max, boolean fail)
             redAlert(int max, boolean fail)
             yellowAlert(int max, boolean fail)
@@ -48,6 +49,7 @@ job('myProject_GEN') {
             sslCertificateCredentialId('codesonar_hub_server_certificate_id')
             projectFile('MyProjectFile')
             newWarningsFilter('new')
+            comparisonAnalysis('MyBaseAnalysisId')
             cyclomaticComplexity(20, false)
             redAlert(3, true)
             yellowAlert(10, false)
@@ -84,6 +86,7 @@ public class CodeSonarJobDslExtension extends ContextExtensionPoint {
         publisher.setServerCertificateCredentialId(context.getSslCertificateCredentialId());
         publisher.setProjectFile(context.getProjectFile());
         publisher.setNewWarningsFilter(context.getNewWarningsFilter());
+        publisher.setComparisonAnalysis(context.getComparisonAnalysis());
         return publisher;
     }
 

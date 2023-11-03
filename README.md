@@ -328,7 +328,7 @@ analysis information from the hub.
       ```
       credentialId: params.CSONAR_HUBUSERCERT,
       ```
-    * If your hub has a self-signed server certificate, *add* the following line after the `socketTimeoutMS` line.
+    * If your hub has a self-signed server certificate, *add* the following line after the `hubAddress` line.
       ```
       serverCertificateCredentialId: params.CSONAR_HUB_CACERT_ID,
       ```
@@ -353,16 +353,26 @@ analysis information from the hub.
       newWarningsFilter: "new")
       ```
       See the [note on visibility filters](#note-on-visibility-filters) below.
-    * To evaluate the results of a different analysis on our hub, replace the `projectFile` line with the following, where `<AID>` is the relevant *analysis id*.
+    * To evaluate the results of a different analysis on your hub, replace the `projectFile` line with the following, where `<AID>` is the relevant *analysis id*.
       ```
-      aid: <AID>,
+      aid: "<AID>",
       ```
       For example, to evaluate the results of the analysis whose ID is 81:
       ```
-      aid: 81,
+      aid: "81",
       ```
+      Note that the `aid` parameter is a string type, not a number type.
       In most cases the `projectFile` is the best way to identify the analysis of interest.
       However, you might want to use a different analysis in a more complex configuration involving multiple analyses.
+    * To specify the "previous" analysis to use as a base for comparing analysis results, add the following line after the `projectFile` line, where `<AID>` is the *analysis id* of your previous analysis.
+      ```
+      comparisonAnalysis: "<AID>",
+      ```
+      For example, to use the previous analysis whose ID is 79:
+      ```
+      comparisonAnalysis: "79",
+      ```
+      Note that the `comparisonAnalysis` parameter is a string type, not a number type.
 
 1. Click **Save**.
 1. Check that everything is working properly.

@@ -96,6 +96,7 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
     private String aid;
     private int socketTimeoutMS = -1;
     private String projectFile;
+    private String comparisonAnalysis;
 
     private HttpService httpService = null;
     private AuthenticationService authenticationService = null;
@@ -184,6 +185,15 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
         this.projectFile = projectFile;
     }
     
+    public String getComparisonAnalysis() {
+        return comparisonAnalysis;
+    }
+
+    @DataBoundSetter
+    public void setComparisonAnalysis(String comparisonAnalysis) {
+        this.comparisonAnalysis = comparisonAnalysis;
+    }
+
     public String getNewWarningsFilter() {
         return newWarningsFilter;
     }
@@ -386,13 +396,66 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
         CodeSonarBuildAction csba = new CodeSonarBuildAction(currentBuildActionDTO, run, expandedProjectName);
 
         List<Pair<String, String>> conditionNamesAndResults = new ArrayList<>();
+        
+        CodeSonarHubAnalysisDataLoader previousDataLoader = null;
+        if (StringUtils.isBlank(comparisonAnalysis)) {
+            previousDataLoader = findPreviousBuildAnalysisDataLoader(
+                    run,
+                    expandedProjectName,
+                    csLogger,
+                    baseHubUri,
+                    hubInfo);
+        } else {
+            Long comparisonAnalysisId = null;
+            try {
+                comparisonAnalysisId = Long.valueOf(comparisonAnalysis);
+            } catch(NumberFormatException e) {
+                throw createError("Unable to parse base analysis ID", e);
+            }
+            previousDataLoader = new CodeSonarHubAnalysisDataLoader(
+                    httpService,
+                    hubInfo,
+                    baseHubUri,
+                    comparisonAnalysisId,
+                    getVisibilityFilterOrDefault(),
+                    getNewWarningsFilterOrDefault());
+            csLogger.writeInfo(
+                "Using analysis {0} on hub {1} for comparison",
+                String.valueOf(comparisonAnalysisId),
+                baseHubUri);
+        }
 
+        csLogger.writeInfo("Evaluating conditions...");
+
+        for (Condition condition : conditions) {
+            Result validationResult = condition.validate(currentDataLoader, previousDataLoader, launcher, listener, csLogger);
+            Pair<String, String> pair = Pair.with(condition.describeResult(), validationResult.toString());
+            conditionNamesAndResults.add(pair);
+            run.setResult(validationResult);
+            csLogger.writeInfo("\"{0}\" marked the build as {1}", condition.getDescriptor().getDisplayName(), validationResult.toString());
+        }
+        
+        csLogger.writeInfo("Done evaluating conditions.");
+        
+        csba.getBuildActionDTO().setConditionNamesAndResults(conditionNamesAndResults);
+        run.addAction(csba);
+        authenticationService.signOut(baseHubUri);
+            
+        csLogger.writeInfo("Done performing codesonar actions");
+    }
+
+    private CodeSonarHubAnalysisDataLoader findPreviousBuildAnalysisDataLoader(
+                Run<?, ?> run,
+                String expandedProjectName,
+                CodeSonarLogger csLogger,
+                URI baseHubUri,
+                CodeSonarHubInfo hubInfo) {
+        CodeSonarHubAnalysisDataLoader previousDataLoader = null;
         // Search for a previous, successful build that has the same ProjectName and hub URI.
         //  We match hub URI since generally it is not reliable to compare results between different hubs.
         //  Also, even if we want to consider other hubs, we may still be unable to communicate with them
         //   due to CA certificate and user credential differences.
         csLogger.writeInfo("Finding previous builds for comparison...");
-        CodeSonarHubAnalysisDataLoader previousDataLoader = null;
         Run<?,?> previousRun = run.getPreviousSuccessfulBuild();
         while(previousRun != null 
             && previousDataLoader == null
@@ -455,28 +518,11 @@ public class CodeSonarPublisher extends Recorder implements SimpleBuildStep {
                 }
             }
         }
-
+   
         if (previousDataLoader == null) {
             csLogger.writeInfo("Could not find a previous build with compatible analysis for comparison.");
         }
-
-        csLogger.writeInfo("Evaluating conditions...");
-
-        for (Condition condition : conditions) {
-            Result validationResult = condition.validate(currentDataLoader, previousDataLoader, launcher, listener, csLogger);
-            Pair<String, String> pair = Pair.with(condition.describeResult(), validationResult.toString());
-            conditionNamesAndResults.add(pair);
-            run.setResult(validationResult);
-            csLogger.writeInfo("\"{0}\" marked the build as {1}", condition.getDescriptor().getDisplayName(), validationResult.toString());
-        }
-        
-        csLogger.writeInfo("Done evaluating conditions.");
-        
-        csba.getBuildActionDTO().setConditionNamesAndResults(conditionNamesAndResults);
-        run.addAction(csba);
-        authenticationService.signOut(baseHubUri);
-            
-        csLogger.writeInfo("Done performing codesonar actions");
+        return previousDataLoader;
     }
     
     private void authenticate(Run<?, ?> run, URI baseHubUri, boolean supportsOpenAPI) throws CodeSonarPluginException {
