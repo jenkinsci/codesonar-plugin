@@ -1,5 +1,5 @@
 ## About CodeSonar
-[GrammaTech CodeSonar](https://www.grammatech.com/codesonar-cc) GrammaTech's flagship static analysis software,
+[CodeSonar](https://links.codesonar.com/product-home/), CodeSecure's flagship static analysis software,
 identifies programming bugs that can result in system crashes, memory corruption, leaks, data races, and security
 vulnerabilities.
 
@@ -602,4 +602,4 @@ The CodeSonar *new warnings filter* allows you to specify exactly what warnings 
 
 
 ## Support and Contact
-Please contact [https://support.grammatech.com/](https://support.grammatech.com/) if you have a request or question regarding the plugin.
+Please contact [CodeSonar Customer Support](https://links.codesonar.com/support/) if you have a request or question regarding the plugin.

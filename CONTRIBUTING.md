@@ -1,3 +1,3 @@
 ### Contributing
 
-Pull requests should be made to [GrammaTech's Github repository fork](https://github.com/grammatech/jenkins-codesonar-plugin)  
+Pull requests should be made to [CodeSecure's GitHub repository fork](https://github.com/codesecure-inc/jenkins-codesonar-plugin)

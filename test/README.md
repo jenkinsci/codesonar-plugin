@@ -9,7 +9,7 @@ This folder contain everything related to our manual testing of the CodeSonar Pl
 
 * **AWS CLI** - you need to install the AWS CLI
 * **Run all commands from the root of this repository!**
-* **A CodeSonar installation file for linux 64 bit**, currently `codesonar-4.4p0.20161021-x86_64-pc-linux.tar.gz` which is already downloaded and available for Praqma employees on our [private GoogleDrive folder `Jenkins CodeSonar Plugin testing resources`](https://drive.google.com/drive/folders/1qcFvmDRblKZl4W8R3jGYqgPfYhbwjRG0). Other can request it from Grammatech on http://go.grammatech.com/get-free-trial/
+* **A CodeSonar installation file for linux 64 bit**
 
 ## Create AWS infrastructure
 
@@ -142,9 +142,9 @@ The Linux kernel job is using a specific git sha of the kernel, so we get the sa
 
 ### Job: wgen_generate_warnings
 
-*Purpose is to auto generate a (large) amount of warnings, to stress test the plugin and setup. We use wgen.py, a script supplied by Grammatech that can generate a number of warnings pr line of code*.
+*Purpose is to auto generate a (large) amount of warnings, to stress test the plugin and setup. We use wgen.py, a script supplied by CodeSonar developers that can generate a number of warnings per line of code*.
 
-The fibonacci.c program have 26 lines of code.
+The fibonacci.c program has 26 lines of code.
 
 The warnings will contain much lesser data than real life data, as the messages are simpler and generated, but we can generate more warnings than a real project would if we like.
 
