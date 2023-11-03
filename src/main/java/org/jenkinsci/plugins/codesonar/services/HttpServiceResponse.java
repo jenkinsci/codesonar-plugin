@@ -1,13 +1,14 @@
 package org.jenkinsci.plugins.codesonar.services;
 
 import java.io.BufferedReader;
+import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.nio.charset.StandardCharsets;
 
-public class HttpServiceResponse {
+public class HttpServiceResponse implements Closeable {
 
     private int statusCode;
     private String reasonPhrase;
@@ -17,6 +18,12 @@ public class HttpServiceResponse {
         this.statusCode = statusCode;
         this.reasonPhrase = reasonPhrase;
         this.contentInputStream = contentInputStream;
+    }
+
+    public void close() throws IOException {
+        if (this.contentInputStream != null) {
+            this.contentInputStream.close();
+        }
     }
 
     public int getStatusCode() {

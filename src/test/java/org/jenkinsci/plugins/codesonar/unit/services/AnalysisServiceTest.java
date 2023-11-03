@@ -29,6 +29,7 @@ import org.jenkinsci.plugins.codesonar.models.analysis.Analysis;
 import org.jenkinsci.plugins.codesonar.models.projects.Project;
 import org.jenkinsci.plugins.codesonar.services.AnalysisService;
 import org.jenkinsci.plugins.codesonar.services.HttpService;
+import org.jenkinsci.plugins.codesonar.services.HttpServiceRequest;
 import org.jenkinsci.plugins.codesonar.services.HttpServiceResponse;
 import org.jenkinsci.plugins.codesonar.services.IAnalysisService;
 import org.jenkinsci.plugins.codesonar.services.XmlSerializationService;
@@ -117,6 +118,7 @@ public class AnalysisServiceTest {
         
 
         when(mockedHttpService.getExecutor()).thenReturn(executor);
+        when(mockedHttpService.getResponse(notNull(HttpServiceRequest.class))).thenCallRealMethod();
         when(mockedHttpService.getResponseFromUrl(notNull(URI.class))).thenCallRealMethod();
         when(mockedHttpService.getResponseFromUrl(any(String.class))).thenCallRealMethod();
 
@@ -152,6 +154,7 @@ public class AnalysisServiceTest {
         Executor executor = Executor.newInstance(httpClient).use(httpCookieStore);
         
         when(mockedHttpService.getExecutor()).thenReturn(executor);
+        when(mockedHttpService.getResponse(any(HttpServiceRequest.class))).thenCallRealMethod();
         when(mockedHttpService.getResponseFromUrl(any(String.class))).thenCallRealMethod();
         analysisService.getAnalysisFromUrl(INVALID_ANALYSIS_URL);
     }

@@ -45,7 +45,7 @@ public class AlertsService extends AbstractService {
             }
             String requestUriString = requestUri.toASCIIString();
             
-            LOGGER.log(Level.INFO, "Querying alerts with kind={0}", kind);
+            //LOGGER.log(Level.INFO, "Querying alerts with kind={0}", kind);
             HttpServiceResponse response = null;
             try {
                 response = httpService.getResponseFromUrl(requestUriString);
@@ -57,7 +57,7 @@ public class AlertsService extends AbstractService {
                      * A 404 response is expected to be returned anytime the request specifies an alert kind that has no
                      * occurrences on the specified analysis
                      */
-                    LOGGER.log(Level.INFO, "HTTP 404: no alerts found for kind={0}", kind);
+                    //LOGGER.log(Level.INFO, "HTTP 404: no alerts found for kind={0}", kind);
                     foundExpectedResponse = true;
                     continue;
                 } else if(response.getStatusCode() == 500) {

@@ -13,11 +13,12 @@ import org.apache.http.client.fluent.Form;
 import org.apache.http.client.fluent.Request;
 import org.jenkinsci.plugins.codesonar.CodeSonarHubCommunicationException;
 import org.jenkinsci.plugins.codesonar.CodeSonarPluginException;
+import org.jenkinsci.plugins.codesonar.models.CodeSonarHubInfo;
 
 public class AuthenticationService extends AbstractService {
     private static final Logger LOGGER = Logger.getLogger(AuthenticationService.class.getName());
     private static final String HTTP_HEADER_AUTHORIZATION = "Authorization";
-    private HttpService httpService;
+    private final HttpService httpService;
 
     public AuthenticationService(HttpService httpService) {
         this.httpService = httpService;
@@ -30,10 +31,16 @@ public class AuthenticationService extends AbstractService {
     private CodeSonarPluginException createError(String msg, Throwable cause, Object ...args) {
         return new CodeSonarPluginException(msg, cause, args);
     }
-    
-    public void authenticate(URI baseHubUri, boolean supportsOpenAPI) throws CodeSonarPluginException {
+
+    /** might return null */
+    private CodeSonarHubInfo getHubInfo() {
+        return this.httpService.getHubInfo();
+    }
+
+    public void authenticate(URI baseHubUri) throws CodeSonarPluginException {
         LOGGER.log(Level.INFO, "Starting new certificate authentication request");
-        if(supportsOpenAPI) {
+        CodeSonarHubInfo hubInfo = getHubInfo();
+        if(hubInfo != null && hubInfo.isOpenAPISupported()) {
             //If the hub supports OpenAPI, then leverage that new form of authentication
             authenticate702(baseHubUri);
         } else {
@@ -112,9 +119,10 @@ public class AuthenticationService extends AbstractService {
         }
     }
     
-    public void authenticate(URI baseHubUri, boolean supportsOpenAPI, String username, String password) throws CodeSonarPluginException {
+    public void authenticate(URI baseHubUri, String username, String password) throws CodeSonarPluginException {
         LOGGER.log(Level.INFO, "Starting new password authentication request");
-        if(supportsOpenAPI) {
+        CodeSonarHubInfo hubInfo = getHubInfo();
+        if(hubInfo != null && hubInfo.isOpenAPISupported()) {
             //If the hub supports OpenAPI, then leverage that new form of authentication
             authenticate702(baseHubUri, username, password);
         } else {
