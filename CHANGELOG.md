@@ -1,6 +1,6 @@
 == Changelog ==
 
-=== Version 3.4.0 (November 2023) ===
+=== Version 3.5.0 (November 2023) ===
 
 * CodeSonar is now a CodeSecure product.
 * Add new comparisonAnalysis parameter.
