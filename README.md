@@ -32,6 +32,39 @@ Setting up the plugin involves three steps, each detailed below.
 * [C. Apply the CodeSonar plugin to your Jenkins Pipeline](#c-apply-the-codesonar-plugin-to-your-jenkins-pipeline)
 
 ### A. Make sure CodeSonar is ready to analyze your software
+
+To integrate CodeSonar with your Jenkins pipeline, you will need to
+*run* the CodeSonar analysis from your pipeline,
+*manage* the analysis results on a CodeSonar hub, and
+*store* the CodeSonar project analysis directory in a stable location.
+
+In this step you will ensure that everything is ready for these CodeSonar actions.
+
+- Run the CodeSonar analysis from your pipeline.
+
+  - Install CodeSonar on one or more Jenkins agents.
+  - Create a suitable *remote analysis launch daemon*, if one does not already exist.
+
+- Manage the analysis results on a CodeSonar hub.
+
+  - Ensure that a suitable hub is running.
+  - Create a suitable hub user account to authenticate actions invoked within Jenkins, if one does not already exist.
+  - Configure Jenkins with the information needed to interact with the hub.
+
+- Store the CodeSonar project analysis directory in a stable location.
+
+  - Create a suitable *remote archiving launch daemon*, if one does not already exist.
+
+  A CodeSonar analysis produces several analysis data artifacts which contain information about the source code as it was interpreted by your compilers.
+  These are stored in the *project analysis directory* on the host machine that does the analysis, and can be quite large.
+  The CodeSonar hub needs access to the analysis data artifacts in order to enable advanced features such as code navigation.
+
+  The runner environment is generally not a suitable location for persistent storage of the analysis data:
+  files and directories may be deleted when the pipeline completes, or reused by subsequent pipelines.
+  If the remote launch daemon used to run the analysis is not suitable,
+  you will need to specify a separate *remote archiving launch daemon*.
+  CodeSonar will transfer the project analysis directory to this launch daemon when the analysis transitions to daemon mode.
+
 Work through the following steps to make sure that CodeSonar is in a suitable state to be invoked in your Jenkins Pipeline.
 
 1. Install CodeSonar on one or more *Jenkins agents* that are capable of building your pipeline. Include the following steps.
@@ -69,7 +102,7 @@ Work through the following steps to make sure that CodeSonar is in a suitable st
     1. If you are prompted with a warning that the hub certificate is self-signed, select the option to trust the certificate.
 
        (If you are not prompted, either the certificate is not self-signed or trust has already been established.)
-1. Make sure there is a suitable launch daemon available to perform the CodeSonar analysis.
+1. Make sure there is a suitable launch daemon available to *perform the CodeSonar analysis*. <a name="analysis_launchd" id="analysis_launchd"></a>
    * If you are using CodeSonar SaaS, launch daemons are provided as part of your SaaS deployment.
    * Otherwise, if you are planning to perform *remote-managed* analysis using a launch daemon running elsewhere, make sure that the launch daemon you want to use is available and connected to the hub.
    * Otherwise, run a launch daemon inside each agent where you installed CodeSonar in the first step above:
@@ -84,7 +117,7 @@ Work through the following steps to make sure that CodeSonar is in a suitable st
          "$CSONAR/codesonar/bin/codesonar" install-launchd -auth password -hubuser alex \
              -max-processes auto http://myhub.example.com:7340
          ```
-         You will be prompted for the *hubuser* password.
+         You will be prompted for the `<hubuser>` password.
       1. Set up the agent to restart the launch daemon automatically.
          * On Windows systems, check to see whether there is a `cslaunchd` service. If not, set one up.
          * On other systems, use a `cron` job or similar.
@@ -92,8 +125,57 @@ Work through the following steps to make sure that CodeSonar is in a suitable st
     **MANUAL:** How CodeSonar Works > Build and Analysis > cslaunchd: The CodeSonar Launch Daemon
 
     **MANUAL:** Using CodeSonar > Building and Analyzing Projects > Continuous Integration > Using CodeSonar With Continuous Integration Tools
+
+1. Make sure there is a suitable launch daemon available to *archive the project analysis directory*. <a name="archive_launchd" id="archive_launchd"></a>
+   Your CodeSonar build/analysis command will specify this launch daemon with `-remote-archive`
+   (this can be omitted if it is the same launch daemon that was specified with `-remote`).
+
+   * If you are using CodeSonar SaaS, you do not need to specify a separate archiving launch daemon.
+   * Otherwise, you will need an archiving launch daemon that runs in a persistent location.
+     In particular, if you are performing the CodeSonar analysis with a launch daemon running on your Jenkins agent then you will need a separate archiving launch daemon.
+
+     If you don't already have a suitable *remote archiving launch daemon*
+     &mdash; one that is running in a persistent location, available, and connected to the hub &mdash;
+     start one now.
+
+     1. Choose a suitable host machine for the remote archiving launch daemon.
+     1. Sign in to the host machine you have selected.
+     1. If CodeSonar is not already installed, install it now.
+     1. Start the launch daemon.
+        Note that a remote launch daemon for use with `remote` or `remote-archive` must be created with `-launchd-home <hdir>`.
+        This specifies a home directory `<hdir>` under which the launch daemon will store the various analysis directories for your analyses.
+
+        ```
+        "$CSONAR/codesonar/bin/codesonar" install-launchd -auth password -hubuser <hubuser> \
+             -launchd-home <hdir> -max-processes auto \
+             <other_launchd_options> \
+             <protocol>://<host>:<port>
+        ```
+
+        For example:
+
+        ```
+        mkdir /usr/alex/launchds
+
+        "$CSONAR/codesonar/bin/codesonar" install-launchd -auth password -hubuser alex \
+             -launchd-home /usr/alex/launchds/AarA -max-processes auto \
+             -launchd-key alexremoteA \
+             http://myhub.example.com:7340
+        ```
+
+        You will be prompted for the `<hubuser>` password.
+
+       1. Set up the host machine to restart the launch daemon automatically.
+          * On Windows systems, check to see whether there is a `cslaunchd` service. If not, set one up.
+          * On other systems, use a `cron` job or similar.
+
+    **MANUAL:** How CodeSonar Works > Build and Analysis > cslaunchd: The CodeSonar Launch Daemon
+
+    **MANUAL:** Using CodeSonar > Building and Analyzing Projects > Continuous Integration > Using CodeSonar With Continuous Integration Tools
+
 1. Choose a name for your CodeSonar project. The remainder of these instructions will refer to this as *proj-name*.
    * If you are building the same project in multiple Jenkins Pipelines, use a different project name for each. For example, add a suffix or prefix to the base project name.
+
    **MANUAL:** How CodeSonar Works > Project
 1. If your *regular software build directory* does not include a general project configuration file (for example, because you have never previously analyzed the project), create one now.
    1. Create the initial configuration file.
@@ -132,6 +214,24 @@ extending the Pipeline's build stage as described in the following steps.
       | String Parameter | `CSONAR_PROJECT_NAME`  | The CodeSonar project name to use. If there is already a CodeSonar project set up to for analyzing your software project, use the name of that project. |
 
     ![Jenkins configuration parameters](docs/img/jenkins_params.png "Jenkins configuration parameters")
+
+1. Set up String parameter `CSONAR_REMOTE_ARGS` to store `-remote` and/or `-remote-archive` options for your CodeSonar command line.
+
+   | CodeSonar Analysis Type                                            | `CSONAR_REMOTE_ARGS` value |
+   |--------------------------------------------------------------------|--------------------------------|
+   | CodeSonar SaaS                                                     | `-remote /saas/*` |
+   | (non-SaaS) remote-managed<br/>(uses remote analysis launch daemon) | `-remote <analysis-launchd> -remote-archive <archive-launchd>`<br/> where `<analysis-launchd>` is your [remote analysis launch daemon](#analysis_launchd) and `<archive-launchd>` is your [remote archive launch daemon](#archive_launchd).<br/> If you are using the same launch daemon `<a-launchd>` for both the analysis phase and the daemon phase, you can simplify this to<br/> `-remote <a-launchd>` |
+   | local-managed<br/>(analysis runs directly on Jenkins agent)        | `-remote-archive <archive-launchd>` <br/>where `<archive-launchd>` is your [remote archive launch daemon](#archive_launchd). |
+
+1. Set up String parameter `CSONAR_FOREGROUND_WAIT` to specify which of {`-foreground`,`-wait`} should be included in your CodeSonar command line.
+  (It should include exactly one of them.)
+
+   | CodeSonar Analysis Type                                            | `CSONAR_FOREGROUND_WAIT` value |
+   |--------------------------------------------------------------------|--------------------------------|
+   | CodeSonar SaaS                                                     | `-wait` |
+   | (non-SaaS) remote-managed<br/>(uses remote analysis launch daemon) | `-wait` |
+   | local-managed<br/>(analysis runs directly on Jenkins agent)        | `-foreground`       |
+
 1. Set up parameters for hub user account credentials: you will need these to authorize the CodeSonar build/analysis.
 
    **MANUAL:** How CodeSonar Works > CodeSonar Structure > Hub > Authentication and Access Control
@@ -173,21 +273,12 @@ extending the Pipeline's build stage as described in the following steps.
                               $CSONAR_WORKDIR/$CSONAR_PROJECT_NAME \
                               -project $CSONAR_PROJECT_NAME \
                               -auth password -hubuser $CSONAR_HUBUSER -hubpwfile $CSONAR_HUBPWFILE \
-                              -foreground"
+                              $CSONAR_REMOTE_ARGS $CSONAR_FOREGROUND_WAIT"
        ```
        * For certificate-based authentication, replace the `-auth` line with:
          ```
          -auth certificate -hubcert $CSONAR_USER_CERT -hubkey $CSONAR_USER_PRIVKEY \
          ```
-       * For CodeSonar SaaS, replace the `-foreground` flag with:
-         ```
-         -remote /saas/* -wait
-         ```
-       * For (non-SaaS) remote-managed analyses, replace the `-foreground` flag with:
-         ```
-         -remote <analysis-launchd> -wait
-         ```
-         Where `<analysis-launchd>` specifies a suitable launch daemon or launchd group that is connected to your hub and can perform the analysis.
        * If you want to specify any addition `codesonar` command line options, add them to this setting.
          See [Optional Extras for $CSONAR_CMD_ARGS](#optional-extras-for-csonar_cmd_args), below, for some ideas.
 
@@ -223,7 +314,7 @@ extending the Pipeline's build stage as described in the following steps.
         }
     }
     ```
-    Then the updated Pipeline will be as follows (for certificate-based hub authentication; no SaaS or other remote analysis).
+    Then the updated Pipeline will be as follows (for certificate-based hub authentication).
     ```
     pipeline {
         agent any
@@ -244,7 +335,7 @@ extending the Pipeline's build stage as described in the following steps.
                                               $CSONAR_WORKDIR/$CSONAR_PROJECT_NAME \
                                               -project $CSONAR_PROJECT_NAME \
                                               -auth certificate -hubcert $CSONAR_USER_CERT -hubkey $CSONAR_USER_PRIVKEY \
-                                              -foreground"
+                                              $CSONAR_REMOTE_ARGS $CSONAR_FOREGROUND_WAIT"
                         sh '''$CSONAR/codesonar/bin/codesonar analyze $CSONAR_CMD_ARGS make'''
                     }
                 }
