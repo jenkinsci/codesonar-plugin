@@ -12,11 +12,11 @@ import org.javatuples.Pair;
 public class SearchConfigData {
     public enum SortingOrder {ASCENDING, DESCENDING}
     
-    public boolean count;
-    public int offset;
-    public int limit;
-    public List<Pair<String, String>> orderBy;
-    public List<String> columns;
+    private boolean count;
+    private int offset;
+    private int limit;
+    private List<Pair<String, String>> orderBy;
+    private List<String> columns;
     
     public SearchConfigData() {
         this.count = false;
