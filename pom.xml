@@ -3,7 +3,7 @@
     <parent>
         <groupId>org.jenkins-ci.plugins</groupId>
         <artifactId>plugin</artifactId>
-        <version>3.56</version>
+        <version>4.88</version>
         <relativePath />
     </parent>
 
@@ -14,26 +14,11 @@
     <packaging>hpi</packaging>
 
     <properties>
-        <jenkins.version>2.164</jenkins.version>
-        <java.version>8</java.version>
-        <java.level>8</java.level>
-        <jenkins-test-harness.version>2.62</jenkins-test-harness.version>
+        <!-- https://www.jenkins.io/doc/developer/plugin-development/choosing-jenkins-baseline/ -->
+        <jenkins.baseline>2.462</jenkins.baseline>
+        <jenkins.version>${jenkins.baseline}.3</jenkins.version>
+        <jenkins-test-harness.version>2225.v04fa_3929c9b_5</jenkins-test-harness.version>
     </properties>
-
-    <developers>
-        <developer>
-            <id>MadsNielsen</id>
-            <name>Mads Nielsen</name>
-            <email>mads.nielsen@eficode.com</email>
-        </developer>
-        <developer>
-            <id>gt_dbechtold</id>
-            <name>dbechtold</name>
-            <organization>CodeSecure</organization>
-            <organizationUrl>https://www.codesecure.com</organizationUrl>
-            <email>dbechtold@codesecure.com</email>
-        </developer>
-    </developers>
     
     <contributors>
         <contributor>
@@ -60,18 +45,35 @@
     </contributors>
 
     <scm>
-        <connection>scm:git:ssh://github.com/jenkinsci/codesonar-plugin.git</connection>
+        <connection>scm:git:https://github.com/jenkinsci/codesonar-plugin.git</connection>
         <developerConnection>scm:git:ssh://git@github.com/jenkinsci/codesonar-plugin.git</developerConnection>
         <url>https://github.com/jenkinsci/codesonar-plugin</url>
         <tag>HEAD</tag>
     </scm>
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>io.jenkins.tools.bom</groupId>
+                <artifactId>bom-${jenkins.baseline}.x</artifactId>
+                <version>4228.v0a_71308d905b_</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <dependency>
+                <groupId>io.jenkins.tools.bom</groupId>
+                <artifactId>bom-weekly</artifactId>
+                <version>4488.v7fe26526366e</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 
     <build>
         <plugins>
             <plugin>
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>
-                <version>0.8.5</version>
                 <executions>
                     <execution>
                         <goals>
@@ -108,15 +110,21 @@
 
     <dependencies>
 
-       <dependency>
+        <dependency>
             <groupId>org.jenkins-ci.plugins.workflow</groupId>
             <artifactId>workflow-aggregator</artifactId>
             <version>2.5</version>
         </dependency>
+
+        <dependency>
+            <groupId>org.apache.ivy</groupId>
+            <artifactId>ivy</artifactId>
+            <version>2.5.3</version>
+        </dependency>
+
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
-            <version>4.13.1</version>
             <scope>test</scope>
             <exclusions>
                 <exclusion>
@@ -129,7 +137,6 @@
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
             <artifactId>job-dsl</artifactId>
-            <version>1.72</version>
             <optional>true</optional>
             <exclusions>
                 <exclusion>
@@ -142,33 +149,30 @@
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
             <artifactId>scm-api</artifactId>
-            <version>2.2.8</version>
         </dependency>
 
         <dependency>
             <groupId>org.hamcrest</groupId>
             <artifactId>hamcrest-core</artifactId>
-            <version>2.2</version>
             <scope>test</scope>
         </dependency>
 
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
-            <version>3.3.0</version>
             <scope>test</scope>
         </dependency>
 
         <dependency>
             <groupId>org.apache.httpcomponents</groupId>
             <artifactId>httpclient</artifactId>
-            <version>4.5.13</version>
+            <version>4.5.14</version>
         </dependency>
 
         <dependency>
             <groupId>org.apache.httpcomponents</groupId>
             <artifactId>fluent-hc</artifactId>
-            <version>4.5.13</version>
+            <version>4.5.14</version>
         </dependency>
 
         <dependency>
@@ -180,13 +184,19 @@
         <dependency>
             <groupId>io.jenkins.plugins</groupId>
             <artifactId>jaxb</artifactId>
-            <version>2.3.0</version>
+            <version>2.3.9-1</version>
         </dependency>
 
         <dependency>
             <groupId>com.google.code.gson</groupId>
             <artifactId>gson</artifactId>
-            <version>2.10</version>
+            <version>2.13.1</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.google.errorprone</groupId>
+            <artifactId>error_prone_annotations</artifactId>
+            <version>2.38.0</version>
         </dependency>
 
     </dependencies>
