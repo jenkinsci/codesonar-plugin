@@ -142,7 +142,7 @@ Work through the following steps to make sure that CodeSonar is in a suitable st
      1. Sign in to the host machine you have selected.
      1. If CodeSonar is not already installed, install it now.
      1. Start the launch daemon.
-        Note that a remote launch daemon for use with `remote` or `remote-archive` must be created with `-launchd-home <hdir>`.
+        Note that a remote launch daemon for use with `-remote` or `-remote-archive` must be created with `-launchd-home <hdir>`.
         This specifies a home directory `<hdir>` under which the launch daemon will store the various analysis directories for your analyses.
 
         ```
