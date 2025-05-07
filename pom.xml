@@ -17,9 +17,8 @@
         <!-- https://www.jenkins.io/doc/developer/plugin-development/choosing-jenkins-baseline/ -->
         <jenkins.baseline>2.462</jenkins.baseline>
         <jenkins.version>${jenkins.baseline}.3</jenkins.version>
-        <jenkins-test-harness.version>2225.v04fa_3929c9b_5</jenkins-test-harness.version>
     </properties>
-    
+
     <contributors>
         <contributor>
             <name>Florent Haxha</name>
@@ -123,18 +122,6 @@
         </dependency>
 
         <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <scope>test</scope>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.hamcrest</groupId>
-                    <artifactId>hamcrest-core</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-
-        <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
             <artifactId>job-dsl</artifactId>
             <optional>true</optional>
@@ -145,16 +132,10 @@
                 </exclusion>
             </exclusions>
         </dependency>
-        
+
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
             <artifactId>scm-api</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.hamcrest</groupId>
-            <artifactId>hamcrest-core</artifactId>
-            <scope>test</scope>
         </dependency>
 
         <dependency>
@@ -164,15 +145,8 @@
         </dependency>
 
         <dependency>
-            <groupId>org.apache.httpcomponents</groupId>
-            <artifactId>httpclient</artifactId>
-            <version>4.5.14</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.apache.httpcomponents</groupId>
-            <artifactId>fluent-hc</artifactId>
-            <version>4.5.14</version>
+            <groupId>org.jenkins-ci.plugins</groupId>
+            <artifactId>apache-httpcomponents-client-4-api</artifactId>
         </dependency>
 
         <dependency>
@@ -184,13 +158,11 @@
         <dependency>
             <groupId>io.jenkins.plugins</groupId>
             <artifactId>jaxb</artifactId>
-            <version>2.3.9-1</version>
         </dependency>
 
         <dependency>
-            <groupId>com.google.code.gson</groupId>
-            <artifactId>gson</artifactId>
-            <version>2.13.1</version>
+            <groupId>io.jenkins.plugins</groupId>
+            <artifactId>gson-api</artifactId>
         </dependency>
 
         <dependency>
@@ -214,5 +186,5 @@
             <url>https://repo.jenkins-ci.org/public/</url>
         </pluginRepository>
     </pluginRepositories>
-    
+
 </project>
