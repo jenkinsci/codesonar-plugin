@@ -1,5 +1,6 @@
 package org.jenkinsci.plugins.codesonar.unit.services;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.Mockito.mock;
@@ -15,23 +16,23 @@ import org.jenkinsci.plugins.codesonar.services.HttpService;
 import org.jenkinsci.plugins.codesonar.services.HttpServiceResponse;
 import org.jenkinsci.plugins.codesonar.services.MetricsService;
 import org.jenkinsci.plugins.codesonar.services.XmlSerializationService;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 /**
  *
  * @author Andrius
  */
-public class MetricsServiceTest {
+class MetricsServiceTest {
 
     private XmlSerializationService mockedXmlSerializationService;
     private HttpService mockedHttpService;
     private HttpServiceResponse mockedHttpServiceResponse;
     private MetricsService metricsService;
 
-    @Before
-    public void setUp() {
+    @BeforeEach
+    void setUp() {
         mockedXmlSerializationService = mock(XmlSerializationService.class);
         mockedHttpService = mock(HttpService.class);
         mockedHttpServiceResponse = mock(HttpServiceResponse.class);
@@ -39,16 +40,16 @@ public class MetricsServiceTest {
     }
 
     @Test
-    public void providedHubAddressAndAnalysisId_shouldReturnAMetricsUrl() {
+    void providedHubAddressAndAnalysisId_shouldReturnAMetricsUrl() {
         final String HUB_ADDRESS = "http://10.10.10.10";
         final String ANALYSIS_ID = "10";
         final String EXPECTED_RESULT = String.format("%s/metrics/%s.xml", HUB_ADDRESS, ANALYSIS_ID);
         URI result = metricsService.getMetricsUriFromAnAnalysisId(URI.create(HUB_ADDRESS), ANALYSIS_ID);
-        Assert.assertEquals(EXPECTED_RESULT, result.toString());
+        assertEquals(EXPECTED_RESULT, result.toString());
     }
 
     @Test
-    public void providedValidMetricsUrl_shouldReturnMetrics() throws IOException {
+    void providedValidMetricsUrl_shouldReturnMetrics() throws IOException {
         final URI VALID_METRICS_URI = URI.create("http://10.10.10.10/validUrl");
         final String RESPONSE_XML_CONTENT = "valid xml content";
         final Metrics EXPECTED_RESULT = new Metrics();
@@ -60,6 +61,6 @@ public class MetricsServiceTest {
         when(mockedHttpService.getResponseFromUrl(VALID_METRICS_URI)).thenReturn(mockedHttpServiceResponse);
         when(mockedXmlSerializationService.deserialize(any(InputStream.class), isA(Class.class))).thenReturn(EXPECTED_RESULT);
         Metrics result = metricsService.getMetricsFromUri(VALID_METRICS_URI);
-        Assert.assertEquals(EXPECTED_RESULT, result);
+        assertEquals(EXPECTED_RESULT, result);
     }
 }

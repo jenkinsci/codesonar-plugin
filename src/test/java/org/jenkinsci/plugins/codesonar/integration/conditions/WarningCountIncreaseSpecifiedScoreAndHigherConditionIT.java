@@ -1,5 +1,7 @@
 package org.jenkinsci.plugins.codesonar.integration.conditions;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -7,23 +9,23 @@ import org.jenkinsci.plugins.codesonar.CodeSonarPublisher;
 import org.jenkinsci.plugins.codesonar.conditions.Condition;
 import org.jenkinsci.plugins.codesonar.conditions.WarningCountIncreaseSpecifiedScoreAndHigherCondition;
 import org.jenkinsci.plugins.codesonar.services.IAnalysisService;
-import org.junit.Assert;
-import org.junit.Test;
-
+import org.junit.jupiter.api.Test;
 import hudson.model.Cause;
 import hudson.model.FreeStyleBuild;
 import hudson.model.FreeStyleProject;
 import hudson.model.Result;
 import hudson.model.queue.QueueTaskFuture;
+import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
 
 /**
  *
  * @author Andrius
  */
-public class WarningCountIncreaseSpecifiedScoreAndHigherConditionIT extends ConditionIntegrationTestBase {
+@WithJenkins
+class WarningCountIncreaseSpecifiedScoreAndHigherConditionIT extends ConditionIntegrationTestBase {
 
     @Test
-    public void percentageOfWarningsBellowTheDesignatedScoreIsAboveTheThreshold_BuildIsSetToWarrantedResult() throws Exception {
+    void percentageOfWarningsBellowTheDesignatedScoreIsAboveTheThreshold_BuildIsSetToWarrantedResult() throws Exception {
         // arrange
         final Result EXPECTED_RESULT = Result.FAILURE;
         final String WARRANTED_RESULT = Result.FAILURE.toString();
@@ -51,11 +53,11 @@ public class WarningCountIncreaseSpecifiedScoreAndHigherConditionIT extends Cond
         FreeStyleBuild build = queueTaskFuture.get();
 
         // assert
-        Assert.assertEquals(EXPECTED_RESULT, build.getResult());
+        assertEquals(EXPECTED_RESULT, build.getResult());
     }
 
     @Test
-    public void percentageOfWarningsBelowTheDesignatedRankIsBellowTheThreshold_BuildIsSuccessful() throws Exception {
+    void percentageOfWarningsBelowTheDesignatedRankIsBellowTheThreshold_BuildIsSuccessful() throws Exception {
         // arrange
         final Result EXPECTED_RESULT = Result.SUCCESS;
         final String WARRANTED_RESULT = Result.FAILURE.toString();
@@ -75,7 +77,7 @@ public class WarningCountIncreaseSpecifiedScoreAndHigherConditionIT extends Cond
         codeSonarPublisher.setProjectFile(VALID_CODESONAR_PROJECT_FILE);
         codeSonarPublisher.setAuthenticationService(mockedAuthenticationService);
         codeSonarPublisher.setHttpService(mockedHttpService);
-        
+
         FreeStyleProject project = jenkinsRule.createFreeStyleProject();
         project.getPublishersList().add(codeSonarPublisher);
 
@@ -84,6 +86,6 @@ public class WarningCountIncreaseSpecifiedScoreAndHigherConditionIT extends Cond
         FreeStyleBuild build = queueTaskFuture.get();
 
         // assert
-        Assert.assertEquals(EXPECTED_RESULT, build.getResult());
+        assertEquals(EXPECTED_RESULT, build.getResult());
     }
 }
