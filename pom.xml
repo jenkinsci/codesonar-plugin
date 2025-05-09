@@ -3,7 +3,7 @@
     <parent>
         <groupId>org.jenkins-ci.plugins</groupId>
         <artifactId>plugin</artifactId>
-        <version>4.88</version>
+        <version>5.16</version>
         <relativePath />
     </parent>
 
@@ -15,9 +15,9 @@
 
     <properties>
         <!-- https://www.jenkins.io/doc/developer/plugin-development/choosing-jenkins-baseline/ -->
-        <jenkins.baseline>2.462</jenkins.baseline>
+        <jenkins.baseline>2.492</jenkins.baseline>
         <jenkins.version>${jenkins.baseline}.3</jenkins.version>
-        <jenkins-test-harness.version>2225.v04fa_3929c9b_5</jenkins-test-harness.version>
+        <jenkins-test-harness.version>2444.v82e008e25040</jenkins-test-harness.version>
     </properties>
     
     <contributors>
@@ -55,14 +55,7 @@
             <dependency>
                 <groupId>io.jenkins.tools.bom</groupId>
                 <artifactId>bom-${jenkins.baseline}.x</artifactId>
-                <version>4228.v0a_71308d905b_</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
-            <dependency>
-                <groupId>io.jenkins.tools.bom</groupId>
-                <artifactId>bom-weekly</artifactId>
-                <version>4488.v7fe26526366e</version>
+                <version>4740.v75a_90f6fefb_7</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -184,7 +177,6 @@
         <dependency>
             <groupId>io.jenkins.plugins</groupId>
             <artifactId>jaxb</artifactId>
-            <version>2.3.9-1</version>
         </dependency>
 
         <dependency>
