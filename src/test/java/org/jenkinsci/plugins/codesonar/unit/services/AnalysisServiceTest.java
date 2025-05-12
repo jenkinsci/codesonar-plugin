@@ -1,8 +1,9 @@
 package org.jenkinsci.plugins.codesonar.unit.services;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.ArgumentMatchers.notNull;
@@ -33,21 +34,18 @@ import org.jenkinsci.plugins.codesonar.services.HttpServiceRequest;
 import org.jenkinsci.plugins.codesonar.services.HttpServiceResponse;
 import org.jenkinsci.plugins.codesonar.services.IAnalysisService;
 import org.jenkinsci.plugins.codesonar.services.XmlSerializationService;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-import hudson.AbortException;
-
-public class AnalysisServiceTest {
+class AnalysisServiceTest {
 
     private XmlSerializationService mockedXmlSerializationService;
     private HttpService mockedHttpService;
-    private HttpService httpService;
     private HttpServiceResponse mockedHttpServiceResponse;
     private IAnalysisService analysisService;
 
-    @Before
-    public void setUp() throws CodeSonarPluginException {
+    @BeforeEach
+    void setUp() {
         mockedXmlSerializationService = mock(XmlSerializationService.class);
         mockedHttpServiceResponse = mock(HttpServiceResponse.class);
         mockedHttpService = mock(HttpService.class);
@@ -55,7 +53,7 @@ public class AnalysisServiceTest {
     }
 
     @Test
-    public void providedValidHubURIAndProjectExistsInAProjectTree_shouldReturnLatestAnalysisUrl() throws IOException, URISyntaxException {
+    void providedValidHubURIAndProjectExistsInAProjectTree_shouldReturnLatestAnalysisUrl() throws IOException, URISyntaxException {
         final String VALID_HUB_ADDRESS = "http://10.10.1.131";
         final String VALID_PROJECT_NAME = "pojectName";
         // "projects with trees xml"
@@ -83,7 +81,7 @@ public class AnalysisServiceTest {
     }
 
     @Test
-    public void providedLogFileWithAnAnalysisUrlPresent_shouldReturnAnAnalysisUrl() {
+    void providedLogFileWithAnAnalysisUrlPresent_shouldReturnAnAnalysisUrl() {
         final List<String> LOG_FILE_WITH_URL = new ArrayList<>();
         LOG_FILE_WITH_URL.add("codesonar: Files parsed successfully.  Logs are visible at:");
         LOG_FILE_WITH_URL.add("codesonar: http://10.10.1.125:8080/analysis/98.html");
@@ -97,7 +95,7 @@ public class AnalysisServiceTest {
     }
 
     @Test
-    public void providedLogFileWithNoAnalysisUrlPresent_shouldReturnNull() {
+    void providedLogFileWithNoAnalysisUrlPresent_shouldReturnNull() {
         final List<String> LOG_FILE_WITHOUT_URL = new ArrayList<>();
         LOG_FILE_WITHOUT_URL.add("codesonar: Files parsed successfully.  Logs are visible at:");
         LOG_FILE_WITHOUT_URL.add("Use 'codesonar analyze' to start the analysis");
@@ -107,31 +105,27 @@ public class AnalysisServiceTest {
         assertNull(result);
     }
 
-    @Test(expected = CodeSonarPluginException.class)
-    public void providedInvalidHubAddress_shouldThrowAnAbortException() throws IOException, URISyntaxException {
+    @Test
+    void providedInvalidHubAddress_shouldThrowAnAbortException() throws Exception {
         final String INVALID_HUB_ADDRESS = "99.99.99.99";
         final String PROJECT_NAME = "pojectName";
         BasicCookieStore httpCookieStore = new BasicCookieStore();
         HttpClientBuilder httpClientBuilder = HttpClients.custom();
         CloseableHttpClient httpClient = httpClientBuilder.evictExpiredConnections().build();
         Executor executor = Executor.newInstance(httpClient).use(httpCookieStore);
-        
-
         when(mockedHttpService.getExecutor()).thenReturn(executor);
         when(mockedHttpService.getResponse(notNull(HttpServiceRequest.class))).thenCallRealMethod();
         when(mockedHttpService.getResponseFromUrl(notNull(URI.class))).thenCallRealMethod();
         when(mockedHttpService.getResponseFromUrl(any(String.class))).thenCallRealMethod();
-
-
-        analysisService.getLatestAnalysisUrlForAProject(new URI(INVALID_HUB_ADDRESS), PROJECT_NAME);
+        assertThrows(CodeSonarPluginException.class, () ->
+            analysisService.getLatestAnalysisUrlForAProject(new URI(INVALID_HUB_ADDRESS), PROJECT_NAME));
     }
 
-    @Test(expected = CodeSonarPluginException.class)
-    public void projectWithProvidedProjectNameIsNotFoundOnTheHub_shouldThrowAnAbortException() throws Exception {
+    @Test
+    void projectWithProvidedProjectNameIsNotFoundOnTheHub_shouldThrowAnAbortException() throws Exception {
         final String VALID_HUB_ADDRESS = "http://10.10.1.131";
         final String VALID_PROJECT_NAME = "pojectName";
         final String RESPONSE_XML_CONTENT = "valid xml";
-        
         SearchResults searchResults = new SearchResults();
         when(mockedHttpServiceResponse.getContentInputStream()).thenReturn(new ByteArrayInputStream(RESPONSE_XML_CONTENT.getBytes()));
         when(mockedHttpServiceResponse.readContent()).thenReturn(RESPONSE_XML_CONTENT);
@@ -140,27 +134,27 @@ public class AnalysisServiceTest {
         when(mockedHttpService.getResponseFromUrl(notNull(String.class))).thenReturn(mockedHttpServiceResponse);
         when(mockedHttpService.getResponseFromUrl(notNull(URI.class))).thenReturn(mockedHttpServiceResponse);
         when(mockedXmlSerializationService.deserialize(notNull(InputStream.class), isA(Class.class))).thenReturn(searchResults);
+        assertThrows(CodeSonarPluginException.class, () ->
+            analysisService.getLatestAnalysisUrlForAProject(new URI(VALID_HUB_ADDRESS), VALID_PROJECT_NAME));
 
-        analysisService.getLatestAnalysisUrlForAProject(new URI(VALID_HUB_ADDRESS), VALID_PROJECT_NAME);
-        
     }
 
-    @Test(expected = CodeSonarPluginException.class)
-    public void providedInvalidAnalysisUrl_shouldThrowAnAbortException() throws IOException {
+    @Test
+    void providedInvalidAnalysisUrl_shouldThrowAnAbortException() throws Exception {
         final String INVALID_ANALYSIS_URL = "10.10.10.10";
         BasicCookieStore httpCookieStore = new BasicCookieStore();
         HttpClientBuilder httpClientBuilder = HttpClients.custom();
         CloseableHttpClient httpClient = httpClientBuilder.evictExpiredConnections().build();
         Executor executor = Executor.newInstance(httpClient).use(httpCookieStore);
-        
         when(mockedHttpService.getExecutor()).thenReturn(executor);
         when(mockedHttpService.getResponse(any(HttpServiceRequest.class))).thenCallRealMethod();
         when(mockedHttpService.getResponseFromUrl(any(String.class))).thenCallRealMethod();
-        analysisService.getAnalysisFromUrl(INVALID_ANALYSIS_URL);
+        assertThrows(CodeSonarPluginException.class, () ->
+            analysisService.getAnalysisFromUrl(INVALID_ANALYSIS_URL));
     }
 
     @Test
-    public void providedValidAnalysisUrl_shouldReturnAnAnalysis() throws Exception {
+    void providedValidAnalysisUrl_shouldReturnAnAnalysis() throws Exception {
         final String VALID_ANALYSIS_URL = "10.10.10.10";
         final String RESPONSE_XML_CONTENT = "valid xml content";
         final InputStream RESPONSE_IS = IOUtils.toInputStream(RESPONSE_XML_CONTENT, "UTF-8");
@@ -174,9 +168,9 @@ public class AnalysisServiceTest {
         Analysis analysis = analysisService.getAnalysisFromUrl(VALID_ANALYSIS_URL);
         assertNotNull(analysis);
     }
-    
+
     @Test
-    public void providedValidAnalysisUrlAndUrlFilterNEW_shouldReturnAnAnalysisUrlForNewWarnings() throws IOException {
+    void providedValidAnalysisUrlAndUrlFilterNEW_shouldReturnAnAnalysisUrlForNewWarnings() throws IOException {
         final URI BASE_HUB_URI = URI.create("10.10.10.10");
         final long ANALYSIS_ID = 15;
         final String RESPONSE_XML_CONTENT = "valid xml content";

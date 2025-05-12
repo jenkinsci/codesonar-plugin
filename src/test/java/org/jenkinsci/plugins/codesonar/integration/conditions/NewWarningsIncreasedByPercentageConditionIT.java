@@ -1,5 +1,7 @@
 package org.jenkinsci.plugins.codesonar.integration.conditions;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -7,19 +9,19 @@ import org.jenkinsci.plugins.codesonar.CodeSonarPublisher;
 import org.jenkinsci.plugins.codesonar.conditions.Condition;
 import org.jenkinsci.plugins.codesonar.conditions.NewWarningsIncreasedByPercentageCondition;
 import org.jenkinsci.plugins.codesonar.services.IAnalysisService;
-import org.junit.Assert;
-import org.junit.Test;
-
+import org.junit.jupiter.api.Test;
 import hudson.model.Cause;
 import hudson.model.FreeStyleBuild;
 import hudson.model.FreeStyleProject;
 import hudson.model.Result;
 import hudson.model.queue.QueueTaskFuture;
+import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
 
-public class NewWarningsIncreasedByPercentageConditionIT extends ConditionIntegrationTestBase {
+@WithJenkins
+class NewWarningsIncreasedByPercentageConditionIT extends ConditionIntegrationTestBase {
 
     @Test
-    public void percentageOfBrandNewWarningsIsAboveTheThreshold_BuildIsSetToWarrantedResult() throws Exception {
+    void percentageOfBrandNewWarningsIsAboveTheThreshold_BuildIsSetToWarrantedResult() throws Exception {
         // arrange
         final String WARRANTED_RESULT = Result.FAILURE.toString();
         final Result EXPECTED_RESULT = Result.fromString(WARRANTED_RESULT);
@@ -37,7 +39,7 @@ public class NewWarningsIncreasedByPercentageConditionIT extends ConditionIntegr
         codeSonarPublisher.setNewWarningsFilter(IAnalysisService.VISIBILITY_FILTER_NEW_WARNINGS_DEFAULT);
         codeSonarPublisher.setProjectFile(VALID_CODESONAR_PROJECT_FILE);
         codeSonarPublisher.setHttpService(mockedHttpService);
-        
+
         FreeStyleProject project = jenkinsRule.createFreeStyleProject();
         project.getPublishersList().add(codeSonarPublisher);
 
@@ -46,11 +48,11 @@ public class NewWarningsIncreasedByPercentageConditionIT extends ConditionIntegr
         FreeStyleBuild build = queueTaskFuture.get();
 
         // assert
-        Assert.assertEquals(EXPECTED_RESULT, build.getResult());
+        assertEquals(EXPECTED_RESULT, build.getResult());
     }
 
     @Test
-    public void percentageOfBrandNewWarningsIsBellowtheThreshold_BuildIsSuccessful() throws Exception {
+    void percentageOfBrandNewWarningsIsBellowtheThreshold_BuildIsSuccessful() throws Exception {
         // arrange
         final String WARRANTED_RESULT = Result.FAILURE.toString();
         final Result EXPECTED_RESULT = Result.SUCCESS;
@@ -69,15 +71,15 @@ public class NewWarningsIncreasedByPercentageConditionIT extends ConditionIntegr
         codeSonarPublisher.setProjectFile(VALID_CODESONAR_PROJECT_FILE);
         codeSonarPublisher.setAuthenticationService(mockedAuthenticationService);
         codeSonarPublisher.setHttpService(mockedHttpService);
-        
+
         FreeStyleProject project = jenkinsRule.createFreeStyleProject();
         project.getPublishersList().add(codeSonarPublisher);
 
         // act
         QueueTaskFuture<FreeStyleBuild> queueTaskFuture = project.scheduleBuild2(0, new Cause.UserIdCause());
         FreeStyleBuild build = queueTaskFuture.get();
-        
+
         // assert
-        Assert.assertEquals(EXPECTED_RESULT, build.getResult());
+        assertEquals(EXPECTED_RESULT, build.getResult());
     }
 }

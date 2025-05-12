@@ -1,5 +1,6 @@
 package org.jenkinsci.plugins.codesonar.unit.services;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.Mockito.mock;
@@ -15,22 +16,23 @@ import org.jenkinsci.plugins.codesonar.services.HttpService;
 import org.jenkinsci.plugins.codesonar.services.HttpServiceResponse;
 import org.jenkinsci.plugins.codesonar.services.ProceduresService;
 import org.jenkinsci.plugins.codesonar.services.XmlSerializationService;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 /**
  *
  * @author Andrius
  */
-public class ProceduresServiceTest {
+class ProceduresServiceTest {
+
     private XmlSerializationService mockedXmlSerializationService;
     private HttpService mockedHttpService;
     private HttpServiceResponse mockedHttpServiceResponse;
     private ProceduresService proceduresService;
 
-    @Before
-    public void setUp() {
+    @BeforeEach
+    void setUp() {
         mockedXmlSerializationService = mock(XmlSerializationService.class);
         mockedHttpService = mock(HttpService.class);
         mockedHttpServiceResponse = mock(HttpServiceResponse.class);
@@ -38,7 +40,7 @@ public class ProceduresServiceTest {
     }
 
     @Test
-    public void providedHubAddressAndAnalysisId_shouldReturnAProceduresUrl() {
+    void providedHubAddressAndAnalysisId_shouldReturnAProceduresUrl() {
         final String HUB_ADDRESS = "http://10.10.1.131";
         final String ANALYSIS_ID = "10";
 
@@ -46,11 +48,11 @@ public class ProceduresServiceTest {
 
         URI result = proceduresService.getProceduresUriFromAnAnalysisId(URI.create(HUB_ADDRESS), ANALYSIS_ID);
 
-        Assert.assertEquals(EXPECTED_RESULT, result.toString());
+        assertEquals(EXPECTED_RESULT, result.toString());
     }
 
     @Test
-    public void providedValidMetricsUrl_shouldReturnMetrics() throws IOException {
+    void providedValidMetricsUrl_shouldReturnMetrics() throws IOException {
         final URI VALID_METRICS_URI = URI.create("http://10.10.10.10/valid");
         final String RESPONSE_XML_CONTENT = "valid xml content";
         final Procedures EXPECTED_RESULT = new Procedures();
@@ -65,6 +67,6 @@ public class ProceduresServiceTest {
 
         Procedures result = proceduresService.getProceduresFromUri(VALID_METRICS_URI);
 
-        Assert.assertEquals(EXPECTED_RESULT, result);
+        assertEquals(EXPECTED_RESULT, result);
     }
 }
