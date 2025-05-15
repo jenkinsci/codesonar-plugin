@@ -20,38 +20,42 @@ import org.jenkinsci.plugins.codesonar.services.IAnalysisService;
 import org.jenkinsci.plugins.codesonar.services.MetricsService;
 import org.jenkinsci.plugins.codesonar.services.ProceduresService;
 import org.jenkinsci.plugins.codesonar.services.XmlSerializationService;
-import org.junit.Rule;
+import org.junit.jupiter.api.BeforeEach;
 import org.jvnet.hudson.test.JenkinsRule;
+import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
 
 /**
  *
  * @author Andrius
  */
-public abstract class ConditionIntegrationTestBase {
-    @Rule
-    public JenkinsRule jenkinsRule = new JenkinsRule();
-    
+@WithJenkins
+abstract class ConditionIntegrationTestBase {
+
+    protected JenkinsRule jenkinsRule;
+
     protected IAnalysisService mockedAnalysisService;
     protected MetricsService mockedMetricsService;
     protected ProceduresService mockedProceduresService;
     protected AuthenticationService mockedAuthenticationService;
-    
+
     protected HttpService mockedHttpService;
-    
+
     protected AnalysisServiceFactory mockedAnalysisServiceFactory;
-    
+
     protected final URI VALID_HUB_ADDRESS = URI.create("10.10.10.10");
     protected final String VALID_PROJECT_NAME = "projectName";
     protected final String VALID_CODESONAR_PROJECT_FILE = "projectName.prj";
 
-    public void setUp() throws Exception {
+    @BeforeEach
+    void setUp(JenkinsRule rule) throws Exception {
+        jenkinsRule = rule;
         mockedAnalysisService = mock(AnalysisService.class);
         mockedMetricsService = mock(MetricsService.class);
         mockedProceduresService = mock(ProceduresService.class);
         mockedAuthenticationService = mock(AuthenticationService.class);
         mockedAnalysisServiceFactory = mock(AnalysisServiceFactory.class);
         mockedHttpService = mock(HttpService.class);
-        
+
         final URI VALID_ANALYSIS_URL = URI.create("http://10.10.1.102/VALID_ANALYSIS_URL");
         final URI BASE_HUB_URI = URI.create("http://10.10.1.102");
         final long ANALYSIS_ID = 15;
@@ -93,9 +97,9 @@ public abstract class ConditionIntegrationTestBase {
                 .thenReturn(VALID_ANALYSIS_ACTIVE_WARNINGS);
         when(mockedAnalysisService.getLatestAnalysisUrlForAProject(VALID_HUB_ADDRESS, VALID_PROJECT_NAME))
                 .thenReturn(VALID_ANALYSIS_URL.toString());
-        
+
         when(mockedAnalysisServiceFactory.getAnalysisService(any(HttpService.class), any(XmlSerializationService.class))).thenReturn(mockedAnalysisService);
-        
+
         when(mockedMetricsService.getMetricsUriFromAnAnalysisId(VALID_HUB_ADDRESS, VALID_ANALYSIS_ACTIVE_WARNINGS.getAnalysisId()))
                 .thenReturn(VALID_METRICS_URL);
         when(mockedMetricsService.getMetricsFromUri(VALID_METRICS_URL)).thenReturn(VALID_METRICS);
@@ -106,7 +110,7 @@ public abstract class ConditionIntegrationTestBase {
 
         when(mockedAnalysisService.getAnalysisFromUrlWithNewWarnings(BASE_HUB_URI, ANALYSIS_ID))
                 .thenReturn(VALID_ANALYSIS_NEW_WARNINGS);
-        
+
         when(mockedHttpService.getResponseFromUrl(any(URI.class)).readContent())
                 .thenReturn("Version: 4.2");
     }
