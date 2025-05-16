@@ -1,5 +1,10 @@
 == Changelog ==
 
+=== Version 3.6.0 (May 2025) ===
+
+* Build on Jenkins Bill-of-Materials (BOM) dependency management and supported plugin infrastructure, requiring Java 17.
+* Update documentation to describe plugin use with CodeSonar -remote and -remote-archive options.
+
 === Version 3.5.0 (November 2023) ===
 
 * CodeSonar is now a CodeSecure product.
