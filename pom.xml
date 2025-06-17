@@ -3,7 +3,7 @@
     <parent>
         <groupId>org.jenkins-ci.plugins</groupId>
         <artifactId>plugin</artifactId>
-        <version>5.16</version>
+        <version>5.17</version>
         <relativePath />
     </parent>
 
@@ -17,7 +17,7 @@
         <!-- https://www.jenkins.io/doc/developer/plugin-development/choosing-jenkins-baseline/ -->
         <jenkins.baseline>2.492</jenkins.baseline>
         <jenkins.version>${jenkins.baseline}.3</jenkins.version>
-        <jenkins-test-harness.version>2444.v82e008e25040</jenkins-test-harness.version>
+        <jenkins-test-harness.version>2462.v7cd38b_7a_361b_</jenkins-test-harness.version>
     </properties>
 
     <contributors>
@@ -55,7 +55,7 @@
             <dependency>
                 <groupId>io.jenkins.tools.bom</groupId>
                 <artifactId>bom-${jenkins.baseline}.x</artifactId>
-                <version>4740.v75a_90f6fefb_7</version>
+                <version>4924.v6b_eb_a_79a_d9d0</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
