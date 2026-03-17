@@ -635,7 +635,7 @@ There are several possible approaches.
 
 Users can specify zero or more *CodeSonar conditions*. 
 * Each condition specifies a bound on some particular property of the CodeSonar analysis results, along with the build *result* setting to be applied if the property's value lies outside the specified bound.
-* The available *result* values are `{'Unstable', 'Failed'}`.
+* The available *result* values are `{'UNSTABLE', 'FAILURE'}`.
 * If multiple conditions are met, the most severe of their corresponding *result* settings is applied.
 * For conditions based on warning counts, the count is with respect to the [`visibilityFilter` setting](#note-on-visibility-filters).
 
@@ -668,9 +668,9 @@ Note that alerts and their colors are not related to the notion of *score colori
 
 ### Conditions Example
 
-With this set of conditions, the plugin will mark the Pipeline as "Failed" if the CodeSonar analysis produces one or more
+With this set of conditions, the plugin will mark the Pipeline as failed (`'FAILURE'`) if the CodeSonar analysis produces one or more
 red alerts *or* the overall warning count (with respect to the specified [visibility filter](#note-on-visibility-filters)) exceeds that of the previous analysis by more than 1%.
-If neither of those conditions are met but there is at least one procedure with cyclomatic complexity greater than 8, the plugin will mark the Pipeline as "Unstable".
+If neither of those conditions are met but there is at least one procedure with cyclomatic complexity greater than 8, the plugin will mark the Pipeline as unstable (`'UNSTABLE'`).
 
 ```
 cyclomaticComplexity(maxCyclomaticComplexity:'8', warrantedResult:'UNSTABLE'),
