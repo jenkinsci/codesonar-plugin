@@ -20,7 +20,7 @@ jobs:
           - 21
     name: Java ${{ matrix.java }} compile
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Cache maven dependencies
         uses: actions/cache@v4
