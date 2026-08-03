@@ -2,7 +2,7 @@ package org.jenkinsci.plugins.codesonar.conditions;
 
 import java.text.MessageFormat;
 
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.jenkinsci.plugins.codesonar.CodeSonarLogger;
 import org.jenkinsci.plugins.codesonar.CodeSonarPluginException;
 import org.jenkinsci.plugins.codesonar.services.CodeSonarHubAnalysisDataLoader;

@@ -1,6 +1,6 @@
 package org.jenkinsci.plugins.codesonar.services;
 
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 
 public class Utils {
     
