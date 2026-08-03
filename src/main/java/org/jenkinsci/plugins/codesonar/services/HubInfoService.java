@@ -7,7 +7,7 @@ import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.http.client.fluent.Request;
 import org.jenkinsci.plugins.codesonar.CodeSonarHubCommunicationException;
 import org.jenkinsci.plugins.codesonar.CodeSonarJsonSyntaxException;
